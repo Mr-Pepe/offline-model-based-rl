@@ -140,3 +140,4 @@ cython_debug/
 
 .vscode
 data/**
+MUJOCO_LOG.TXT
