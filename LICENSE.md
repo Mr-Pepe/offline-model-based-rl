@@ -1,0 +1,1 @@
+Large parts are taken from OpenAI's Spinning Up (https://spinningup.openai.com) which is published under MIT license (see LICENSE_SPINUP.md).
