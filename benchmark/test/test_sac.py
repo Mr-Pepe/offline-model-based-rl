@@ -7,37 +7,34 @@ from benchmark.sac.sac import sac
 from benchmark.utils.run_utils import setup_logger_kwargs
 import pytest
 
-logger_kwargs = setup_logger_kwargs('test_sac_cpu')
-device = 'cpu'
+logger_kwargs = setup_logger_kwargs('test_sac')
 env = 'HalfCheetah-v2'
-n_epochs = 1
-hidden_sizes = [3, 3]
+
 
 def test_total_steps_must_be_enough_to_perform_at_least_one_update():
     update_after = 150
     n_steps_per_epoch = 100
+    n_epochs = 1
 
     with pytest.raises(ValueError):
-        sac(lambda: gym.make(env), actor_critic=MLPActorCritic,
-            ac_kwargs=dict(hidden_sizes=hidden_sizes), epochs=n_epochs,
-            steps_per_epoch=n_steps_per_epoch, update_after=update_after,
-            logger_kwargs=logger_kwargs, device='cpu')
+        sac(lambda: gym.make(env), actor_critic=MLPActorCritic, epochs=n_epochs,
+            steps_per_epoch=n_steps_per_epoch, update_after=update_after)
         assert True == True
 
 
-# def test_sac_cpu():
+def test_sac_converges_cpu():
+    device = 'cpu'
+    n_epochs = 4
+    start = time.time()
+    max_ep_len = 500
 
-#     n_steps_per_epoch = 1000
-#     total_steps = n_steps_per_epoch * n_epochs
+    final_return = sac(lambda: gym.make(env), actor_critic=MLPActorCritic,
+                 epochs=n_epochs, max_ep_len=max_ep_len,
+                 logger_kwargs=logger_kwargs, device='cpu')
 
-#     start = time.time()
+    assert final_return
 
-#     sac(lambda: gym.make(env), actor_critic=MLPActorCritic,
-#         ac_kwargs=dict(hidden_sizes=hidden_sizes), epochs=n_epochs, steps_per_epoch=n_steps_per_epoch,
-#         logger_kwargs=logger_kwargs, device='cpu')
-
-#     assert True == True, 'Test {} on {} for {} steps with {} layers in {}s'.format(
-#         env, device, total_steps, hidden_sizes, time.time())
+    assert final_return > 100
 
 
 # def test_sac_gpu():
