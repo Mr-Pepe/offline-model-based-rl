@@ -144,6 +144,7 @@ def sac(env_fn, actor_critic=MLPActorCritic, ac_kwargs=dict(), seed=0,
     replay_buffer = ReplayBuffer(
         obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
 
+
     # Count variables (protip: try to get a feel for how different size networks behave!)
     var_counts = tuple(count_vars(module) for module in [ac.pi, ac.q1, ac.q2])
     logger.log(
@@ -255,6 +256,11 @@ def sac(env_fn, actor_critic=MLPActorCritic, ac_kwargs=dict(), seed=0,
     total_steps = steps_per_epoch * epochs
     start_time = time.time()
     o, ep_ret, ep_len = env.reset(), 0, 0
+
+    max_ep_len = min(max_ep_len, total_steps)
+
+    if total_steps < update_after + ((total_steps - update_after) % update_every):
+        raise ValueError('Number of total steps too low. Increase number of epochs or steps per epoch.')
 
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
