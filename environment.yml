@@ -1,40 +1,83 @@
-name: d4rl
+name: thesis
 channels:
+  - pytorch
   - conda-forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
-  - _openmp_mutex=4.5=1_gnu
-  - absl-py=0.10.0=py36h9f0ad1d_0
+  - _openmp_mutex=4.5=1_llvm
+  - astroid=2.4.2=py38h32f6830_1
+  - attrs=20.2.0=pyh9f0ad1d_0
+  - blas=2.16=mkl
   - ca-certificates=2020.6.20=hecda079_0
-  - certifi=2020.6.20=py36h9880bd3_2
+  - certifi=2020.6.20=py38h924ce5b_2
+  - cudatoolkit=10.2.89=hfd86e86_1
+  - freetype=2.10.3=he06d7ca_0
+  - iniconfig=1.0.1=pyh9f0ad1d_0
+  - isort=5.6.2=py38h32f6830_0
+  - joblib=0.17.0=py_0
+  - jpeg=9d=h516909a_0
+  - lazy-object-proxy=1.4.3=py38h1e0a361_2
+  - lcms2=2.11=hbd6801e_0
   - ld_impl_linux-64=2.35=h769bd43_9
+  - libblas=3.8.0=16_mkl
+  - libcblas=3.8.0=16_mkl
   - libffi=3.2.1=he1b5a44_1007
   - libgcc-ng=9.3.0=h5dbcf3e_17
-  - libgomp=9.3.0=h5dbcf3e_17
+  - libgfortran-ng=7.5.0=hae1eefd_17
+  - libgfortran4=7.5.0=hae1eefd_17
+  - liblapack=3.8.0=16_mkl
+  - liblapacke=3.8.0=16_mkl
+  - libpng=1.6.37=hed695b0_2
   - libstdcxx-ng=9.3.0=h2ae2ef3_17
-  - ncurses=6.2=he1b5a44_1
+  - libtiff=4.1.0=hc7e4089_6
+  - libwebp-base=1.1.0=h516909a_3
+  - llvm-openmp=10.0.1=hc9558a2_0
+  - lz4-c=1.9.2=he1b5a44_3
+  - mccabe=0.6.1=py_1
+  - mkl=2020.2=256
+  - more-itertools=8.5.0=py_0
+  - mpi=1.0=mpich
+  - mpi4py=3.0.3=py38h4a80816_2
+  - mpich=3.3.2=hc856adb_3
+  - ncurses=6.2=he1b5a44_2
+  - ninja=1.10.1=hc9558a2_1
+  - numpy=1.19.2=py38hbc27379_1
+  - olefile=0.46=py_0
   - openssl=1.1.1h=h516909a_0
+  - packaging=20.4=pyh9f0ad1d_0
+  - pillow=7.2.0=py38h9776b28_2
   - pip=20.2.3=py_0
+  - pluggy=0.13.1=py38h32f6830_3
+  - psutil=5.7.2=py38h8df0ef7_1
+  - py=1.9.0=pyh9f0ad1d_0
+  - pylint=2.6.0=py38h32f6830_0
   - pyparsing=2.4.7=pyh9f0ad1d_0
-  - python=3.6.11=h4d41432_2_cpython
-  - python_abi=3.6=1_cp36m
+  - pytest=6.1.1=py38h32f6830_1
+  - python=3.8.6=h852b56e_0_cpython
+  - python_abi=3.8=1_cp38
+  - pytorch=1.6.0=py3.8_cuda10.2.89_cudnn7.6.5_0
   - readline=8.0=he28a2e2_2
-  - setuptools=49.6.0=py36h9880bd3_2
+  - setuptools=49.6.0=py38h924ce5b_2
   - six=1.15.0=pyh9f0ad1d_0
   - sqlite=3.33.0=h4cf870e_1
   - tk=8.6.10=hed695b0_1
+  - toml=0.10.1=pyh9f0ad1d_0
+  - torchvision=0.7.0=py38_cu102
   - wheel=0.35.1=pyh9f0ad1d_0
+  - wrapt=1.11.2=py38h1e0a361_1
   - xz=5.2.5=h516909a_1
   - zlib=1.2.11=h516909a_1009
+  - zstd=1.4.5=h6597ccf_2
   - pip:
+    - absl-py==0.10.0
     - cffi==1.14.3
     - chardet==3.0.4
     - click==7.1.2
     - cloudpickle==1.6.0
     - cython==0.29.21
     - d4rl==1.1
-    - dm-control==0.0.327666647
+    - dm-control==0.0.336440200
     - dm-env==1.2
     - dm-tree==0.1.5
     - fasteners==0.15
@@ -49,8 +92,6 @@ dependencies:
     - mjrl==1.0.0
     - monotonic==1.5
     - mujoco-py==2.0.2.13
-    - numpy==1.19.2
-    - pillow==7.2.0
     - protobuf==3.13.0
     - pycparser==2.20
     - pyglet==1.5.0
