@@ -20,6 +20,8 @@ if __name__ == '__main__':
     logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
     device = 'cuda' if args.device == 'cuda' and torch.cuda.is_available() else 'cpu'
 
+    print("Training on {}".format(device))
+
     torch.set_num_threads(torch.get_num_threads())
 
     sac(lambda: gym.make(args.env), actor_critic=MLPActorCritic,
