@@ -54,11 +54,12 @@ def load_policy_and_env(fpath, itr='last', deterministic=False):
 
 def load_pytorch_policy(fpath, itr, deterministic=False):
     """ Load a pytorch policy saved with Spinning Up Logger."""
-    
+
     fname = osp.join(fpath, 'pyt_save', 'model'+itr+'.pt')
     print('\n\nLoading from %s.\n\n'%fname)
 
     model = torch.load(fname)
+    model.to('cpu')
 
     # make function for producing an action given a single state
     def get_action(x):

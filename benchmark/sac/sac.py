@@ -132,6 +132,9 @@ def sac(env_fn, actor_critic=MLPActorCritic, ac_kwargs=dict(), seed=0,
 
     # Create actor-critic module and target networks
     ac = actor_critic(env.observation_space, env.action_space, **ac_kwargs)
+    ac.pi.to(device)
+    ac.q1.to(device)
+    ac.q2.to(device)
     ac_targ = deepcopy(ac)
 
     # Freeze target networks with respect to optimizers (only update via polyak averaging)
@@ -175,8 +178,8 @@ def sac(env_fn, actor_critic=MLPActorCritic, ac_kwargs=dict(), seed=0,
         loss_q = loss_q1 + loss_q2
 
         # Useful info for logging
-        q_info = dict(Q1Vals=q1.detach().numpy(),
-                      Q2Vals=q2.detach().numpy())
+        q_info = dict(Q1Vals=q1.cpu().detach().numpy(),
+                      Q2Vals=q2.cpu().detach().numpy())
 
         return loss_q, q_info
 
@@ -192,7 +195,7 @@ def sac(env_fn, actor_critic=MLPActorCritic, ac_kwargs=dict(), seed=0,
         loss_pi = (alpha * logp_pi - q_pi).mean()
 
         # Useful info for logging
-        pi_info = dict(LogPi=logp_pi.detach().numpy())
+        pi_info = dict(LogPi=logp_pi.cpu().detach().numpy())
 
         return loss_pi, pi_info
 
@@ -204,6 +207,9 @@ def sac(env_fn, actor_critic=MLPActorCritic, ac_kwargs=dict(), seed=0,
     logger.setup_pytorch_saver(ac)
 
     def update(data):
+        for key in data:
+            data[key] = data[key].to(device)
+
         # First run one gradient descent step for Q1 and Q2
         q_optimizer.zero_grad()
         loss_q, q_info = compute_loss_q(data)
@@ -240,7 +246,7 @@ def sac(env_fn, actor_critic=MLPActorCritic, ac_kwargs=dict(), seed=0,
                 p_targ.data.add_((1 - polyak) * p.data)
 
     def get_action(o, deterministic=False):
-        return ac.act(torch.as_tensor(o, dtype=torch.float32),
+        return ac.act(torch.as_tensor(o, dtype=torch.float32, device=device),
                       deterministic)
 
     def test_agent():

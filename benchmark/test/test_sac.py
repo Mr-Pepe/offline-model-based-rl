@@ -24,22 +24,27 @@ def test_total_steps_must_be_enough_to_perform_at_least_one_update():
 
 def test_sac_converges_cpu():
     device = 'cpu'
-    n_epochs = 4
+    n_epochs = 5
     start = time.time()
-    max_ep_len = 500
 
     final_return = sac(lambda: gym.make(env), actor_critic=MLPActorCritic,
-                 epochs=n_epochs, max_ep_len=max_ep_len,
-                 logger_kwargs=logger_kwargs, device='cpu')
+                       epochs=n_epochs,
+                       logger_kwargs=logger_kwargs, device=device)
 
     assert final_return
 
-    assert final_return > 100
+    assert final_return > 500
 
 
-# def test_sac_gpu():
-#     sac(lambda: gym.make('HalfCheetah-v2'), actor_critic=MLPActorCritic,
-#         ac_kwargs=dict(hidden_sizes=[3, 3]), epochs=1, steps_per_epoch=100,
-#         logger_kwargs=logger_kwargs, device='cuda')
+def test_sac_converges_gpu():
+    device = 'cuda'
+    n_epochs = 5
+    start = time.time()
 
-#     assert True == True
+    final_return = sac(lambda: gym.make(env), actor_critic=MLPActorCritic,
+                       epochs=n_epochs,
+                       logger_kwargs=logger_kwargs, device=device)
+
+    assert final_return
+
+    assert final_return > 500
