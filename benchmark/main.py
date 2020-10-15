@@ -1,9 +1,10 @@
 import argparse
-from benchmark.utils.run_utils import setup_logger_kwargs
-import torch
+
 import gym
-from benchmark.models.mlp_actor_critic import MLPActorCritic
-from benchmark.sac.sac import sac
+import torch
+
+from benchmark.train import train
+from benchmark.utils.run_utils import setup_logger_kwargs
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -14,7 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--exp_name', type=str, default='sac')
-    parser.add_argument('--device', type=str, default='cuda')
+    parser.add_argument('--device', type=str, default='cpu')
     args = parser.parse_args()
 
     logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
@@ -24,7 +25,7 @@ if __name__ == '__main__':
 
     torch.set_num_threads(torch.get_num_threads())
 
-    sac(lambda: gym.make(args.env), actor_critic=MLPActorCritic,
-        ac_kwargs=dict(hidden_sizes=[args.hid]*args.l),
-        gamma=args.gamma, seed=args.seed, epochs=args.epochs,
-        logger_kwargs=logger_kwargs, device=device)
+    train(lambda: gym.make(args.env),
+          sac_kwargs=dict(hidden_sizes=[args.hid]*args.l, gamma=args.gamma),
+          seed=args.seed, epochs=args.epochs,
+          logger_kwargs=logger_kwargs, device=device)
