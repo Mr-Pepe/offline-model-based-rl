@@ -76,13 +76,14 @@ def test_trains_on_offline_data():
     dataset = env.get_dataset()
     observations = dataset['observations']
     actions = dataset['actions']
+    rewards = dataset['rewards'].reshape(-1, 1)
 
     model = EnvironmentModel(
         observations.shape[1] + actions.shape[1],
-        observations.shape[1] + actions.shape[1])
+        observations.shape[1] + rewards.shape[1])
 
     lr = 1e-3
-    batch_size = 512
+    batch_size = 1024
 
     optim = Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
@@ -92,7 +93,7 @@ def test_trains_on_offline_data():
     for i in range(2000):
         idxs = np.random.randint(0, observations.shape[0] - 1, size=batch_size)
         x = torch.as_tensor(np.concatenate((observations[idxs], actions[idxs]), axis=1), dtype=torch.float32)
-        y = torch.as_tensor(np.concatenate((observations[idxs+1], actions[idxs+1]), axis=1), dtype=torch.float32)
+        y = torch.as_tensor(np.concatenate((observations[idxs+1], rewards[idxs]), axis=1), dtype=torch.float32)
         optim.zero_grad()
         y_pred = model(x)
         loss = criterion(y_pred, y)
