@@ -10,3 +10,6 @@ class EnvironmentModel(nn.Module):
     def forward(self, x):
         #TODO: Transform angular input to [sin(x), cos(x)]
         return self.layers(x)
+
+    def get_prediction(self, x):
+        return self.forward(x).cpu().detach().numpy()
