@@ -1,3 +1,4 @@
+from benchmark.utils.evaluate_policy import test_agent
 import time
 from copy import deepcopy
 
@@ -165,18 +166,3 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
             logger.dump_tabular()
 
     return final_return
-
-
-def test_agent(test_env, agent, max_ep_len, num_test_episodes, logger):
-    sum_ep_ret = 0
-    for j in range(num_test_episodes):
-        o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
-        while not(d or (ep_len == max_ep_len)):
-            # Take deterministic actions at test time
-            o, r, d, _ = test_env.step(agent.get_action(o, True))
-            ep_ret += r
-            ep_len += 1
-        logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
-        sum_ep_ret += ep_ret
-
-    return sum_ep_ret / num_test_episodes
