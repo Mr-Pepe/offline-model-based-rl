@@ -8,4 +8,5 @@ class EnvironmentModel(nn.Module):
         self.layers = mlp([in_dim] + hidden + [out_dim], nn.ReLU)
 
     def forward(self, x):
+        #TODO: Transform angular input to [sin(x), cos(x)]
         return self.layers(x)
