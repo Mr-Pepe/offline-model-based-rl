@@ -16,6 +16,11 @@ class ReplayBuffer:
         self.done_buf = np.zeros(size, dtype=np.float32)
         self.ptr, self.size, self.max_size = 0, 0, size
 
+        self.split_at_size = -1
+        self.split_with_val_split = -1
+        self.train_idxs = []
+        self.val_idxs = []
+
     def store(self, obs, act, rew, next_obs, done):
         self.obs_buf[self.ptr] = obs
         self.obs2_buf[self.ptr] = next_obs
@@ -35,7 +40,10 @@ class ReplayBuffer:
         return {k: torch.as_tensor(v, dtype=torch.float32) for k,v in batch.items()}
 
     def sample_train_batch(self, batch_size=32, val_split=0.2):
-        idxs = np.random.randint(0, (1-val_split)*self.size, size=batch_size)
+        if self.split_at_size != self.size or self.split_with_val_split != val_split:
+            self.split(val_split)
+
+        idxs = np.random.choice(self.train_idxs, batch_size)
         batch = dict(obs=self.obs_buf[idxs],
                      obs2=self.obs2_buf[idxs],
                      act=self.act_buf[idxs],
@@ -44,10 +52,20 @@ class ReplayBuffer:
         return {k: torch.as_tensor(v, dtype=torch.float32) for k,v in batch.items()}
 
     def sample_val_batch(self, batch_size=32, val_split=0.2):
-        idxs = np.random.randint((1-val_split)*self.size, self.size, size=batch_size)
+        if self.split_at_size != self.size or self.split_with_val_split != val_split:
+            self.split(val_split)
+
+        idxs = np.random.choice(self.val_idxs, batch_size)
         batch = dict(obs=self.obs_buf[idxs],
                      obs2=self.obs2_buf[idxs],
                      act=self.act_buf[idxs],
                      rew=self.rew_buf[idxs],
                      done=self.done_buf[idxs])
         return {k: torch.as_tensor(v, dtype=torch.float32) for k,v in batch.items()}
+
+    def split(self, val_split=0.2):
+        self.split_at_size = self.size
+        self.split_with_val_split = val_split
+
+        self.val_idxs = np.random.choice(np.arange(self.size), int(self.size*val_split), replace=False)
+        self.train_idxs = np.setdiff1d(np.arange(self.size), self.val_idxs)
