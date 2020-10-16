@@ -9,7 +9,7 @@ env = 'HalfCheetah-v2'
 
 
 def test_total_steps_must_be_enough_to_perform_at_least_one_update():
-    update_after = 150
+    init_steps = 150
     n_steps_per_epoch = 100
     n_epochs = 1
 
@@ -17,7 +17,7 @@ def test_total_steps_must_be_enough_to_perform_at_least_one_update():
         train(lambda: gym.make(env),
               epochs=n_epochs,
               steps_per_epoch=n_steps_per_epoch,
-              update_after=update_after)
+              init_steps=init_steps)
         assert True == True
 
 

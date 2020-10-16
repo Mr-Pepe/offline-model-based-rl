@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from benchmark.utils.virtual_rollouts import generate_virtual_rollout
 from benchmark.actors.sac import SAC
 from benchmark.models.environment_model import EnvironmentModel
@@ -13,7 +14,7 @@ def test_generate_rollout_of_desired_length():
     observation_dim = observation_space.shape[0]
     action_dim = action_space.shape[0]
 
-    start_observation = env.reset()
+    start_observation = torch.as_tensor(env.reset(), dtype=torch.float32).unsqueeze(0)
 
     model = EnvironmentModel(observation_dim, action_dim)
     agent = SAC(observation_space, action_space)
@@ -23,8 +24,8 @@ def test_generate_rollout_of_desired_length():
 
     assert len(virtual_rollout) == 10
 
-    np.testing.assert_array_equal(virtual_rollout[0][0].shape, (17,))
-    np.testing.assert_array_equal(virtual_rollout[0][1].shape, (6,))
-    assert type(virtual_rollout[0][2]) is np.float32
-    np.testing.assert_array_equal(virtual_rollout[0][3].shape, (17,))
-    assert virtual_rollout[0][4] == False
+    np.testing.assert_array_equal(virtual_rollout[0]['o'].shape, (1, 17))
+    np.testing.assert_array_equal(virtual_rollout[0]['act'].shape, (1, 6))
+    np.testing.assert_array_equal(virtual_rollout[0]['rew'].shape, (1))
+    np.testing.assert_array_equal(virtual_rollout[0]['o2'].shape, (1, 17))
+    assert virtual_rollout[0]['d'] == False

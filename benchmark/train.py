@@ -1,3 +1,4 @@
+from benchmark.utils.virtual_rollouts import generate_virtual_rollout
 from benchmark.utils.train_environment_model import train_environment_model
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.evaluate_policy import test_agent
@@ -16,33 +17,28 @@ from benchmark.utils.replay_buffer import ReplayBuffer
 
 def train(env_fn, sac_kwargs=dict(), seed=0,
           steps_per_epoch=4000, epochs=100, replay_size=int(1e6),
-          batch_size=100, start_steps=10000,
-          update_after=1000, update_every=50, num_test_episodes=10, max_ep_len=1000,
-          use_model=False,
+          batch_size=100, random_steps=10000,
+          init_steps=1000, num_test_episodes=10, max_ep_len=1000,
+          use_model=False, model_rollouts=10, agent_updates=1,
           logger_kwargs=dict(), save_freq=1, device='cpu'):
     """
 
     Args:
+        epochs (int): Number of epochs to run and train agent.
+
         steps_per_epoch (int): Number of steps of interaction (state-action pairs)
             for the agent and the environment in each epoch.
-
-        epochs (int): Number of epochs to run and train agent.
 
         replay_size (int): Maximum length of replay buffer.
 
         batch_size (int): Minibatch size for SGD.
 
-        start_steps (int): Number of steps for uniform-random action selection,
+        random_steps (int): Number of steps for uniform-random action selection,
             before running real policy. Helps exploration.
 
-        update_after (int): Number of env interactions to collect before
-            starting to do gradient descent updates. Ensures replay buffer
-            is full enough for useful updates.
-
-        update_every (int): Number of env interactions that should elapse
-            between gradient descent updates. Note: Regardless of how long
-            you wait between updates, the ratio of env steps to gradient steps
-            is locked to 1.
+        init_steps (int): Number of env interactions to collect before
+            starting to do gradient descent updates or training an environment
+            model. Ensures replay buffer is full enough for useful updates.
 
         num_test_episodes (int): Number of episodes to test the deterministic
             policy at the end of each epoch.
@@ -50,6 +46,12 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
         max_ep_len (int): Maximum length of trajectory / episode / rollout.
 
         use_model (bool): Whether to augment data with virtual rollouts.
+
+        model_rollouts (int): The number of model rollouts to perform per
+            environment step.
+
+        agent_updates (int): The number of agent updates to perform per
+            environment step.
 
         save_freq (int): How often (in terms of gap between epochs) to save
             the current policy and value function.
@@ -96,7 +98,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
 
     max_ep_len = min(max_ep_len, total_steps)
 
-    if total_steps < update_after + ((total_steps - update_after) % update_every):
+    if total_steps < init_steps:
         raise ValueError(
             'Number of total steps too low. Increase number of epochs or steps per epoch.')
 
@@ -105,16 +107,18 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
     for epoch in range(epochs):
 
         # Train environment model on real experience
-        if real_replay_buffer.size > 0:
+        if use_model and real_replay_buffer.size > 0:
             train_environment_model(env_model, real_replay_buffer)
 
         # Main loop: collect experience in env and update/log each epoch
         for step_epoch in range(steps_per_epoch):
 
+            print("Step: {}".format(step_epoch))
+
             # Until start_steps have elapsed, randomly sample actions
             # from a uniform distribution for better exploration. Afterwards,
             # use the learned policy.
-            if step_total > start_steps:
+            if step_total > random_steps:
                 a = agent.get_action(o)
             else:
                 a = env.action_space.sample()
@@ -138,13 +142,19 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
                 logger.store(EpRet=ep_ret, EpLen=ep_len)
                 o, ep_ret, ep_len = env.reset(), 0, 0
 
-            # Update handling
-            if step_total >= update_after and step_total % update_every == 0:
-                for j in range(update_every):
-                    batch = real_replay_buffer.sample_batch(batch_size)
-                    loss_q, q_info, loss_pi, pi_info = agent.update(data=batch)
-                    logger.store(LossQ=loss_q.item(), **q_info)
-                    logger.store(LossPi=loss_pi.item(), **pi_info)
+
+            if step_total >= init_steps:
+                if use_model:
+                    for model_rollout in range(model_rollouts):
+                        start_observation = real_replay_buffer.sample_batch(1)['obs']
+                        rollout = generate_virtual_rollout(env_model, agent, start_observation, 1)
+                        for step in rollout:
+                            virtual_replay_buffer.store(step['o'], step['act'], step['rew'], step['o2'], step['d'])
+
+                    update_agent(agent, agent_updates, virtual_replay_buffer, batch_size, logger)
+                else:
+                    # Update regular SAC
+                    update_agent(agent, agent_updates, real_replay_buffer, batch_size, logger)
 
             step_total += 1
 
@@ -172,3 +182,11 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
         logger.dump_tabular()
 
     return final_return
+
+
+def update_agent(agent, n_updates, buffer, batch_size, logger):
+    for j in range(n_updates):
+        batch = buffer.sample_batch(batch_size)
+        loss_q, q_info, loss_pi, pi_info = agent.update(data=batch)
+        logger.store(LossQ=loss_q.item(), **q_info)
+        logger.store(LossPi=loss_pi.item(), **pi_info)
