@@ -12,21 +12,24 @@ def test_is_nn_module():
     assert issubclass(EnvironmentModel, nn.Module)
 
 
-def test_takes_state_as_input_and_outputs_same_dimensions():
-    model = EnvironmentModel(5, 5)
+def test_takes_state_and_action_as_input_and_outputs_state_and_reward():
+    obs_dim = 5
+    act_dim = 6
 
-    tensor_size = (3, 5)
+    model = EnvironmentModel(obs_dim, act_dim)
+
+    tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
     output = model(input)
 
-    assert output.shape == input.shape
+    np.testing.assert_array_equal(output.shape, (3, obs_dim+1))
 
 
 def test_overfits_on_single_sample():
     model = EnvironmentModel(1, 1)
 
-    x = torch.as_tensor([3], dtype=torch.float32)
-    y = torch.as_tensor([5], dtype=torch.float32)
+    x = torch.as_tensor([3, 3], dtype=torch.float32)
+    y = torch.as_tensor([5, 4], dtype=torch.float32)
     lr = 1e-3
 
     optim = Adam(model.parameters(), lr=lr)
@@ -42,17 +45,15 @@ def test_overfits_on_single_sample():
         loss.backward()
         optim.step()
 
-    assert float(y - y_pred) < 1e-5
+    assert criterion(y, y_pred).item() < 1e-5
 
 
 def test_overfits_on_batch():
 
-    model = EnvironmentModel(10, 10)
+    model = EnvironmentModel(obs_dim=3, act_dim=4)
 
-    tensor_size = (10, 10)
-
-    x = torch.rand(tensor_size)
-    y = torch.rand(tensor_size)
+    x = torch.rand((10, 7))
+    y = torch.rand((10, 4))
     lr = 1e-3
 
     optim = Adam(model.parameters(), lr=lr)
@@ -68,7 +69,7 @@ def test_overfits_on_batch():
         loss.backward()
         optim.step()
 
-    assert float((y - y_pred).mean().sum()) < 1e-5
+    assert criterion(y, y_pred).item() < 1e-5
 
 
 def test_trains_on_offline_data():
@@ -79,10 +80,9 @@ def test_trains_on_offline_data():
     rewards = dataset['rewards'].reshape(-1, 1)
 
     model = EnvironmentModel(
-        observations.shape[1] + actions.shape[1],
-        observations.shape[1] + rewards.shape[1])
+        observations.shape[1], actions.shape[1])
 
-    lr = 1e-3
+    lr = 1e-2
     batch_size = 1024
 
     optim = Adam(model.parameters(), lr=lr)
@@ -92,14 +92,16 @@ def test_trains_on_offline_data():
 
     for i in range(2000):
         idxs = np.random.randint(0, observations.shape[0] - 1, size=batch_size)
-        x = torch.as_tensor(np.concatenate((observations[idxs], actions[idxs]), axis=1), dtype=torch.float32)
-        y = torch.as_tensor(np.concatenate((observations[idxs+1], rewards[idxs]), axis=1), dtype=torch.float32)
+        x = torch.as_tensor(np.concatenate(
+            (observations[idxs], actions[idxs]), axis=1), dtype=torch.float32)
+        y = torch.as_tensor(np.concatenate(
+            (observations[idxs+1], rewards[idxs]), axis=1), dtype=torch.float32)
         optim.zero_grad()
         y_pred = model(x)
         loss = criterion(y_pred, y)
         print("Loss: {}".format(loss))
-        losses.append(loss)
+        losses.append(loss.item())
         loss.backward()
         optim.step()
 
-    assert losses[-1].item() < 1
+    assert losses[-1] < 1

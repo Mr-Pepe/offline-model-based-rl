@@ -15,7 +15,7 @@ def test_generate_rollout_of_desired_length():
 
     start_observation = env.reset()
 
-    model = EnvironmentModel(observation_dim+action_dim, observation_dim + 1)
+    model = EnvironmentModel(observation_dim, action_dim)
     agent = SAC(observation_space, action_space)
 
     virtual_rollout = generate_virtual_rollout(

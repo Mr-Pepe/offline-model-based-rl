@@ -20,8 +20,8 @@ def generate_virtual_rollout(model, agent, start_observation, steps):
         action = agent.get_action(this_observation)
         pred = model.get_prediction(torch.as_tensor(
             np.concatenate((this_observation, action)), dtype=torch.float32))
-        next_observation = pred[:-1]
-        reward = pred[-1]
+        next_observation = pred[0, :-1]
+        reward = pred[0, -1]
 
         rollout.append([this_observation, action,
                         reward, next_observation, False])
