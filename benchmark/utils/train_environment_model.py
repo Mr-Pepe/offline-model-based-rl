@@ -27,7 +27,7 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024):
         optim.zero_grad()
         y_pred = model(x)
         loss = criterion(y_pred, y)
-        print("Loss: {}".format(loss))
+        # print("Loss: {}".format(loss))
         losses.append(loss.item())
         loss.backward()
         optim.step()

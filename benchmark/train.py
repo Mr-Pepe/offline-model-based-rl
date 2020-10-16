@@ -103,6 +103,8 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
 
     for epoch in range(epochs):
 
+        agent_update_performed = False
+
         # Train environment model on real experience
         if use_model and real_replay_buffer.size > 0 and step_total > init_steps:
             train_environment_model(env_model, real_replay_buffer)
@@ -110,7 +112,8 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
         # Main loop: collect experience in env and update/log each epoch
         for step_epoch in range(steps_per_epoch):
 
-            print("Epoch {}, step {}/{}".format(epoch, step_epoch+1, steps_per_epoch), end='\r')
+            print("Epoch {}, step {}/{}".format(epoch,
+                                                step_epoch+1, steps_per_epoch), end='\r')
 
             if step_total > random_steps:
                 a = agent.get_action(o)
@@ -136,6 +139,8 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
 
             # Update agent
             if step_total >= init_steps:
+                agent_update_performed = True
+
                 if use_model:
                     # TODO: Adapt to rollout length schedule
                     virtual_replay_buffer = ReplayBuffer(
@@ -168,7 +173,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
         final_return = test_agent(
             test_env, agent, max_ep_len, num_test_episodes, logger)
 
-        log_end_of_epoch(logger, epoch, step_total, start_time)
+        log_end_of_epoch(logger, epoch, step_total, start_time, agent_update_performed)
 
     return final_return
 
@@ -181,38 +186,32 @@ def update_agent(agent, n_updates, buffer, batch_size, logger):
         logger.store(LossPi=loss_pi.item(), **pi_info)
 
 
-def log_end_of_epoch(logger, epoch, step_total, start_time):
+def log_end_of_epoch(logger, epoch, step_total, start_time, agent_update_performed):
     logger.log_tabular('Epoch', epoch)
 
-    if 'EpRet' in logger.epoch_dict:
-        logger.log_tabular('EpRet', with_min_and_max=True)
+    logger.log_tabular('EpRet', with_min_and_max=True)
 
-    if 'TestEpRet' in logger.epoch_dict:
-        logger.log_tabular('TestEpRet', with_min_and_max=True)
+    logger.log_tabular('TestEpRet', with_min_and_max=True)
 
-    if 'EpLen' in logger.epoch_dict:
-        logger.log_tabular('EpLen', average_only=True)
+    logger.log_tabular('EpLen', average_only=True)
 
-    if 'TestEpLen' in logger.epoch_dict:
-        logger.log_tabular('TestEpLen', average_only=True)
+    logger.log_tabular('TestEpLen', average_only=True)
 
     logger.log_tabular('TotalEnvInteracts', step_total)
 
-    if 'Q1Vals' in logger.epoch_dict:
-        logger.log_tabular('Q1Vals', with_min_and_max=True)
+    # Use placeholder values if no agent update has been performed yet
+    if not agent_update_performed:
+        logger.store(Q1Vals=0,
+                     Q2Vals=0,
+                     LogPi=0,
+                     LossPi=0,
+                     LossQ=0)
 
-    if 'Q2Vals' in logger.epoch_dict:
-        logger.log_tabular('Q2Vals', with_min_and_max=True)
-
-    if 'LogPi' in logger.epoch_dict:
-        logger.log_tabular('LogPi', with_min_and_max=True)
-
-    if 'LossPi' in logger.epoch_dict:
-        logger.log_tabular('LossPi', average_only=True)
-
-    if 'LossQ' in logger.epoch_dict:
-        logger.log_tabular('LossQ', average_only=True)
+    logger.log_tabular('Q1Vals', with_min_and_max=True)
+    logger.log_tabular('Q2Vals', with_min_and_max=True)
+    logger.log_tabular('LogPi', with_min_and_max=True)
+    logger.log_tabular('LossPi', average_only=True)
+    logger.log_tabular('LossQ', average_only=True)
 
     logger.log_tabular('Time', time.time()-start_time)
-
     logger.dump_tabular()
