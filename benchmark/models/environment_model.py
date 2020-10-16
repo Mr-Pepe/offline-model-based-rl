@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch
 
 class EnvironmentModel(nn.Module):
+    """ Takes in a state and action and predicts next state and reward. """
+
     def __init__(self, obs_dim, act_dim, hidden=[128, 128]):
         super().__init__()
 

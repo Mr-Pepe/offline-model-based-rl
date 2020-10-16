@@ -1,3 +1,5 @@
+from benchmark.utils.train_environment_model import train_environment_model
+from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.evaluate_policy import test_agent
 import time
 from copy import deepcopy
@@ -16,6 +18,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
           steps_per_epoch=4000, epochs=100, replay_size=int(1e6),
           batch_size=100, start_steps=10000,
           update_after=1000, update_every=50, num_test_episodes=10, max_ep_len=1000,
+          use_model=False,
           logger_kwargs=dict(), save_freq=1, device='cpu'):
     """
 
@@ -46,6 +49,8 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
 
         max_ep_len (int): Maximum length of trajectory / episode / rollout.
 
+        use_model (bool): Whether to augment data with virtual rollouts.
+
         save_freq (int): How often (in terms of gap between epochs) to save
             the current policy and value function.
 
@@ -64,12 +69,18 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
     obs_dim = env.observation_space.shape
     act_dim = env.action_space.shape[0]
 
-    # Create actor-critic module and target networks
+    # Create SAC and environment model
     sac_kwargs.update({'device': device})
     agent = SAC(env.observation_space, env.action_space, **sac_kwargs)
+    env_model = EnvironmentModel(obs_dim[0], act_dim)
+    env_model.to(device)
 
-    # Experience buffer
-    replay_buffer = ReplayBuffer(
+    # TODO: Save environment model
+    logger.setup_pytorch_saver(agent)
+
+    real_replay_buffer = ReplayBuffer(
+        obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
+    virtual_replay_buffer = ReplayBuffer(
         obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
 
     var_counts = tuple(count_vars(module)
@@ -77,9 +88,6 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
     logger.log(
         '\nNumber of parameters: \t pi: %d, \t q1: %d, \t q2: %d\n' % var_counts)
 
-    # Set up model saving
-    # TODO: Save environment model
-    logger.setup_pytorch_saver(agent)
 
     # Prepare for interaction with environment
     total_steps = steps_per_epoch * epochs
@@ -95,6 +103,10 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
     step_total = 0
 
     for epoch in range(epochs):
+
+        # Train environment model on real experience
+        if real_replay_buffer.size > 0:
+            train_environment_model(env_model, real_replay_buffer)
 
         # Main loop: collect experience in env and update/log each epoch
         for step_epoch in range(steps_per_epoch):
@@ -118,7 +130,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
             d = False if ep_len == max_ep_len else d
 
             # Store experience to replay buffer
-            replay_buffer.store(o, a, r, o2, d)
+            real_replay_buffer.store(o, a, r, o2, d)
             o = o2
 
             # End of trajectory handling
@@ -129,7 +141,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
             # Update handling
             if step_total >= update_after and step_total % update_every == 0:
                 for j in range(update_every):
-                    batch = replay_buffer.sample_batch(batch_size)
+                    batch = real_replay_buffer.sample_batch(batch_size)
                     loss_q, q_info, loss_pi, pi_info = agent.update(data=batch)
                     logger.store(LossQ=loss_q.item(), **q_info)
                     logger.store(LossPi=loss_pi.item(), **pi_info)
