@@ -20,14 +20,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
     """
 
     Args:
-        env_fn : A function which creates a copy of the environment.
-            The environment must satisfy the OpenAI Gym API.
-
-        sac_kwargs (dict): Any kwargs appropriate for the SAC agent.
-
-        seed (int): Seed for random number generators.
-
-        steps_per_epoch (int): Number of steps of interaction (state-action pairs) 
+        steps_per_epoch (int): Number of steps of interaction (state-action pairs)
             for the agent and the environment in each epoch.
 
         epochs (int): Number of epochs to run and train agent.
@@ -44,16 +37,14 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
             is full enough for useful updates.
 
         update_every (int): Number of env interactions that should elapse
-            between gradient descent updates. Note: Regardless of how long 
-            you wait between updates, the ratio of env steps to gradient steps 
+            between gradient descent updates. Note: Regardless of how long
+            you wait between updates, the ratio of env steps to gradient steps
             is locked to 1.
 
         num_test_episodes (int): Number of episodes to test the deterministic
             policy at the end of each epoch.
 
         max_ep_len (int): Maximum length of trajectory / episode / rollout.
-
-        logger_kwargs (dict): Keyword args for EpochLogger.
 
         save_freq (int): How often (in terms of gap between epochs) to save
             the current policy and value function.
@@ -87,6 +78,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
         '\nNumber of parameters: \t pi: %d, \t q1: %d, \t q2: %d\n' % var_counts)
 
     # Set up model saving
+    # TODO: Save environment model
     logger.setup_pytorch_saver(agent)
 
     # Prepare for interaction with environment
@@ -143,7 +135,6 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
                     logger.store(LossPi=loss_pi.item(), **pi_info)
 
             step_total += 1
-
 
         # Save model
         if (epoch % save_freq == 0) or (epoch == epochs):
