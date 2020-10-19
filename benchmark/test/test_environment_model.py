@@ -1,3 +1,4 @@
+import pytest
 from torch._C import dtype
 from benchmark.models.environment_model import EnvironmentModel
 import torch.nn as nn
@@ -105,3 +106,22 @@ def test_trains_on_offline_data():
         optim.step()
 
     assert losses[-1] < 1
+
+
+def test_probabilistic_model_returns_different_results_for_same_input():
+    obs_dim = 5
+    act_dim = 6
+
+    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
+
+    tensor_size = (3, obs_dim+act_dim)
+    input = torch.rand(tensor_size)
+    output1 = model(input).detach()
+    output2 = model(input).detach()
+
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal, output1, output2)
+
+def test_raises_error_if_type_unknown():
+    with pytest.raises(ValueError): 
+        model = EnvironmentModel(1, 2, type="asdasd")
