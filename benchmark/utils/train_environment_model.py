@@ -13,6 +13,9 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024, val_split=0.2
     n_train_batches = int((data_size * (1-val_split)) // batch_size)
     n_val_batches = int((data_size * val_split) // batch_size)
 
+    if n_train_batches == 0 or n_val_batches == 0:
+        raise ValueError("Dataset not big enough to generate a train/val split with the given batch size.")
+
     optim = Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
