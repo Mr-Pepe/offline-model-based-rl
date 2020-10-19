@@ -1,10 +1,8 @@
 import pytest
-from torch._C import dtype
 from benchmark.models.environment_model import EnvironmentModel
 import torch.nn as nn
 import torch
 from torch.optim.adam import Adam
-import d4rl
 import gym
 import numpy as np
 
@@ -122,6 +120,7 @@ def test_probabilistic_model_returns_different_results_for_same_input():
     np.testing.assert_raises(
         AssertionError, np.testing.assert_array_equal, output1, output2)
 
+
 def test_raises_error_if_type_unknown():
-    with pytest.raises(ValueError): 
-        model = EnvironmentModel(1, 2, type="asdasd")
+    with pytest.raises(ValueError):
+        EnvironmentModel(1, 2, type="asdasd")

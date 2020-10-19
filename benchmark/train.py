@@ -3,11 +3,9 @@ from benchmark.utils.train_environment_model import train_environment_model
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.evaluate_policy import test_agent
 import time
-from copy import deepcopy
 
 import numpy as np
 import torch
-from torch.optim import Adam
 
 from benchmark.actors.sac import SAC
 from benchmark.utils.count_vars import count_vars
@@ -28,8 +26,8 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
     Args:
         epochs (int): Number of epochs to run and train agent.
 
-        steps_per_epoch (int): Number of steps of interaction (state-action pairs)
-            for the agent and the environment in each epoch.
+        steps_per_epoch (int): Number of steps of interaction (state-action
+            pairs) for the agent and the environment in each epoch.
 
         replay_size (int): Maximum length of replay buffer.
 
@@ -52,7 +50,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
         model_rollouts (int): The number of model rollouts to perform per
             environment step.
 
-        train_model_every (int): After how many steps the model should be 
+        train_model_every (int): After how many steps the model should be
             retrained.
 
         model_batch_size (int): Batch size for training the environment model.
@@ -98,7 +96,8 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
     var_counts = tuple(count_vars(module)
                        for module in [agent.pi, agent.q1, agent.q2])
     logger.log(
-        '\nNumber of parameters: \t pi: %d, \t q1: %d, \t q2: %d\n' % var_counts)
+        '\nNumber of parameters: \t pi: {}, \t q1: {}, \t q2: {}\n'
+        .format(*var_counts))
 
     # Prepare for interaction with environment
     total_steps = steps_per_epoch * epochs
@@ -109,7 +108,8 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
 
     if total_steps < init_steps:
         raise ValueError(
-            'Number of total steps too low. Increase number of epochs or steps per epoch.')
+            """Number of total steps too low. Increase number of epochs or
+            steps per epoch.""")
 
     step_total = 0
 
@@ -127,14 +127,16 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
                     step_total > init_steps and \
                     step_total % train_model_every == 0:
                 model_val_error = train_environment_model(
-                    env_model, real_replay_buffer, model_lr, model_batch_size, model_val_split)
+                    env_model, real_replay_buffer, model_lr, model_batch_size,
+                    model_val_split)
                 model_trained = True
                 logger.store(LossEnvModel=model_val_error)
                 print('')
                 print('Environment model error: {}'.format(model_val_error))
 
             print("Epoch {}, step {}/{}".format(epoch,
-                                                step_epoch+1, steps_per_epoch), end='\r')
+                                                step_epoch+1,
+                                                steps_per_epoch), end='\r')
 
             if step_total > random_steps:
                 a = agent.get_action(o)
@@ -173,7 +175,8 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
                             env_model, agent, start_observation, 1)
                         for step in rollout:
                             virtual_replay_buffer.store(
-                                step['o'], step['act'], step['rew'], step['o2'], step['d'])
+                                step['o'], step['act'], step['rew'],
+                                step['o2'], step['d'])
 
                     update_agent(agent, agent_updates,
                                  virtual_replay_buffer, batch_size, logger)
@@ -208,7 +211,9 @@ def update_agent(agent, n_updates, buffer, batch_size, logger):
         logger.store(LossPi=loss_pi.item(), **pi_info)
 
 
-def log_end_of_epoch(logger, epoch, step_total, start_time, agent_update_performed, model_trained):
+def log_end_of_epoch(logger, epoch, step_total, start_time,
+                     agent_update_performed, model_trained):
+
     logger.log_tabular('Epoch', epoch)
 
     logger.log_tabular('EpRet', with_min_and_max=True)

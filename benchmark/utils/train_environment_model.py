@@ -1,10 +1,10 @@
-import numpy as np
 from torch import nn
 import torch
 from torch.optim.adam import Adam
 
 
-def train_environment_model(model, data, lr=1e-2, batch_size=1024, val_split=0.2, patience=20, debug=False):
+def train_environment_model(model, data, lr=1e-2, batch_size=1024,
+                            val_split=0.2, patience=20, debug=False):
     """ Train an environment model on a replay buffer until convergence """
 
     device = next(model.parameters()).device
@@ -14,7 +14,9 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024, val_split=0.2
     n_val_batches = int((data_size * val_split) // batch_size)
 
     if n_train_batches == 0 or n_val_batches == 0:
-        raise ValueError("Dataset not big enough to generate a train/val split with the given batch size.")
+        raise ValueError(
+            """Dataset not big enough to generate a train/val split with the
+            given batch size.""")
 
     optim = Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
@@ -42,7 +44,7 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024, val_split=0.2
             avg_train_loss += loss.item()
             loss.backward()
             optim.step()
-        
+
         if debug:
             print("Train loss: {}".format(avg_train_loss/n_train_batches))
 
@@ -67,6 +69,7 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024, val_split=0.2
             n_bad_val_losses += 1
 
         if debug:
-            print("Patience: {} Val loss: {}".format(n_bad_val_losses, avg_val_loss))
+            print("Patience: {} Val loss: {}".format(
+                n_bad_val_losses, avg_val_loss))
 
     return avg_val_loss

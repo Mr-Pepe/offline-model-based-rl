@@ -6,7 +6,11 @@ import torch
 class EnvironmentModel(nn.Module):
     """ Takes in a state and action and predicts next state and reward. """
 
-    def __init__(self, obs_dim, act_dim, hidden=[128, 128], type='deterministic'):
+    def __init__(self,
+                 obs_dim,
+                 act_dim,
+                 hidden=[128, 128],
+                 type='deterministic'):
         """
             type (string): deterministic or probabilistic
         """
@@ -21,7 +25,8 @@ class EnvironmentModel(nn.Module):
             self.layers = mlp([obs_dim + act_dim] +
                               hidden + [obs_dim+1], nn.ReLU)
         elif type == 'probabilistic':
-            # Probabilistic network outputs are first all means and then all log-variances
+            # Probabilistic network outputs are first all means and
+            # then all log-variances
             self.layers = mlp([obs_dim + act_dim] +
                               hidden + [self.out_dim*2], nn.ReLU)
         else:
@@ -42,7 +47,7 @@ class EnvironmentModel(nn.Module):
         if self.type == 'deterministic':
             out = self.layers(x)
 
-        elif self.type == 'probabilistic':
+        else:
             mean, logvar = self.predict_mean_and_logvar(x)
 
             # Taken from https://github.com/1Konny/Beta-VAE/blob/master/model.py
@@ -53,7 +58,9 @@ class EnvironmentModel(nn.Module):
 
         # TODO: Transform angular input to [sin(x), cos(x)]
         # Only learn a residual of the state
-        return out + torch.cat((x[:, :self.obs_dim], torch.zeros((x.shape[0], 1), device=device)), dim=1)
+        return out + torch.cat((x[:, :self.obs_dim],
+                                torch.zeros((x.shape[0], 1), device=device)),
+                               dim=1)
 
     def get_prediction(self, x):
         return self.forward(x).cpu().detach().numpy()
