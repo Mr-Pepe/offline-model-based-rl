@@ -23,7 +23,7 @@ def test_train_environment_model():
     model = EnvironmentModel(observations.shape[1], actions.shape[1])
 
 
-    loss = train_environment_model(model, buffer, val_split=0.2, patience=10)
+    loss = train_environment_model(model, buffer, val_split=0.2, patience=10, debug=True)
 
     assert loss < 0.3
 
@@ -46,4 +46,4 @@ def test_raise_error_if_data_not_enough_for_split_at_given_batch_size():
     with pytest.raises(ValueError):
         model = EnvironmentModel(observations.shape[1], actions.shape[1])
 
-        train_environment_model(model, buffer, val_split=0.2, patience=10)
+        train_environment_model(model, buffer, val_split=0.2, patience=10, debug=True)

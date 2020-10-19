@@ -19,7 +19,9 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
           steps_per_epoch=4000, epochs=100, replay_size=int(1e6),
           batch_size=100, random_steps=10000,
           init_steps=1000, num_test_episodes=10, max_ep_len=1000,
-          use_model=False, model_rollouts=10, agent_updates=1,
+          use_model=False, model_rollouts=10, train_model_every=250,
+          model_batch_size=128, model_lr=1e-3, model_val_split=0.2,
+          agent_updates=1,
           logger_kwargs=dict(), save_freq=1, device='cpu'):
     """
 
@@ -49,6 +51,16 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
 
         model_rollouts (int): The number of model rollouts to perform per
             environment step.
+
+        train_model_every (int): After how many steps the model should be 
+            retrained.
+
+        model_batch_size (int): Batch size for training the environment model.
+
+        model_lr (float): Learning rate for training the environment model.
+
+        model_val_split (float): Fraction of data to use as validation set for
+            training of environment model.
 
         agent_updates (int): The number of agent updates to perform per
             environment step.
@@ -104,13 +116,22 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
     for epoch in range(epochs):
 
         agent_update_performed = False
-
-        # Train environment model on real experience
-        if use_model and real_replay_buffer.size > 0 and step_total > init_steps:
-            train_environment_model(env_model, real_replay_buffer)
+        model_trained = False
 
         # Main loop: collect experience in env and update/log each epoch
         for step_epoch in range(steps_per_epoch):
+
+            # Train environment model on real experience
+            if use_model and \
+                    real_replay_buffer.size > 0 and \
+                    step_total > init_steps and \
+                    step_total % train_model_every == 0:
+                model_val_error = train_environment_model(
+                    env_model, real_replay_buffer, model_lr, model_batch_size, model_val_split)
+                model_trained = True
+                logger.store(LossEnvModel=model_val_error)
+                print('')
+                print('Environment model error: {}'.format(model_val_error))
 
             print("Epoch {}, step {}/{}".format(epoch,
                                                 step_epoch+1, steps_per_epoch), end='\r')
@@ -173,7 +194,8 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
         final_return = test_agent(
             test_env, agent, max_ep_len, num_test_episodes, logger)
 
-        log_end_of_epoch(logger, epoch, step_total, start_time, agent_update_performed)
+        log_end_of_epoch(logger, epoch, step_total, start_time,
+                         agent_update_performed, model_trained)
 
     return final_return
 
@@ -186,7 +208,7 @@ def update_agent(agent, n_updates, buffer, batch_size, logger):
         logger.store(LossPi=loss_pi.item(), **pi_info)
 
 
-def log_end_of_epoch(logger, epoch, step_total, start_time, agent_update_performed):
+def log_end_of_epoch(logger, epoch, step_total, start_time, agent_update_performed, model_trained):
     logger.log_tabular('Epoch', epoch)
 
     logger.log_tabular('EpRet', with_min_and_max=True)
@@ -198,6 +220,12 @@ def log_end_of_epoch(logger, epoch, step_total, start_time, agent_update_perform
     logger.log_tabular('TestEpLen', average_only=True)
 
     logger.log_tabular('TotalEnvInteracts', step_total)
+
+    # Use placeholder value if no model update has been performed yet
+    if not model_trained:
+        logger.store(LossEnvModel=0)
+
+    logger.log_tabular('LossEnvModel', with_min_and_max=True)
 
     # Use placeholder values if no agent update has been performed yet
     if not agent_update_performed:

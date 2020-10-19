@@ -4,7 +4,7 @@ import torch
 from torch.optim.adam import Adam
 
 
-def train_environment_model(model, data, lr=1e-2, batch_size=1024, val_split=0.2, patience=20):
+def train_environment_model(model, data, lr=1e-2, batch_size=1024, val_split=0.2, patience=20, debug=False):
     """ Train an environment model on a replay buffer until convergence """
 
     device = next(model.parameters()).device
@@ -42,8 +42,9 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024, val_split=0.2
             avg_train_loss += loss.item()
             loss.backward()
             optim.step()
-
-        print("Train loss: {}".format(avg_train_loss/n_train_batches))
+        
+        if debug:
+            print("Train loss: {}".format(avg_train_loss/n_train_batches))
 
         avg_val_loss = 0
         for i in range(n_val_batches):
@@ -65,6 +66,7 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024, val_split=0.2
         else:
             n_bad_val_losses += 1
 
-        print("Patience: {} Val loss: {}".format(n_bad_val_losses, avg_val_loss))
+        if debug:
+            print("Patience: {} Val loss: {}".format(n_bad_val_losses, avg_val_loss))
 
     return avg_val_loss
