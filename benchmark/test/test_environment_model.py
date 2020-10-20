@@ -50,7 +50,6 @@ def test_overfits_on_single_sample():
 
 
 def test_overfits_on_batch():
-
     model = EnvironmentModel(obs_dim=3, act_dim=4)
 
     x = torch.rand((10, 7))
@@ -74,6 +73,8 @@ def test_overfits_on_batch():
 
 
 def test_trains_on_offline_data():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
     env = gym.make('halfcheetah-random-v0')
     dataset = env.get_dataset()
     observations = dataset['observations']
@@ -82,6 +83,8 @@ def test_trains_on_offline_data():
 
     model = EnvironmentModel(
         observations.shape[1], actions.shape[1])
+
+    model.to(device)
 
     lr = 1e-2
     batch_size = 1024
@@ -93,10 +96,17 @@ def test_trains_on_offline_data():
 
     for i in range(2000):
         idxs = np.random.randint(0, observations.shape[0] - 1, size=batch_size)
-        x = torch.as_tensor(np.concatenate(
-            (observations[idxs], actions[idxs]), axis=1), dtype=torch.float32)
-        y = torch.as_tensor(np.concatenate(
-            (observations[idxs+1], rewards[idxs]), axis=1), dtype=torch.float32)
+        x = torch.as_tensor(np.concatenate((observations[idxs],
+                                            actions[idxs]),
+                                           axis=1),
+                            dtype=torch.float32,
+                            device=device)
+        y = torch.as_tensor(np.concatenate((observations[idxs+1],
+                                            rewards[idxs]),
+                                           axis=1),
+                            dtype=torch.float32,
+                            device=device)
+
         optim.zero_grad()
         y_pred = model(x)
         loss = criterion(y_pred, y)

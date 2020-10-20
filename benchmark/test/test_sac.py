@@ -21,25 +21,9 @@ def test_total_steps_must_be_enough_to_perform_at_least_one_update():
         assert True == True
 
 
-def test_sac_converges_cpu():
-    device = 'cpu'
+def test_sac_converges():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     n_epochs = 5
-
-    final_return = train(lambda: gym.make(env),
-                         epochs=n_epochs,
-                         logger_kwargs=logger_kwargs,
-                         device=device)
-
-    assert final_return
-
-    assert final_return > 500
-
-
-def test_sac_converges_gpu():
-    device = 'cuda'
-    n_epochs = 5
-
-    assert torch.cuda.is_available()
 
     final_return = train(lambda: gym.make(env),
                          epochs=n_epochs,

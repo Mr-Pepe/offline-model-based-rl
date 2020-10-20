@@ -7,8 +7,9 @@ from benchmark.utils.run_utils import setup_logger_kwargs
 logger_kwargs = setup_logger_kwargs('test_mbpo')
 env = 'HalfCheetah-v2'
 
-def test_mbpo_with_single_deterministic_model_converges_cpu():
-    device = 'cpu'
+
+def test_mbpo_with_single_deterministic_model_converges():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     n_epochs = 5
 
     final_return = train(lambda: gym.make(env),

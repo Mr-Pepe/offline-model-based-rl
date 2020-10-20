@@ -53,6 +53,8 @@ def test_raise_error_if_data_not_enough_for_split_at_given_batch_size():
 
 
 def test_train_probabilistic_model():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
     env = gym.make('halfcheetah-random-v0')
     dataset = d4rl.qlearning_dataset(env)
     observations = dataset['observations']
@@ -70,8 +72,7 @@ def test_train_probabilistic_model():
     model = EnvironmentModel(
         observations.shape[1], actions.shape[1], type='probabilistic')
 
-    if torch.cuda.is_available():
-        model.to('cuda')
+    model.to(device)
 
     loss = train_environment_model(
         model, buffer, val_split=0.2, patience=20, debug=True)
