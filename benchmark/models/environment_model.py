@@ -2,7 +2,7 @@ from benchmark.models.mlp import mlp
 import torch.nn as nn
 import torch
 from torch.nn.functional import softplus
-from torch.autograd import Variable
+from torch.nn.parameter import Parameter
 
 
 class EnvironmentModel(nn.Module):
@@ -36,10 +36,10 @@ class EnvironmentModel(nn.Module):
 
         # Taken from https://github.com/kchua/handful-of-trials/blob/master/
         # dmbrl/modeling/models/BNN.py
-        self.max_logvar = Variable(
-            torch.ones((self.out_dim)), requires_grad=True)/2
-        self.min_logvar = Variable(torch.ones(
-            (self.out_dim)), requires_grad=True)*-10
+        self.max_logvar = Parameter(torch.ones((self.out_dim))/2,
+                                    requires_grad=True)
+        self.min_logvar = Parameter(torch.ones((self.out_dim))*-10,
+                                    requires_grad=True)
 
     def predict_mean_and_logvar(self, x):
         x = self.check_device_and_shape(x)

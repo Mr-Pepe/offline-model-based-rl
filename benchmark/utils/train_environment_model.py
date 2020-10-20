@@ -1,4 +1,5 @@
-from torch import nn
+from benchmark.utils.loss_functions import \
+    deterministic_loss, probabilistic_loss
 import torch
 from torch.optim.adam import Adam
 
@@ -19,7 +20,6 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024,
             given batch size.""")
 
     optim = Adam(model.parameters(), lr=lr)
-    criterion = nn.MSELoss()
 
     min_val_loss = 1e10
     n_bad_val_losses = 0
@@ -39,10 +39,13 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024,
             y = y.to(device)
 
             optim.zero_grad()
-            y_pred = model(x)
-            loss = criterion(y_pred, y)
+            if model.type == 'deterministic':
+                loss = deterministic_loss(x, y, model)
+            else:
+                loss = probabilistic_loss(x, y, model)
+
             avg_train_loss += loss.item()
-            loss.backward()
+            loss.backward(retain_graph=True)
             optim.step()
 
         if debug:
@@ -57,8 +60,13 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024,
             x = x.to(device)
             y = y.to(device)
 
-            y_pred = model(x)
-            avg_val_loss += criterion(y_pred, y).item()
+            if model.type == 'deterministic':
+                avg_val_loss += deterministic_loss(x, y, model).item()
+            else:
+                avg_val_loss += probabilistic_loss(x,
+                                                   y,
+                                                   model,
+                                                   only_mse=True).item()
 
         avg_val_loss /= n_val_batches
 
