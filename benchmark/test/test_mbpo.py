@@ -1,5 +1,4 @@
 import gym
-import pytest
 import torch
 from benchmark.train import train
 from benchmark.utils.run_utils import setup_logger_kwargs

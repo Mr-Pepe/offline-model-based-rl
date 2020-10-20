@@ -14,9 +14,10 @@ def test_generate_rollout_of_desired_length():
     observation_dim = observation_space.shape[0]
     action_dim = action_space.shape[0]
 
-    start_observation = torch.as_tensor(env.reset(), dtype=torch.float32).unsqueeze(0)
+    start_observation = torch.as_tensor(env.reset(),
+                                        dtype=torch.float32).unsqueeze(0)
 
-    model = EnvironmentModel(observation_dim, action_dim)
+    model = EnvironmentModel(observation_dim, action_dim, type='probabilistic')
     agent = SAC(observation_space, action_space)
 
     virtual_rollout = generate_virtual_rollout(
@@ -28,4 +29,4 @@ def test_generate_rollout_of_desired_length():
     np.testing.assert_array_equal(virtual_rollout[0]['act'].shape, (1, 6))
     np.testing.assert_array_equal(virtual_rollout[0]['rew'].shape, (1))
     np.testing.assert_array_equal(virtual_rollout[0]['o2'].shape, (1, 17))
-    assert virtual_rollout[0]['d'] == False
+    assert not virtual_rollout[0]['d']
