@@ -3,7 +3,7 @@ import torch
 
 def deterministic_loss(x, y, model):
     y_pred = model(x)
-    return torch.square(y_pred - y)
+    return torch.square(y_pred - y).mean()
 
 
 def probabilistic_loss(x, y, model, only_mse=False):
