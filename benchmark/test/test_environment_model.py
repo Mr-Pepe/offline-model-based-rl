@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt  # noqa
 import pytest
 from benchmark.models.environment_model import EnvironmentModel
 import torch.nn as nn
@@ -139,13 +140,18 @@ def test_raises_error_if_type_unknown():
 
 
 def test_train_probabilistic_model_on_toy_dataset():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
     x = torch.rand((1000,)) * PI - 2*PI
-    x = torch.cat((x, torch.rand((1000,)) * PI + PI))
+    x = torch.cat((x, torch.rand((1000,)) * PI + PI)).to(device)
     y = torch.sin(x) + torch.normal(0, 0.225 *
-                                    torch.abs(torch.sin(1.5*x + PI/8)))
+                                    torch.abs(torch.sin(1.5*x + PI/8)))\
+        .to(device)
 
     model = EnvironmentModel(
         1, 0, hidden=[200, 200, 200, 200], type='probabilistic')
+
+    model.to(device)
 
     lr = 1e-4
     optim = Adam(model.parameters(), lr=lr)
@@ -163,7 +169,8 @@ def test_train_probabilistic_model_on_toy_dataset():
         var_bound_loss = 0.01*max_logvar.sum() - 0.01*min_logvar.sum()
         loss = mse_loss + var_loss + var_bound_loss
 
-        print("Loss: {}".format(loss))
+        print("Loss: {:.3f}, MSE: {:.3f}, VAR: {:.3f}, VAR BOUND: {:.3f}"
+              .format(loss, mse_loss, var_loss, var_bound_loss))
         loss.backward(retain_graph=True)
         optim.step()
 
@@ -174,12 +181,14 @@ def test_train_probabilistic_model_on_toy_dataset():
 
     # mean, logvar, _, _ = model.predict_mean_and_logvar(
     #     torch.reshape(x_true, (-1, 1)))
-    # mean = mean[:, 0].detach()
-    # logvar = logvar[:, 0].detach()
+    # mean = mean[:, 0].detach().cpu()
+    # logvar = logvar[:, 0].detach().cpu()
 
     # std = torch.exp(0.5*logvar)
 
-    # import matplotlib.pyplot as plt
+    # x = x.cpu()
+    # y = y.cpu()
+
     # plt.fill_between(x_true, mean+std, mean-std, color='lightcoral')
     # plt.scatter(x[800:1200], y[800:1200], color='green', marker='x')
     # plt.plot(x_true, y_true, color='black')
