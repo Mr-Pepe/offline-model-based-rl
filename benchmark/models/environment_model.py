@@ -61,11 +61,8 @@ class EnvironmentModel(nn.Module):
         else:
             mean, logvar, _, _ = self.predict_mean_and_logvar(x)
 
-            # Taken from https://github.com/1Konny/Beta-VAE/blob/master/model.py
-            std = logvar.div(2).exp()
-            eps = std.data.new(std.size()).normal_()
-
-            out = mean + std*eps
+            std = torch.exp(0.5*logvar)
+            out = torch.normal(mean, std)
 
         # TODO: Transform angular input to [sin(x), cos(x)]
         # Only learn a residual of the state
