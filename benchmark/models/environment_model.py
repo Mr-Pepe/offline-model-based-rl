@@ -1,6 +1,8 @@
 from benchmark.models.mlp import mlp
 import torch.nn as nn
 import torch
+from torch.nn.functional import softplus
+from torch.autograd import Variable
 
 
 class EnvironmentModel(nn.Module):
@@ -32,13 +34,22 @@ class EnvironmentModel(nn.Module):
         else:
             raise ValueError("Unknown type {}".format(type))
 
+        # Taken from https://github.com/kchua/handful-of-trials/blob/master/
+        # dmbrl/modeling/models/BNN.py
+        self.max_logvar = Variable(
+            torch.ones((self.out_dim)), requires_grad=True)/2
+        self.min_logvar = Variable(torch.ones(
+            (self.out_dim)), requires_grad=True)*-10
+
     def predict_mean_and_logvar(self, x):
         x = self.check_device_and_shape(x)
 
         out = self.layers(x)
         mean, logvar = out[:, self.out_dim:], out[:, :self.out_dim]
+        logvar = self.max_logvar - softplus(self.max_logvar - logvar)
+        logvar = self.min_logvar + softplus(logvar - self.min_logvar)
 
-        return mean, logvar
+        return mean, logvar, self.max_logvar, self.min_logvar
 
     def forward(self, x):
         device = next(self.parameters()).device
@@ -48,7 +59,7 @@ class EnvironmentModel(nn.Module):
             out = self.layers(x)
 
         else:
-            mean, logvar = self.predict_mean_and_logvar(x)
+            mean, logvar, _, _ = self.predict_mean_and_logvar(x)
 
             # Taken from https://github.com/1Konny/Beta-VAE/blob/master/model.py
             std = logvar.div(2).exp()

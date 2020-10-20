@@ -1,6 +1,5 @@
 import d4rl
 import gym
-import torch
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.replay_buffer import ReplayBuffer
 from benchmark.utils.train_environment_model import train_environment_model
@@ -50,4 +49,3 @@ def test_raise_error_if_data_not_enough_for_split_at_given_batch_size():
 
         train_environment_model(
             model, buffer, val_split=0.2, patience=10, debug=True)
-
