@@ -17,7 +17,8 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
           steps_per_epoch=4000, epochs=100, replay_size=int(1e6),
           batch_size=100, random_steps=10000,
           init_steps=1000, num_test_episodes=10, max_ep_len=1000,
-          use_model=False, model_rollouts=10, train_model_every=250,
+          use_model=False, model_type='deterministic',
+          model_rollouts=10, train_model_every=250,
           model_batch_size=128, model_lr=1e-3, model_val_split=0.2,
           agent_updates=1,
           logger_kwargs=dict(), save_freq=1, device='cpu'):
@@ -46,6 +47,9 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
         max_ep_len (int): Maximum length of trajectory / episode / rollout.
 
         use_model (bool): Whether to augment data with virtual rollouts.
+
+        model_type (string): Environment model type:
+            deterministic or probabilistic
 
         model_rollouts (int): The number of model rollouts to perform per
             environment step.
@@ -84,7 +88,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
     # Create SAC and environment model
     sac_kwargs.update({'device': device})
     agent = SAC(env.observation_space, env.action_space, **sac_kwargs)
-    env_model = EnvironmentModel(obs_dim[0], act_dim)
+    env_model = EnvironmentModel(obs_dim[0], act_dim, type=model_type)
     env_model.to(device)
 
     # TODO: Save environment model
