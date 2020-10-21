@@ -22,26 +22,26 @@ def test_takes_state_and_action_as_input_and_outputs_state_and_reward():
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output, _, _ = model(input)
+    output, _, _, _, _ = model(input)
 
     np.testing.assert_array_equal(output.shape, (3, obs_dim+1))
 
 
-def test_overfits_on_single_sample():
+def test_single_deterministic_network_overfits_on_single_sample():
     model = EnvironmentModel(1, 1)
 
     x = torch.as_tensor([3, 3], dtype=torch.float32)
     y = torch.as_tensor([5, 4], dtype=torch.float32)
     lr = 1e-3
 
-    optim = Adam(model.parameters(), lr=lr)
+    optim = Adam(model.networks[0].parameters(), lr=lr)
     criterion = nn.MSELoss()
 
     y_pred = 0
 
     for i in range(1000):
         optim.zero_grad()
-        y_pred, _, _ = model(x)
+        y_pred, _, _, _, _ = model(x)
         loss = criterion(y_pred, y)
         print("Loss: {}".format(loss))
         loss.backward()
@@ -50,21 +50,21 @@ def test_overfits_on_single_sample():
     assert criterion(y, y_pred).item() < 1e-5
 
 
-def test_overfits_on_batch():
+def test_single_deterministic_network_overfits_on_batch():
     model = EnvironmentModel(obs_dim=3, act_dim=4)
 
     x = torch.rand((10, 7))
     y = torch.rand((10, 4))
     lr = 1e-3
 
-    optim = Adam(model.parameters(), lr=lr)
+    optim = Adam(model.networks[0].parameters(), lr=lr)
     criterion = nn.MSELoss()
 
     y_pred = 0
 
     for i in range(1000):
         optim.zero_grad()
-        y_pred, _, _ = model(x)
+        y_pred, _, _, _, _ = model(x)
         loss = criterion(y_pred, y)
         print("Loss: {}".format(loss))
         loss.backward()
@@ -90,7 +90,7 @@ def test_deterministic_model_trains_on_offline_data():
     lr = 1e-2
     batch_size = 1024
 
-    optim = Adam(model.parameters(), lr=lr)
+    optim = Adam(model.networks[0].parameters(), lr=lr)
     criterion = nn.MSELoss()
 
     losses = []
@@ -109,7 +109,7 @@ def test_deterministic_model_trains_on_offline_data():
                             device=device)
 
         optim.zero_grad()
-        y_pred, _, _ = model(x)
+        y_pred, _, _, _, _ = model(x)
         loss = criterion(y_pred, y)
         print("Loss: {}".format(loss))
         losses.append(loss.item())
@@ -127,8 +127,8 @@ def test_probabilistic_model_returns_different_results_for_same_input():
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output1, _, _ = model(input)
-    output2, _, _ = model(input)
+    output1, _, _, _, _ = model(input)
+    output2, _, _, _, _ = model(input)
 
     np.testing.assert_raises(
         AssertionError, np.testing.assert_array_equal,
@@ -156,19 +156,19 @@ def test_probabilistic_model_trains_on_toy_dataset(plot=False):
     model.to(device)
 
     lr = 1e-4
-    optim = Adam(model.parameters(), lr=lr)
+    optim = Adam(model.networks[0].parameters(), lr=lr)
 
     loss = torch.tensor(0)
 
-    for i in range(500):
+    for i in range(1000):
         optim.zero_grad()
-        _, mean, logvar = model(torch.reshape(x, (-1, 1)))
+        _, mean, logvar, max_logvar, min_logvar = model(
+            torch.reshape(x, (-1, 1)))
         inv_var = torch.exp(-logvar)
 
         mse_loss = (torch.square(mean[:, 0] - y) * inv_var[:, 0]).mean()
         var_loss = logvar.mean()
-        var_bound_loss = 0.01 * model.max_logvar.sum() \
-            - 0.01 * model.min_logvar.sum()
+        var_bound_loss = 0.01 * max_logvar.sum() - 0.01 * min_logvar.sum()
         loss = mse_loss + var_loss + var_bound_loss
 
         print("Loss: {:.3f}, MSE: {:.3f}, VAR: {:.3f}, VAR BOUND: {:.3f}"
@@ -181,7 +181,7 @@ def test_probabilistic_model_trains_on_toy_dataset(plot=False):
     x_true = torch.arange(-3*PI, 3*PI, 0.01)
     y_true = torch.sin(x_true)
 
-    _, mean, logvar = model(torch.reshape(x_true, (-1, 1)))
+    _, mean, logvar, _, _ = model(torch.reshape(x_true, (-1, 1)))
     mean = mean[:, 0].detach().cpu()
     logvar = logvar[:, 0].detach().cpu()
 
@@ -197,3 +197,95 @@ def test_probabilistic_model_trains_on_toy_dataset(plot=False):
         plt.plot(x_true, mean, color='red')
 
         plt.show()
+
+
+def test_deterministic_ensemble_gives_different_predictions_per_model():
+    obs_dim = 5
+    act_dim = 6
+
+    model = EnvironmentModel(obs_dim, act_dim, n_networks=3)
+
+    tensor_size = (3, obs_dim+act_dim)
+    input = torch.rand(tensor_size)
+    output1, _, _, _, _ = model(input, 0)
+    output2, _, _, _, _ = model(input, 1)
+    output3, _, _, _, _ = model(input, 2)
+
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal,
+        output1.detach(),
+        output2.detach())
+
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal,
+        output1.detach(),
+        output3.detach())
+
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal,
+        output2.detach(),
+        output3.detach())
+
+
+def test_deterministic_ensemble_overfits_on_batch():
+    n_networks = 5
+    model = EnvironmentModel(obs_dim=3, act_dim=4, n_networks=n_networks)
+
+    x = torch.rand((10, 7))
+    y = torch.rand((10, 4))
+    lr = 1e-3
+
+    optims = [Adam(model.networks[i_network].parameters(), lr=lr)
+              for i_network in range(n_networks)]
+    criterion = nn.MSELoss()
+
+    y_pred = [0 for i in range(n_networks)]
+    losses = [1e10 for i in range(n_networks)]
+
+    for step in range(500):
+        for i_network in range(n_networks):
+            optim = optims[i_network]
+            optim.zero_grad()
+            y_pred, _, _, _, _ = model(x, i_network=i_network)
+            loss = criterion(y_pred, y)
+            # print("Network {}, Loss: {:.3f}".format(i_network, loss))
+            loss.backward()
+            optim.step()
+
+            losses[i_network] = loss.item()
+
+        print(losses)
+
+    for i_network in range(n_networks):
+        assert losses[i_network] < 1e-5
+
+
+def test_model_returns_prediction_of_random_network_if_not_specified():
+    obs_dim = 5
+    act_dim = 6
+
+    model = EnvironmentModel(obs_dim, act_dim, n_networks=500)
+
+    tensor_size = (3, obs_dim+act_dim)
+    input = torch.rand(tensor_size)
+    output1 = model.get_prediction(input)
+    output2 = model.get_prediction(input)
+
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal,
+        output1,
+        output2)
+
+
+def test_model_returns_same_output_if_network_specified():
+    obs_dim = 5
+    act_dim = 6
+
+    model = EnvironmentModel(obs_dim, act_dim, n_networks=100)
+
+    tensor_size = (3, obs_dim+act_dim)
+    input = torch.rand(tensor_size)
+    output1 = model.get_prediction(input, i_network=30)
+    output2 = model.get_prediction(input, i_network=30)
+
+    np.testing.assert_array_equal(output1, output2)
