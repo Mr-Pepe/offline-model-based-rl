@@ -51,8 +51,17 @@ class EnvironmentModel(nn.Module):
         mean = 0
         logvar = 0
 
-        if self.type == 'probabilistic':
-            mean = out[:, self.out_dim:]
+        # The model only learns a residual, so the input has to be added
+        if self.type == 'deterministic':
+            out += out + torch.cat((x[:, :self.obs_dim],
+                                    torch.zeros((x.shape[0], 1),
+                                                device=device)),
+                                   dim=1)
+
+        elif self.type == 'probabilistic':
+            mean = out[:, self.out_dim:] + torch.cat((x[:, :self.obs_dim],
+                                                      torch.zeros((x.shape[0], 1), device=device)),
+                                                     dim=1)
 
             logvar = out[:, :self.out_dim]
             logvar = self.max_logvar - softplus(self.max_logvar - logvar)
@@ -61,9 +70,7 @@ class EnvironmentModel(nn.Module):
             std = torch.exp(0.5*logvar)
             out = torch.normal(mean, std)
 
-        return out + torch.cat((x[:, :self.obs_dim],
-                                torch.zeros((x.shape[0], 1), device=device)),
-                               dim=1), \
+        return out, \
             mean, \
             logvar
 
