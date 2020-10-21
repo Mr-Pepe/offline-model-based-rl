@@ -22,7 +22,7 @@ def test_takes_state_and_action_as_input_and_outputs_state_and_reward():
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output = model(input)
+    output, _, _ = model(input)
 
     np.testing.assert_array_equal(output.shape, (3, obs_dim+1))
 
@@ -41,7 +41,7 @@ def test_overfits_on_single_sample():
 
     for i in range(1000):
         optim.zero_grad()
-        y_pred = model(x)
+        y_pred, _, _ = model(x)
         loss = criterion(y_pred, y)
         print("Loss: {}".format(loss))
         loss.backward()
@@ -64,7 +64,7 @@ def test_overfits_on_batch():
 
     for i in range(1000):
         optim.zero_grad()
-        y_pred = model(x)
+        y_pred, _, _ = model(x)
         loss = criterion(y_pred, y)
         print("Loss: {}".format(loss))
         loss.backward()
@@ -73,7 +73,7 @@ def test_overfits_on_batch():
     assert criterion(y, y_pred).item() < 1e-5
 
 
-def test_trains_on_offline_data():
+def test_deterministic_model_trains_on_offline_data():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     env = gym.make('halfcheetah-random-v0')
@@ -109,7 +109,7 @@ def test_trains_on_offline_data():
                             device=device)
 
         optim.zero_grad()
-        y_pred = model(x)
+        y_pred, _, _ = model(x)
         loss = criterion(y_pred, y)
         print("Loss: {}".format(loss))
         losses.append(loss.item())
@@ -127,11 +127,13 @@ def test_probabilistic_model_returns_different_results_for_same_input():
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output1 = model(input).detach()
-    output2 = model(input).detach()
+    output1, _, _ = model(input)
+    output2, _, _ = model(input)
 
     np.testing.assert_raises(
-        AssertionError, np.testing.assert_array_equal, output1, output2)
+        AssertionError, np.testing.assert_array_equal,
+        output1.detach(),
+        output2.detach())
 
 
 def test_raises_error_if_type_unknown():
@@ -139,7 +141,7 @@ def test_raises_error_if_type_unknown():
         EnvironmentModel(1, 2, type="asdasd")
 
 
-def test_train_probabilistic_model_on_toy_dataset():
+def test_probabilistic_model_trains_on_toy_dataset():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     x = torch.rand((1000,)) * PI - 2*PI
@@ -160,13 +162,13 @@ def test_train_probabilistic_model_on_toy_dataset():
 
     for i in range(500):
         optim.zero_grad()
-        mean, logvar, max_logvar, min_logvar = model.predict_mean_and_logvar(
-            torch.reshape(x, (-1, 1)))
+        _, mean, logvar = model(torch.reshape(x, (-1, 1)))
         inv_var = torch.exp(-logvar)
 
         mse_loss = (torch.square(mean[:, 0] - y) * inv_var[:, 0]).mean()
         var_loss = logvar.mean()
-        var_bound_loss = 0.01*max_logvar.sum() - 0.01*min_logvar.sum()
+        var_bound_loss = 0.01 * model.max_logvar.sum() \
+            - 0.01 * model.min_logvar.sum()
         loss = mse_loss + var_loss + var_bound_loss
 
         print("Loss: {:.3f}, MSE: {:.3f}, VAR: {:.3f}, VAR BOUND: {:.3f}"

@@ -41,48 +41,35 @@ class EnvironmentModel(nn.Module):
         self.min_logvar = Parameter(torch.ones((self.out_dim))*-10,
                                     requires_grad=True)
 
-    def predict_mean_and_logvar(self, x):
-        device = next(self.parameters()).device
-        x = self.check_device_and_shape(x, device)
-
-        out = self.layers(x)
-        mean, logvar = out[:, self.out_dim:], out[:, :self.out_dim]
-        logvar = self.max_logvar - softplus(self.max_logvar - logvar)
-        logvar = self.min_logvar + softplus(logvar - self.min_logvar)
-
-        # Only learn a residual
-        return mean - torch.cat((x[:, :self.obs_dim],
-                                 torch.zeros((x.shape[0], 1),
-                                             device=device)),
-                                dim=1),\
-            logvar, \
-            self.max_logvar, \
-            self.min_logvar
-
     def forward(self, x):
         device = next(self.parameters()).device
         x = self.check_device_and_shape(x, device)
 
-        if self.type == 'deterministic':
-            # Model only returns the residual
-            out = self.layers(x)
-            out = out + torch.cat((x[:, :self.obs_dim],
-                                   torch.zeros((x.shape[0], 1), device=device)),
-                                  dim=1)
+        # TODO: Transform angular input to [sin(x), cos(x)]
 
-        else:
-            # Residual and current observation are already sumed up inside
-            # the function
-            mean, logvar, _, _ = self.predict_mean_and_logvar(x)
+        out = self.layers(x)
+        mean = 0
+        logvar = 0
+
+        if self.type == 'probabilistic':
+            mean = out[:, self.out_dim:]
+
+            logvar = out[:, :self.out_dim]
+            logvar = self.max_logvar - softplus(self.max_logvar - logvar)
+            logvar = self.min_logvar + softplus(logvar - self.min_logvar)
 
             std = torch.exp(0.5*logvar)
             out = torch.normal(mean, std)
 
-        # TODO: Transform angular input to [sin(x), cos(x)]
-        return out
+        return out + torch.cat((x[:, :self.obs_dim],
+                                torch.zeros((x.shape[0], 1), device=device)),
+                               dim=1), \
+            mean, \
+            logvar
 
     def get_prediction(self, x):
-        return self.forward(x).cpu().detach().numpy()
+        prediction, _, _ = self.forward(x)
+        return prediction.cpu().detach().numpy()
 
     def check_device_and_shape(self, x, device=None):
         if not device:
