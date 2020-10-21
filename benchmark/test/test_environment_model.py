@@ -1,5 +1,5 @@
-import matplotlib.pyplot as plt  # noqa
 import pytest
+import matplotlib.pyplot as plt
 from benchmark.models.environment_model import EnvironmentModel
 import torch.nn as nn
 import torch
@@ -141,7 +141,7 @@ def test_raises_error_if_type_unknown():
         EnvironmentModel(1, 2, type="asdasd")
 
 
-def test_probabilistic_model_trains_on_toy_dataset():
+def test_probabilistic_model_trains_on_toy_dataset(plot=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     x = torch.rand((1000,)) * PI - 2*PI
@@ -178,22 +178,22 @@ def test_probabilistic_model_trains_on_toy_dataset():
 
     assert loss.item() < -5
 
-    # x_true = torch.range(-3*PI, 3*PI, 0.01)
-    # y_true = torch.sin(x_true)
+    x_true = torch.arange(-3*PI, 3*PI, 0.01)
+    y_true = torch.sin(x_true)
 
-    # mean, logvar, _, _ = model.predict_mean_and_logvar(
-    #     torch.reshape(x_true, (-1, 1)))
-    # mean = mean[:, 0].detach().cpu()
-    # logvar = logvar[:, 0].detach().cpu()
+    _, mean, logvar = model(torch.reshape(x_true, (-1, 1)))
+    mean = mean[:, 0].detach().cpu()
+    logvar = logvar[:, 0].detach().cpu()
 
-    # std = torch.exp(0.5*logvar)
+    std = torch.exp(0.5*logvar)
 
-    # x = x.cpu()
-    # y = y.cpu()
+    x = x.cpu()
+    y = y.cpu()
 
-    # plt.fill_between(x_true, mean+std, mean-std, color='lightcoral')
-    # plt.scatter(x[800:1200], y[800:1200], color='green', marker='x')
-    # plt.plot(x_true, y_true, color='black')
-    # plt.plot(x_true, mean, color='red')
+    if plot:
+        plt.fill_between(x_true, mean+std, mean-std, color='lightcoral')
+        plt.scatter(x[800:1200], y[800:1200], color='green', marker='x')
+        plt.plot(x_true, y_true, color='black')
+        plt.plot(x_true, mean, color='red')
 
-    # plt.show()
+        plt.show()

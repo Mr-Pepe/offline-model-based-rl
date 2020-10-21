@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from torch._C import dtype
 
 
 def generate_virtual_rollout(model, agent, start_observation, steps):
@@ -19,7 +18,8 @@ def generate_virtual_rollout(model, agent, start_observation, steps):
     for step in range(steps):
         action = agent.get_action(this_observation)
         pred = model.get_prediction(torch.as_tensor(
-            np.concatenate((this_observation, action), axis=1), dtype=torch.float32))
+            np.concatenate((this_observation, action), axis=1),
+            dtype=torch.float32))
         next_observation = pred[:, :-1]
         reward = pred[:, -1]
 

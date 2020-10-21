@@ -59,9 +59,10 @@ class EnvironmentModel(nn.Module):
                                    dim=1)
 
         elif self.type == 'probabilistic':
-            mean = out[:, self.out_dim:] + torch.cat((x[:, :self.obs_dim],
-                                                      torch.zeros((x.shape[0], 1), device=device)),
-                                                     dim=1)
+            mean = out[:, self.out_dim:] + \
+                torch.cat((x[:, :self.obs_dim],
+                           torch.zeros((x.shape[0], 1), device=device)),
+                          dim=1)
 
             logvar = out[:, :self.out_dim]
             logvar = self.max_logvar - softplus(self.max_logvar - logvar)
