@@ -11,12 +11,11 @@ def probabilistic_loss(x, y, model, only_mse=False):
     inv_var = torch.exp(-logvar)
 
     if only_mse:
-        std = torch.exp(0.5*logvar)
-        y_pred = torch.normal(mean, std)
-        return torch.square(y - y_pred).mean()
+        return torch.square(mean - y).mean()
     else:
-        mse_loss = (torch.square(
-            mean - y) * inv_var).mean()
+        mse_loss = (torch.square(mean - y) * inv_var).mean()
         var_loss = logvar.mean()
         var_bound_loss = 0.01*max_logvar.sum() - 0.01*min_logvar.sum()
+        # print("{:.3f}, {:.3f}, {:.3f}".format(
+        #     mse_loss, var_loss, var_bound_loss))
         return mse_loss + var_loss + var_bound_loss
