@@ -17,7 +17,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
           steps_per_epoch=4000, epochs=100, replay_size=int(1e6),
           batch_size=100, random_steps=10000,
           init_steps=1000, num_test_episodes=10, max_ep_len=1000,
-          use_model=False, model_type='deterministic',
+          use_model=False, model_type='deterministic', n_networks=1,
           model_rollouts=10, train_model_every=250,
           model_batch_size=128, model_lr=1e-3, model_val_split=0.2,
           agent_updates=1,
@@ -50,6 +50,8 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
 
         model_type (string): Environment model type:
             deterministic or probabilistic
+
+        n_networks (int): The number of networks to use as an ensemble.
 
         model_rollouts (int): The number of model rollouts to perform per
             environment step.
@@ -88,7 +90,10 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
     # Create SAC and environment model
     sac_kwargs.update({'device': device})
     agent = SAC(env.observation_space, env.action_space, **sac_kwargs)
-    env_model = EnvironmentModel(obs_dim[0], act_dim, type=model_type)
+    env_model = EnvironmentModel(obs_dim[0],
+                                 act_dim,
+                                 type=model_type,
+                                 n_networks=n_networks)
     env_model.to(device)
 
     # TODO: Save environment model

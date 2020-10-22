@@ -1,4 +1,5 @@
 import argparse
+from benchmark.utils.str2bool import str2bool
 
 import gym
 import torch
@@ -18,6 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('--init_steps', type=int, default=5000)
     parser.add_argument('--use_model', type=str2bool, default=True)
     parser.add_argument('--model_type', type=str, default='probabilistic')
+    parser.add_argument('--n_networks', type=int, default=10)
     parser.add_argument('--model_rollouts', type=int, default=10)
     parser.add_argument('--train_model_every', type=int, default=100)
     parser.add_argument('--model_batch_size', type=int, default=256)
@@ -41,8 +43,8 @@ if __name__ == '__main__':
           sac_kwargs=dict(hidden_sizes=[args.hid]*args.l, gamma=args.gamma),
           seed=args.seed, epochs=args.epochs,
           logger_kwargs=logger_kwargs, device=device,
-          init_steps=args.init_steps,
-          use_model=args.use_model, steps_per_epoch=args.steps_per_epoch,
+          init_steps=args.init_steps, use_model=args.use_model,
+          n_networks=args.n_networks, steps_per_epoch=args.steps_per_epoch,
           agent_updates=args.agent_updates, model_rollouts=args.model_rollouts,
           train_model_every=args.train_model_every, model_lr=args.model_lr,
           model_val_split=args.model_val_split,
