@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=400)
     parser.add_argument('--steps_per_epoch', type=int, default=1000)
     parser.add_argument('--init_steps', type=int, default=5000)
-    parser.add_argument('--use_model', type=bool, default=True)
+    parser.add_argument('--use_model', type=str2bool, default=True)
     parser.add_argument('--model_type', type=str, default='probabilistic')
     parser.add_argument('--model_rollouts', type=int, default=10)
     parser.add_argument('--train_model_every', type=int, default=100)
