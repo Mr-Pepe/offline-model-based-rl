@@ -28,6 +28,9 @@ class EnvironmentModel(nn.Module):
         self.type = type
         self.n_networks = n_networks
 
+        if type != 'deterministic' and type != 'probabilistic':
+            raise ValueError("Unknown type {}".format(type))
+
         self.networks = []
 
         for i_network in range(n_networks):
@@ -40,8 +43,6 @@ class EnvironmentModel(nn.Module):
                 self.networks.append(mlp([obs_dim + act_dim] +
                                          hidden + [self.out_dim*2],
                                          nn.ReLU))
-            else:
-                raise ValueError("Unknown type {}".format(type))
 
             # Taken from https://github.com/kchua/handful-of-trials/blob/master/
             # dmbrl/modeling/models/BNN.py
@@ -51,6 +52,8 @@ class EnvironmentModel(nn.Module):
             self.networks[i_network].min_logvar = Parameter(torch.ones(
                 (self.out_dim))*-10,
                 requires_grad=True)
+
+        self.networks = nn.ModuleList(self.networks)
 
     def forward(self, x, i_network=0):
         network = self.networks[i_network]
