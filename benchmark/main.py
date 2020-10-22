@@ -44,6 +44,7 @@ if __name__ == '__main__':
           seed=args.seed, epochs=args.epochs,
           logger_kwargs=logger_kwargs, device=device,
           init_steps=args.init_steps, use_model=args.use_model,
+          model_type=args.model_type,
           n_networks=args.n_networks, steps_per_epoch=args.steps_per_epoch,
           agent_updates=args.agent_updates, model_rollouts=args.model_rollouts,
           train_model_every=args.train_model_every, model_lr=args.model_lr,
