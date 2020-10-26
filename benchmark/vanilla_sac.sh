@@ -4,7 +4,7 @@ python main.py \
     --l 4 \
     --epochs 400 \
     --steps_per_epoch 1000 \
-    --init_steps 10000 \
+    --init_steps 1000 \
     --use_model False \
     --agent_updates 1 \
     --num_test_episodes 10 \
