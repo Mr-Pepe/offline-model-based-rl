@@ -13,13 +13,14 @@ from benchmark.utils.logx import EpochLogger
 from benchmark.utils.replay_buffer import ReplayBuffer
 
 
-def train(env_fn, sac_kwargs=dict(), seed=0,
+def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
           steps_per_epoch=4000, epochs=100, replay_size=int(1e6),
-          batch_size=100, random_steps=10000,
+          agent_batch_size=100, random_steps=10000,
           init_steps=1000, num_test_episodes=10, max_ep_len=1000,
-          use_model=False, model_type='deterministic', n_networks=1,
+          use_model=False,
           model_rollouts=10, train_model_every=250,
           model_batch_size=128, model_lr=1e-3, model_val_split=0.2,
+          model_patience=3,
           agent_updates=1,
           logger_kwargs=dict(), save_freq=1, device='cpu'):
     """
@@ -47,11 +48,6 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
         max_ep_len (int): Maximum length of trajectory / episode / rollout.
 
         use_model (bool): Whether to augment data with virtual rollouts.
-
-        model_type (string): Environment model type:
-            deterministic or probabilistic
-
-        n_networks (int): The number of networks to use as an ensemble.
 
         model_rollouts (int): The number of model rollouts to perform per
             environment step.
@@ -92,8 +88,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
     agent = SAC(env.observation_space, env.action_space, **sac_kwargs)
     env_model = EnvironmentModel(obs_dim[0],
                                  act_dim,
-                                 type=model_type,
-                                 n_networks=n_networks)
+                                 **model_kwargs)
     env_model.to(device)
 
     # TODO: Save environment model
@@ -137,7 +132,7 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
                     step_total % train_model_every == 0:
                 model_val_error = train_environment_model(
                     env_model, real_replay_buffer, model_lr, model_batch_size,
-                    model_val_split)
+                    model_val_split, patience=model_patience)
                 model_trained = True
                 logger.store(LossEnvModel=model_val_error)
                 print('')
@@ -188,11 +183,11 @@ def train(env_fn, sac_kwargs=dict(), seed=0,
                                 step['o2'], step['d'])
 
                     update_agent(agent, agent_updates,
-                                 virtual_replay_buffer, batch_size, logger)
+                                 virtual_replay_buffer, agent_batch_size, logger)
                 else:
                     # Update regular SAC
                     update_agent(agent, agent_updates,
-                                 real_replay_buffer, batch_size, logger)
+                                 real_replay_buffer, agent_batch_size, logger)
 
             step_total += 1
 
