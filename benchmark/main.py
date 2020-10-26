@@ -24,6 +24,8 @@ if __name__ == '__main__':
     parser.add_argument('--model_type', type=str, default='probabilistic')
     parser.add_argument('--n_networks', type=int, default=7)
     parser.add_argument('--model_rollouts', type=int, default=400)
+    parser.add_argument('--rollout_schedule', nargs='+',
+                        type=int, default=[1, 1, 20, 100])
     parser.add_argument('--train_model_every', type=int, default=250)
     parser.add_argument('--model_batch_size', type=int, default=1024)
     parser.add_argument('--model_lr', type=float, default=1e-3)
@@ -58,6 +60,7 @@ if __name__ == '__main__':
           use_model=args.use_model,
           steps_per_epoch=args.steps_per_epoch,
           agent_updates=args.agent_updates, model_rollouts=args.model_rollouts,
+          rollout_schedule=args.rollout_schedule,
           train_model_every=args.train_model_every, model_lr=args.model_lr,
           model_val_split=args.model_val_split,
           model_batch_size=args.model_batch_size,

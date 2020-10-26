@@ -1,3 +1,5 @@
+from benchmark.utils.rollout_length_from_schedule import \
+    get_rollout_length_from_schedule
 from benchmark.utils.virtual_rollouts import generate_virtual_rollout
 from benchmark.utils.train_environment_model import train_environment_model
 from benchmark.models.environment_model import EnvironmentModel
@@ -18,7 +20,8 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
           agent_batch_size=100, random_steps=10000,
           init_steps=1000, num_test_episodes=10, max_ep_len=1000,
           use_model=False,
-          model_rollouts=10, train_model_every=250,
+          model_rollouts=10, rollout_schedule=[1, 1, 20, 100],
+          train_model_every=250,
           model_batch_size=128, model_lr=1e-3, model_val_split=0.2,
           model_patience=3,
           agent_updates=1,
@@ -117,10 +120,15 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
 
     step_total = 0
 
-    for epoch in range(epochs):
+    for epoch in range(1, epochs + 1):
 
         agent_update_performed = False
         model_trained = False
+
+        rollout_length = get_rollout_length_from_schedule(
+            rollout_schedule, epoch)
+
+        print("Epoch {}\tRollout length: {}".format(epoch, rollout_length))
 
         # Main loop: collect experience in env and update/log each epoch
         for step_epoch in range(steps_per_epoch):
@@ -175,15 +183,17 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
                     for model_rollout in range(model_rollouts):
                         start_observation = real_replay_buffer.sample_batch(1)[
                             'obs']
+
                         rollout = generate_virtual_rollout(
-                            env_model, agent, start_observation, 1)
+                            env_model, agent, start_observation, rollout_length)
                         for step in rollout:
                             virtual_replay_buffer.store(
                                 step['o'], step['act'], step['rew'],
                                 step['o2'], step['d'])
 
                     update_agent(agent, agent_updates,
-                                 virtual_replay_buffer, agent_batch_size, logger)
+                                 virtual_replay_buffer, agent_batch_size,
+                                 logger)
                 else:
                     # Update regular SAC
                     update_agent(agent, agent_updates,
@@ -202,7 +212,7 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
             test_env, agent, max_ep_len, num_test_episodes, logger)
 
         log_end_of_epoch(logger, epoch, step_total, start_time,
-                         agent_update_performed, model_trained)
+                         agent_update_performed, model_trained, rollout_length)
 
     return final_return
 
@@ -216,9 +226,11 @@ def update_agent(agent, n_updates, buffer, batch_size, logger):
 
 
 def log_end_of_epoch(logger, epoch, step_total, start_time,
-                     agent_update_performed, model_trained):
+                     agent_update_performed, model_trained, rollout_length):
 
     logger.log_tabular('Epoch', epoch)
+
+    logger.log_tabular('RolloutLength', rollout_length)
 
     logger.log_tabular('EpRet', with_min_and_max=True)
 
