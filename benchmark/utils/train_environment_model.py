@@ -19,6 +19,8 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024,
 
     avg_val_losses = [1e10 for i in range(model.n_networks)]
 
+    print('')
+
     for i_network, network in enumerate(model.networks):
         print("Training network {}/{}".format(i_network+1, model.n_networks))
 
