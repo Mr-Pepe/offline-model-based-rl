@@ -8,7 +8,7 @@ python main.py \
     --seed 0 \
     --epochs 400 \
     --steps_per_epoch 1000 \
-    --init_steps 1000 \
+    --init_steps 1300 \
     --use_model True \
     --model_type probabilistic \
     --n_networks 7 \
