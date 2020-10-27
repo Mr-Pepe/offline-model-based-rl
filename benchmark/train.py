@@ -100,6 +100,9 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
     real_replay_buffer = ReplayBuffer(
         obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
 
+    virtual_replay_buffer = ReplayBuffer(
+        obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
+
     var_counts = tuple(count_vars(module)
                        for module in [agent.pi, agent.q1, agent.q2])
     logger.log(
@@ -177,9 +180,6 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
                 agent_update_performed = True
 
                 if use_model:
-                    # TODO: Adapt to rollout length schedule
-                    virtual_replay_buffer = ReplayBuffer(
-                        obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
                     for model_rollout in range(model_rollouts):
                         start_observation = real_replay_buffer.sample_batch(1)[
                             'obs']
