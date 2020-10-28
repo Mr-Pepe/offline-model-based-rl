@@ -19,5 +19,5 @@ python main.py \
     --model_val_split 0.2 \
     --agent_updates 40 \
     --num_test_episodes 10 \
-    --exp_name mbpo_deterministic_single \
+    --exp_name half_cheetah_mbpo_deterministic_single \
     --device cuda
