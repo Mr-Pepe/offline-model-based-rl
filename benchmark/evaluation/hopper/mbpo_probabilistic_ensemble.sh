@@ -22,7 +22,7 @@ python main.py \
     --model_lr 1e-3 \
     --model_val_split 0.2 \
     --model_patience 3 \
-    --agent_updates 40 \
+    --agent_updates 20 \
     --num_test_episodes 10 \
     --exp_name hopper_mbpo_probabilistic_ensemble \
     --device cuda

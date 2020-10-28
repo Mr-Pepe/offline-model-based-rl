@@ -100,6 +100,9 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
     real_replay_buffer = ReplayBuffer(
         obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
 
+    virtual_replay_buffer = ReplayBuffer(
+        obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
+
     var_counts = tuple(count_vars(module)
                        for module in [agent.pi, agent.q1, agent.q2])
     logger.log(
@@ -119,6 +122,7 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
             steps per epoch.""")
 
     step_total = 0
+    steps_since_model_training = 1e10
 
     for epoch in range(1, epochs + 1):
 
@@ -137,11 +141,12 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
             if use_model and \
                     real_replay_buffer.size > 0 and \
                     step_total > init_steps and \
-                    step_total % train_model_every == 0:
+                    steps_since_model_training >= train_model_every:
                 model_val_error = train_environment_model(
                     env_model, real_replay_buffer, model_lr, model_batch_size,
                     model_val_split, patience=model_patience)
                 model_trained = True
+                steps_since_model_training = 0
                 logger.store(LossEnvModel=model_val_error)
                 print('')
                 print('Environment model error: {}'.format(model_val_error))
@@ -177,9 +182,6 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
                 agent_update_performed = True
 
                 if use_model:
-                    # TODO: Adapt to rollout length schedule
-                    virtual_replay_buffer = ReplayBuffer(
-                        obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
                     for model_rollout in range(model_rollouts):
                         start_observation = real_replay_buffer.sample_batch(1)[
                             'obs']
@@ -198,6 +200,8 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
                     # Update regular SAC
                     update_agent(agent, agent_updates,
                                  real_replay_buffer, agent_batch_size, logger)
+
+            steps_since_model_training += 1
 
             step_total += 1
 
