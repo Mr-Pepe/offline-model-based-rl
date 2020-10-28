@@ -8,7 +8,7 @@ python main.py \
     --seed 0 \
     --epochs 125 \
     --steps_per_epoch 1000 \
-    --init_steps 10000 \
+    --init_steps 1000 \
     --random_steps 10000 \
     --agent_batch_size 256 \
     --agent_lr 3e-4 \
