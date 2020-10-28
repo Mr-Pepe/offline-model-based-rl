@@ -12,5 +12,5 @@ python main.py \
     --use_model False \
     --agent_updates 1 \
     --num_test_episodes 10 \
-    --exp_name vanilla_sac \
+    --exp_name half_cheetah_vanilla_sac \
     --device cuda

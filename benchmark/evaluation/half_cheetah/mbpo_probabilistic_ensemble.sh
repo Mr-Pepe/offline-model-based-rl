@@ -24,5 +24,5 @@ python main.py \
     --model_patience 20 \
     --agent_updates 40 \
     --num_test_episodes 10 \
-    --exp_name cheetah_mbpo_probabilistic_ensemble \
+    --exp_name half_cheetah_mbpo_probabilistic_ensemble \
     --device cuda
