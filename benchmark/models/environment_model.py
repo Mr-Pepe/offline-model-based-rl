@@ -23,7 +23,8 @@ class EnvironmentModel(nn.Module):
 
         self.obs_dim = obs_dim
         self.act_dim = act_dim
-        self.out_dim = obs_dim+1
+        # Append reward and done signal
+        self.out_dim = obs_dim+2
 
         self.type = type
         self.n_networks = n_networks
@@ -36,7 +37,7 @@ class EnvironmentModel(nn.Module):
         for i_network in range(n_networks):
             if type == 'deterministic':
                 self.networks.append(mlp([obs_dim + act_dim] +
-                                         hidden + [obs_dim+1], nn.ReLU))
+                                         hidden + [self.out_dim], nn.ReLU))
             elif type == 'probabilistic':
                 # Probabilistic network outputs are first all means and
                 # then all log-variances
@@ -69,23 +70,25 @@ class EnvironmentModel(nn.Module):
         max_logvar = 0
         min_logvar = 0
 
+        # Squash done signal
+        out[:, self.out_dim - 1] = torch.sigmoid(out[:, self.out_dim - 1])
+
         # The model only learns a residual, so the input has to be added
         if self.type == 'deterministic':
             out += torch.cat((x[:, :self.obs_dim],
-                                    torch.zeros((x.shape[0], 1),
-                                                device=device)),
-                                   dim=1)
+                              torch.zeros((x.shape[0], 2), device=device)),
+                             dim=1)
 
         elif self.type == 'probabilistic':
-            mean = out[:, self.out_dim:] + \
+            mean = out[:, :self.out_dim] + \
                 torch.cat((x[:, :self.obs_dim],
-                           torch.zeros((x.shape[0], 1), device=device)),
+                           torch.zeros((x.shape[0], 2), device=device)),
                           dim=1)
 
             max_logvar = network.max_logvar
             min_logvar = network.min_logvar
 
-            logvar = out[:, :self.out_dim]
+            logvar = out[:, self.out_dim:]
             logvar = max_logvar - softplus(max_logvar - logvar)
             logvar = min_logvar + softplus(logvar - min_logvar)
 
@@ -103,6 +106,8 @@ class EnvironmentModel(nn.Module):
                                   (1,)) if i_network == -1 else i_network
 
         prediction, _, _, _, _ = self.forward(x, i_network)
+
+        prediction[:, -1] = prediction[:, -1] > 0.5
 
         return prediction.cpu().detach().numpy()
 

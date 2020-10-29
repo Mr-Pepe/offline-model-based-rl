@@ -14,7 +14,7 @@ def test_is_nn_module():
     assert issubclass(EnvironmentModel, nn.Module)
 
 
-def test_takes_state_and_action_as_input_and_outputs_state_and_reward():
+def test_takes_state_and_action_as_input_and_outputs_state_reward_done():
     obs_dim = 5
     act_dim = 6
 
@@ -24,14 +24,15 @@ def test_takes_state_and_action_as_input_and_outputs_state_and_reward():
     input = torch.rand(tensor_size)
     output, _, _, _, _ = model(input)
 
-    np.testing.assert_array_equal(output.shape, (3, obs_dim+1))
+    np.testing.assert_array_equal(output.shape, (3, obs_dim+2))
 
 
 def test_single_deterministic_network_overfits_on_single_sample():
+    torch.manual_seed(0)
     model = EnvironmentModel(1, 1)
 
     x = torch.as_tensor([3, 3], dtype=torch.float32)
-    y = torch.as_tensor([5, 4], dtype=torch.float32)
+    y = torch.as_tensor([5, 4, 1], dtype=torch.float32)
     lr = 1e-3
 
     optim = Adam(model.networks[0].parameters(), lr=lr)
@@ -47,14 +48,14 @@ def test_single_deterministic_network_overfits_on_single_sample():
         loss.backward()
         optim.step()
 
-    assert criterion(y, y_pred).item() < 1e-5
+    assert criterion(y, y_pred).item() < 2e-5
 
 
 def test_single_deterministic_network_overfits_on_batch():
     model = EnvironmentModel(obs_dim=3, act_dim=4)
 
     x = torch.rand((10, 7))
-    y = torch.rand((10, 4))
+    y = torch.rand((10, 5))
     lr = 1e-3
 
     optim = Adam(model.networks[0].parameters(), lr=lr)
@@ -81,6 +82,7 @@ def test_deterministic_model_trains_on_offline_data():
     observations = dataset['observations']
     actions = dataset['actions']
     rewards = dataset['rewards'].reshape(-1, 1)
+    dones = dataset['terminals'].reshape(-1, 1)
 
     model = EnvironmentModel(
         observations.shape[1], actions.shape[1])
@@ -103,7 +105,8 @@ def test_deterministic_model_trains_on_offline_data():
                             dtype=torch.float32,
                             device=device)
         y = torch.as_tensor(np.concatenate((observations[idxs+1],
-                                            rewards[idxs]),
+                                            rewards[idxs],
+                                            dones[idxs]),
                                            axis=1),
                             dtype=torch.float32,
                             device=device)
@@ -229,10 +232,12 @@ def test_deterministic_ensemble_gives_different_predictions_per_model():
 
 def test_deterministic_ensemble_overfits_on_batch():
     n_networks = 5
+    torch.manual_seed(0)
+
     model = EnvironmentModel(obs_dim=3, act_dim=4, n_networks=n_networks)
 
     x = torch.rand((10, 7))
-    y = torch.rand((10, 4))
+    y = torch.rand((10, 5))
     lr = 1e-3
 
     optims = [Adam(model.networks[i_network].parameters(), lr=lr)
@@ -257,7 +262,7 @@ def test_deterministic_ensemble_overfits_on_batch():
         print(losses)
 
     for i_network in range(n_networks):
-        assert losses[i_network] < 1e-5
+        assert losses[i_network] < 2e-5
 
 
 def test_model_returns_prediction_of_random_network_if_not_specified():
@@ -289,3 +294,38 @@ def test_model_returns_same_output_if_network_specified():
     output2 = model.get_prediction(input, i_network=30)
 
     np.testing.assert_array_equal(output1, output2)
+
+
+def test_deterministic_model_returns_binary_done_signal():
+    obs_dim = 5
+    act_dim = 6
+    torch.manual_seed(0)
+
+    model = EnvironmentModel(obs_dim, act_dim, n_networks=500)
+
+    tensor_size = (100, obs_dim+act_dim)
+    input = torch.rand(tensor_size)
+    output = model.get_prediction(input)
+
+    assert output[:, -1].any()
+
+    for value in output[:, -1]:
+        assert (value == 0 or value == 1)
+
+
+def test_probabilistic_model_returns_binary_done_signal():
+    obs_dim = 5
+    act_dim = 6
+    torch.manual_seed(0)
+
+    model = EnvironmentModel(obs_dim, act_dim, n_networks=500,
+                             type='probabilistic')
+
+    tensor_size = (100, obs_dim+act_dim)
+    input = torch.rand(tensor_size)
+    output = model.get_prediction(input)
+
+    assert output[:, -1].any()
+
+    for value in output[:, -1]:
+        assert (value == 0 or value == 1)
