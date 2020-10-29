@@ -71,7 +71,7 @@ class EnvironmentModel(nn.Module):
 
         # The model only learns a residual, so the input has to be added
         if self.type == 'deterministic':
-            out += out + torch.cat((x[:, :self.obs_dim],
+            out += torch.cat((x[:, :self.obs_dim],
                                     torch.zeros((x.shape[0], 1),
                                                 device=device)),
                                    dim=1)
