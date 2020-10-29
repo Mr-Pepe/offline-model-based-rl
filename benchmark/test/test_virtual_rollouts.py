@@ -29,4 +29,4 @@ def test_generate_rollout_of_desired_length():
     np.testing.assert_array_equal(virtual_rollout[0]['act'].shape, (1, 6))
     np.testing.assert_array_equal(virtual_rollout[0]['rew'].shape, (1))
     np.testing.assert_array_equal(virtual_rollout[0]['o2'].shape, (1, 17))
-    assert not virtual_rollout[0]['d']
+    np.testing.assert_array_equal(virtual_rollout[0]['d'].shape, (1))

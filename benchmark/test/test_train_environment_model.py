@@ -8,6 +8,7 @@ import pytest
 
 def test_train_deterministic_environment_model():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    torch.manual_seed(0)
 
     env = gym.make('halfcheetah-random-v0')
     buffer, obs_dim, act_dim = load_dataset_from_env(env)
@@ -38,6 +39,7 @@ def test_raise_error_if_data_not_enough_for_split_at_given_batch_size():
 
 def test_train_probabilistic_model():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    torch.manual_seed(0)
 
     env = gym.make('halfcheetah-random-v0')
     buffer, obs_dim, act_dim = load_dataset_from_env(env)
