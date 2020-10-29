@@ -39,8 +39,9 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024,
             for i in range(n_train_batches):
                 batch = data.sample_train_batch(batch_size, val_split)
                 x = torch.cat((batch['obs'], batch['act']), dim=1)
-                y = torch.cat(
-                    (batch['obs2'], batch['rew'].unsqueeze(1)), dim=1)
+                y = torch.cat((batch['obs2'],
+                               batch['rew'].unsqueeze(1),
+                               batch['done'].unsqueeze(1)), dim=1)
 
                 x = x.to(device)
                 y = y.to(device)
@@ -65,8 +66,9 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024,
             for i in range(n_val_batches):
                 batch = data.sample_val_batch(batch_size, val_split)
                 x = torch.cat((batch['obs'], batch['act']), dim=1)
-                y = torch.cat(
-                    (batch['obs2'], batch['rew'].unsqueeze(1)), dim=1)
+                y = torch.cat((batch['obs2'],
+                               batch['rew'].unsqueeze(1),
+                               batch['done'].unsqueeze(1)), dim=1)
 
                 x = x.to(device)
                 y = y.to(device)
