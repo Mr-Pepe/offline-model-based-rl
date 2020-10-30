@@ -69,3 +69,6 @@ class ReplayBuffer:
 
         self.val_idxs = np.random.choice(np.arange(self.size), int(self.size*val_split), replace=False)
         self.train_idxs = np.setdiff1d(np.arange(self.size), self.val_idxs)
+
+    def get_terminal_ratio(self):
+        return self.done_buf.sum()/self.size

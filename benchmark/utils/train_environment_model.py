@@ -21,6 +21,8 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024,
 
     print('')
 
+    done_factor = 1/data.get_terminal_ratio()
+
     for i_network, network in enumerate(model.networks):
         print("Training network {}/{}".format(i_network+1, model.n_networks))
 
@@ -48,9 +50,12 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024,
 
                 optim.zero_grad()
                 if model.type == 'deterministic':
-                    loss = deterministic_loss(x, y, model, i_network)
+                    loss = deterministic_loss(
+                        x, y, model, i_network, done_factor)
                 else:
-                    loss = probabilistic_loss(x, y, model, i_network)
+                    loss = probabilistic_loss(
+                        x, y, model, i_network,
+                        terminal_loss_factor=done_factor)
 
                 avg_train_loss += loss.item()
                 loss.backward(retain_graph=True)
