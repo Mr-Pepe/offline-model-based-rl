@@ -60,6 +60,7 @@ def test_train_probabilistic_model():
 
 def test_train_deterministic_ensemble():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    torch.manual_seed(0)
 
     env = gym.make('halfcheetah-random-v0')
     buffer, obs_dim, act_dim = load_dataset_from_env(env)
@@ -81,6 +82,7 @@ def test_train_deterministic_ensemble():
 
 def test_train_probabilistic_ensemble():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    torch.manual_seed(0)
 
     env = gym.make('halfcheetah-random-v0')
     buffer, obs_dim, act_dim = load_dataset_from_env(env)
