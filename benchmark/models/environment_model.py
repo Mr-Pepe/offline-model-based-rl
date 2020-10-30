@@ -1,4 +1,4 @@
-from benchmark.models.mlp import mlp
+from benchmark.models.multi_head_mlp import MultiHeadMlp
 import torch.nn as nn
 import torch
 from torch.nn.functional import softplus
@@ -35,15 +35,10 @@ class EnvironmentModel(nn.Module):
         self.networks = []
 
         for i_network in range(n_networks):
-            if type == 'deterministic':
-                self.networks.append(mlp([obs_dim + act_dim] +
-                                         hidden + [self.out_dim], nn.ReLU))
-            elif type == 'probabilistic':
-                # Probabilistic network outputs are first all means and
-                # then all log-variances
-                self.networks.append(mlp([obs_dim + act_dim] +
-                                         hidden + [self.out_dim*2],
-                                         nn.ReLU))
+            self.networks.append(MultiHeadMlp(
+                [obs_dim + act_dim] + hidden,
+                self.obs_dim,
+                double_output=type == 'probabilistic'))
 
             # Taken from https://github.com/kchua/handful-of-trials/blob/master/
             # dmbrl/modeling/models/BNN.py
@@ -64,14 +59,20 @@ class EnvironmentModel(nn.Module):
 
         # TODO: Transform angular input to [sin(x), cos(x)]
 
-        out = network(x)
+        obs, reward, done = network(x)
+        if self.type == 'deterministic':
+            out = torch.cat((obs, reward, done), dim=1)
+        else:
+            out = torch.cat((obs[:, :self.obs_dim],
+                             reward[:, 0].unsqueeze(1),
+                             done[:, 0].unsqueeze(1),
+                             obs[:, self.obs_dim:],
+                             reward[:, 1].unsqueeze(1),
+                             done[:, 1].unsqueeze(1)), dim=1)
         mean = 0
         logvar = 0
         max_logvar = 0
         min_logvar = 0
-
-        # Squash done signal
-        out[:, self.out_dim - 1] = torch.sigmoid(out[:, self.out_dim - 1])
 
         # The model only learns a residual, so the input has to be added
         if self.type == 'deterministic':

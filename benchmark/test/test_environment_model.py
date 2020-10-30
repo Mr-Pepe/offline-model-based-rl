@@ -144,8 +144,10 @@ def test_raises_error_if_type_unknown():
         EnvironmentModel(1, 2, type="asdasd")
 
 
-def test_probabilistic_model_trains_on_toy_dataset(plot=False):
+def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    torch.manual_seed(0)
 
     x = torch.rand((1000,)) * PI - 2*PI
     x = torch.cat((x, torch.rand((1000,)) * PI + PI)).to(device)
@@ -154,7 +156,7 @@ def test_probabilistic_model_trains_on_toy_dataset(plot=False):
         .to(device)
 
     model = EnvironmentModel(
-        1, 0, hidden=[200, 200, 200, 200], type='probabilistic')
+        1, 0, hidden=[64, 64, 64], type='probabilistic')
 
     model.to(device)
 
@@ -163,15 +165,16 @@ def test_probabilistic_model_trains_on_toy_dataset(plot=False):
 
     loss = torch.tensor(0)
 
-    for i in range(1000):
+    for i in range(steps):
         optim.zero_grad()
         _, mean, logvar, max_logvar, min_logvar = model(
             torch.reshape(x, (-1, 1)))
         inv_var = torch.exp(-logvar)
 
         mse_loss = (torch.square(mean[:, 0] - y) * inv_var[:, 0]).mean()
-        var_loss = logvar.mean()
-        var_bound_loss = 0.01 * max_logvar.sum() - 0.01 * min_logvar.sum()
+        var_loss = logvar[:, 0].mean()
+        var_bound_loss = 0.01 * \
+            max_logvar[0].sum() - 0.01 * min_logvar[0].sum()
         loss = mse_loss + var_loss + var_bound_loss
 
         print("Loss: {:.3f}, MSE: {:.3f}, VAR: {:.3f}, VAR BOUND: {:.3f}"
@@ -179,21 +182,22 @@ def test_probabilistic_model_trains_on_toy_dataset(plot=False):
         loss.backward(retain_graph=True)
         optim.step()
 
-    assert loss.item() < -5
+    if not plot:
+        assert loss.item() < -2
 
-    x_true = torch.arange(-3*PI, 3*PI, 0.01)
-    y_true = torch.sin(x_true)
+    else:
+        x_true = torch.arange(-3*PI, 3*PI, 0.01)
+        y_true = torch.sin(x_true)
 
-    _, mean, logvar, _, _ = model(torch.reshape(x_true, (-1, 1)))
-    mean = mean[:, 0].detach().cpu()
-    logvar = logvar[:, 0].detach().cpu()
+        _, mean, logvar, _, _ = model(torch.reshape(x_true, (-1, 1)))
+        mean = mean[:, 0].detach().cpu()
+        logvar = logvar[:, 0].detach().cpu()
 
-    std = torch.exp(0.5*logvar)
+        std = torch.exp(0.5*logvar)
 
-    x = x.cpu()
-    y = y.cpu()
+        x = x.cpu()
+        y = y.cpu()
 
-    if plot:
         plt.fill_between(x_true, mean+std, mean-std, color='lightcoral')
         plt.scatter(x[800:1200], y[800:1200], color='green', marker='x')
         plt.plot(x_true, y_true, color='black')
@@ -268,6 +272,8 @@ def test_deterministic_ensemble_overfits_on_batch():
 def test_model_returns_prediction_of_random_network_if_not_specified():
     obs_dim = 5
     act_dim = 6
+
+    torch.manual_seed(0)
 
     model = EnvironmentModel(obs_dim, act_dim, n_networks=500)
 
