@@ -15,6 +15,14 @@ def hopper_termination_fn(next_obs):
     return done
 
 
+def half_cheetah_termination_fn(obs):
+
+    done = torch.as_tensor([False]).repeat(len(obs))
+    done = done[:, None]
+    return done
+
+
 termination_functions = {
     'hopper': hopper_termination_fn,
+    'half_cheetah': half_cheetah_termination_fn,
 }
