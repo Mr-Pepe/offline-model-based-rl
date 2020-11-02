@@ -5,7 +5,8 @@ from torch.optim.adam import Adam
 
 
 def train_environment_model(model, data, lr=1e-2, batch_size=1024,
-                            val_split=0.2, patience=20, debug=False):
+                            val_split=0.2, patience=20, debug=False,
+                            train_term=False):
     """ Train an environment model on a replay buffer until convergence """
 
     data_size = data.size
@@ -20,8 +21,6 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024,
     avg_val_losses = [1e10 for i in range(model.n_networks)]
 
     print('')
-
-    done_factor = 1/data.get_terminal_ratio()
 
     for i_network, network in enumerate(model.networks):
         print("Training network {}/{}".format(i_network+1, model.n_networks))
@@ -42,20 +41,16 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024,
                 batch = data.sample_train_batch(batch_size, val_split)
                 x = torch.cat((batch['obs'], batch['act']), dim=1)
                 y = torch.cat((batch['obs2'],
-                               batch['rew'].unsqueeze(1),
-                               batch['done'].unsqueeze(1)), dim=1)
+                               batch['rew'].unsqueeze(1)), dim=1)
 
                 x = x.to(device)
                 y = y.to(device)
 
                 optim.zero_grad()
                 if model.type == 'deterministic':
-                    loss = deterministic_loss(
-                        x, y, model, i_network, done_factor)
+                    loss = deterministic_loss(x, y, model, i_network)
                 else:
-                    loss = probabilistic_loss(
-                        x, y, model, i_network,
-                        terminal_loss_factor=done_factor)
+                    loss = probabilistic_loss(x, y, model, i_network)
 
                 avg_train_loss += loss.item()
                 loss.backward(retain_graph=True)
@@ -72,8 +67,7 @@ def train_environment_model(model, data, lr=1e-2, batch_size=1024,
                 batch = data.sample_val_batch(batch_size, val_split)
                 x = torch.cat((batch['obs'], batch['act']), dim=1)
                 y = torch.cat((batch['obs2'],
-                               batch['rew'].unsqueeze(1),
-                               batch['done'].unsqueeze(1)), dim=1)
+                               batch['rew'].unsqueeze(1)), dim=1)
 
                 x = x.to(device)
                 y = y.to(device)
