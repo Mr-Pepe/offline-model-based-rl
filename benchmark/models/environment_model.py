@@ -1,3 +1,4 @@
+from benchmark.models.mlp import mlp
 from benchmark.models.multi_head_mlp import MultiHeadMlp
 import torch.nn as nn
 import torch
@@ -23,8 +24,8 @@ class EnvironmentModel(nn.Module):
 
         self.obs_dim = obs_dim
         self.act_dim = act_dim
-        # Append reward and done signal
-        self.out_dim = obs_dim+2
+        # Append reward signal
+        self.out_dim = obs_dim+1
 
         self.type = type
         self.n_networks = n_networks
@@ -51,24 +52,28 @@ class EnvironmentModel(nn.Module):
 
         self.networks = nn.ModuleList(self.networks)
 
-    def forward(self, x, i_network=0):
+        self.done_network = mlp([self.obs_dim, 32, 32, 32, 1],
+                                nn.ReLU,
+                                nn.Sigmoid)
+
+    def forward(self, obs_act, i_network=0):
         network = self.networks[i_network]
 
         device = next(network.parameters()).device
-        x = self.check_device_and_shape(x, device)
+        obs_act = self.check_device_and_shape(obs_act, device)
 
         # TODO: Transform angular input to [sin(x), cos(x)]
 
-        obs, reward, done = network(x)
+        obs, reward = network(obs_act)
+
         if self.type == 'deterministic':
+            done = self.done_network(obs)
             out = torch.cat((obs, reward, done), dim=1)
         else:
             out = torch.cat((obs[:, :self.obs_dim],
                              reward[:, 0].unsqueeze(1),
-                             done[:, 0].unsqueeze(1),
                              obs[:, self.obs_dim:],
-                             reward[:, 1].unsqueeze(1),
-                             done[:, 1].unsqueeze(1)), dim=1)
+                             reward[:, 1].unsqueeze(1)), dim=1)
         mean = 0
         logvar = 0
         max_logvar = 0
@@ -76,14 +81,15 @@ class EnvironmentModel(nn.Module):
 
         # The model only learns a residual, so the input has to be added
         if self.type == 'deterministic':
-            out += torch.cat((x[:, :self.obs_dim],
-                              torch.zeros((x.shape[0], 2), device=device)),
+            out += torch.cat((obs_act[:, :self.obs_dim],
+                              torch.zeros((obs_act.shape[0], 2),
+                                          device=device)),
                              dim=1)
 
         elif self.type == 'probabilistic':
             mean = out[:, :self.out_dim] + \
-                torch.cat((x[:, :self.obs_dim],
-                           torch.zeros((x.shape[0], 2), device=device)),
+                torch.cat((obs_act[:, :self.obs_dim],
+                           torch.zeros((obs_act.shape[0], 1), device=device)),
                           dim=1)
 
             max_logvar = network.max_logvar
@@ -95,6 +101,9 @@ class EnvironmentModel(nn.Module):
 
             std = torch.exp(0.5*logvar)
             out = torch.normal(mean, std)
+
+            done = self.done_network(out[:, :self.obs_dim])
+            out = torch.cat((out, done), dim=1)
 
         return out, \
             mean, \

@@ -43,12 +43,12 @@ def test_single_deterministic_network_overfits_on_single_sample():
     for i in range(1000):
         optim.zero_grad()
         y_pred, _, _, _, _ = model(x)
-        loss = criterion(y_pred, y)
+        loss = criterion(y_pred[:, :-1], y[:-1])
         print("Loss: {}".format(loss))
         loss.backward()
         optim.step()
 
-    assert criterion(y, y_pred).item() < 2e-5
+    assert criterion(y[:-1], y_pred[:, :-1]).item() < 2e-5
 
 
 def test_single_deterministic_network_overfits_on_batch():
@@ -66,12 +66,12 @@ def test_single_deterministic_network_overfits_on_batch():
     for i in range(1000):
         optim.zero_grad()
         y_pred, _, _, _, _ = model(x)
-        loss = criterion(y_pred, y)
+        loss = criterion(y_pred[:, :-1], y[:, :-1])
         print("Loss: {}".format(loss))
         loss.backward()
         optim.step()
 
-    assert criterion(y, y_pred).item() < 1e-5
+    assert criterion(y[:, :-1], y_pred[:, :-1]).item() < 1e-5
 
 
 def test_deterministic_model_trains_on_offline_data():
@@ -92,8 +92,10 @@ def test_deterministic_model_trains_on_offline_data():
     lr = 1e-2
     batch_size = 1024
 
-    optim = Adam(model.networks[0].parameters(), lr=lr)
-    criterion = nn.MSELoss()
+    obs_rew_optim = Adam(model.networks[0].parameters(), lr=lr)
+    done_optim = Adam(model.done_network.parameters(), lr=lr)
+    obs_rew_criterion = nn.MSELoss()
+    done_criterion = nn.BCELoss()
 
     losses = []
 
@@ -111,13 +113,17 @@ def test_deterministic_model_trains_on_offline_data():
                             dtype=torch.float32,
                             device=device)
 
-        optim.zero_grad()
+        obs_rew_optim.zero_grad()
+        done_optim.zero_grad()
         y_pred, _, _, _, _ = model(x)
-        loss = criterion(y_pred, y)
-        print("Loss: {}".format(loss))
+        obs_rew_loss = obs_rew_criterion(y_pred[:, :-1], y[:, :-1])
+        done_loss = done_criterion(y_pred[:, -1], y[:, -1])
+        print("Obs/Reward loss: {}   Done loss: {}".format(obs_rew_loss, done_loss))
+        loss = obs_rew_loss + done_loss
         losses.append(loss.item())
         loss.backward()
-        optim.step()
+        obs_rew_optim.step()
+        done_optim.step()
 
     assert losses[-1] < 1
 
@@ -256,8 +262,7 @@ def test_deterministic_ensemble_overfits_on_batch():
             optim = optims[i_network]
             optim.zero_grad()
             y_pred, _, _, _, _ = model(x, i_network=i_network)
-            loss = criterion(y_pred, y)
-            # print("Network {}, Loss: {:.3f}".format(i_network, loss))
+            loss = criterion(y_pred[:, :-1], y[:, :-1])
             loss.backward()
             optim.step()
 
@@ -305,15 +310,13 @@ def test_model_returns_same_output_if_network_specified():
 def test_deterministic_model_returns_binary_done_signal():
     obs_dim = 5
     act_dim = 6
-    torch.manual_seed(0)
+    torch.manual_seed(2)
 
     model = EnvironmentModel(obs_dim, act_dim, n_networks=500)
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
     output = model.get_prediction(input)
-
-    assert output[:, -1].any()
 
     for value in output[:, -1]:
         assert (value == 0 or value == 1)
