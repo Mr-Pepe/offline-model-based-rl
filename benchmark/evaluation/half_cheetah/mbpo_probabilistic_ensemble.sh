@@ -2,6 +2,7 @@
 
 python main.py \
     --env HalfCheetah-v2 \
+    --term_fn half_cheetah \
     --hid 200 \
     --l 4 \
     --gamma 0.99 \
@@ -24,5 +25,5 @@ python main.py \
     --model_patience 20 \
     --agent_updates 40 \
     --num_test_episodes 10 \
-    --exp_name half_cheetah_mbpo_probabilistic_ensemble \
+    --exp_name half_cheetah_mbpo_probabilistic_ensemble_use_term_fn \
     --device cuda
