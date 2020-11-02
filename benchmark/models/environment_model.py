@@ -74,7 +74,7 @@ class EnvironmentModel(nn.Module):
 
         if self.type == 'deterministic':
             if term_fn:
-                done = termination_functions[term_fn](obs.detach())
+                done = termination_functions[term_fn](obs)
             else:
                 done = self.done_network(obs)
 
@@ -113,7 +113,7 @@ class EnvironmentModel(nn.Module):
             out = torch.normal(mean, std)
 
             if term_fn:
-                done = termination_functions[term_fn](obs.detach())
+                done = termination_functions[term_fn](obs)
             else:
                 done = self.done_network(out[:, :self.obs_dim])
 

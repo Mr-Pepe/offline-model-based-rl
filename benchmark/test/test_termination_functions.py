@@ -1,5 +1,6 @@
 from benchmark.utils.termination_functions import hopper_termination_fn
 import gym
+import torch
 import numpy as np
 
 
@@ -19,7 +20,7 @@ def test_hopper_termination_function():
         if done:
             env.reset()
 
-    next_obss = np.array(next_obss)
-    dones = np.array(dones).reshape(-1, 1)
+    next_obss = torch.as_tensor(next_obss)
+    dones = torch.as_tensor(dones).reshape(-1, 1)
 
     np.testing.assert_array_equal(dones, hopper_termination_fn(next_obss))
