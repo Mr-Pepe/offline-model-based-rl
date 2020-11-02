@@ -1,3 +1,4 @@
+from benchmark.utils.termination_functions import termination_functions
 from benchmark.models.mlp import mlp
 from benchmark.models.multi_head_mlp import MultiHeadMlp
 import torch.nn as nn
@@ -56,7 +57,12 @@ class EnvironmentModel(nn.Module):
                                 nn.ReLU,
                                 nn.Sigmoid)
 
-    def forward(self, obs_act, i_network=0):
+    def forward(self, obs_act, i_network=0, term_fn=None):
+
+        if term_fn and term_fn not in termination_functions:
+            raise ValueError(
+                "Unknown termination function: {}".format(term_fn))
+
         network = self.networks[i_network]
 
         device = next(network.parameters()).device
@@ -67,7 +73,11 @@ class EnvironmentModel(nn.Module):
         obs, reward = network(obs_act)
 
         if self.type == 'deterministic':
-            done = self.done_network(obs)
+            if term_fn:
+                done = termination_functions[term_fn](obs.detach())
+            else:
+                done = self.done_network(obs)
+
             out = torch.cat((obs, reward, done), dim=1)
         else:
             out = torch.cat((obs[:, :self.obs_dim],
@@ -102,7 +112,11 @@ class EnvironmentModel(nn.Module):
             std = torch.exp(0.5*logvar)
             out = torch.normal(mean, std)
 
-            done = self.done_network(out[:, :self.obs_dim])
+            if term_fn:
+                done = termination_functions[term_fn](obs.detach())
+            else:
+                done = self.done_network(out[:, :self.obs_dim])
+
             out = torch.cat((out, done), dim=1)
 
         return out, \
@@ -111,11 +125,11 @@ class EnvironmentModel(nn.Module):
             max_logvar, \
             min_logvar
 
-    def get_prediction(self, x, i_network=-1):
+    def get_prediction(self, x, i_network=-1, term_fn=None):
         i_network = torch.randint(self.n_networks,
                                   (1,)) if i_network == -1 else i_network
 
-        prediction, _, _, _, _ = self.forward(x, i_network)
+        prediction, _, _, _, _ = self.forward(x, i_network, term_fn=term_fn)
 
         prediction[:, -1] = prediction[:, -1] > 0.5
 

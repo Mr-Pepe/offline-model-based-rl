@@ -15,7 +15,7 @@ from benchmark.utils.logx import EpochLogger
 from benchmark.utils.replay_buffer import ReplayBuffer
 
 
-def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
+def train(env_fn, term_fn=None, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
           steps_per_epoch=4000, epochs=100, replay_size=int(1e6),
           agent_batch_size=100, random_steps=10000,
           init_steps=1000, num_test_episodes=10, max_ep_len=1000,
@@ -29,6 +29,10 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
     """
 
     Args:
+        term_fn (str): A termination function as specified in
+            termination_functions.py. If None, the termination function will
+            be learned with an extra network.
+
         epochs (int): Number of epochs to run and train agent.
 
         steps_per_epoch (int): Number of steps of interaction (state-action
@@ -144,7 +148,9 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
                     steps_since_model_training >= train_model_every:
                 model_val_error = train_environment_model(
                     env_model, real_replay_buffer, model_lr, model_batch_size,
-                    model_val_split, patience=model_patience)
+                    model_val_split, patience=model_patience,
+                    train_term=(term_fn == None))
+
                 model_trained = True
                 steps_since_model_training = 0
                 logger.store(LossEnvModel=model_val_error)
@@ -187,7 +193,8 @@ def train(env_fn, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
                             'obs']
 
                         rollout = generate_virtual_rollout(
-                            env_model, agent, start_observation, rollout_length)
+                            env_model, agent, start_observation, rollout_length,
+                            term_fn=term_fn)
                         for step in rollout:
                             virtual_replay_buffer.store(
                                 step['o'], step['act'], step['rew'],

@@ -2,7 +2,9 @@ import numpy as np
 import torch
 
 
-def generate_virtual_rollout(model, agent, start_observation, steps):
+def generate_virtual_rollout(model, agent, start_observation, steps,
+                             term_fn=None):
+
     model_is_training = model.training
     agent_is_training = agent.training
 
@@ -19,7 +21,7 @@ def generate_virtual_rollout(model, agent, start_observation, steps):
         action = agent.get_action(this_observation)
         pred = model.get_prediction(torch.as_tensor(
             np.concatenate((this_observation, action), axis=1),
-            dtype=torch.float32))
+            dtype=torch.float32), term_fn=term_fn)
         next_observation = pred[:, :-2]
         reward = pred[:, -2]
         done = pred[:, -1]
@@ -28,6 +30,9 @@ def generate_virtual_rollout(model, agent, start_observation, steps):
                         'rew': reward, 'o2': next_observation, 'd': done})
 
         this_observation = next_observation
+
+        if done:
+            break
 
     if model_is_training:
         model.train()

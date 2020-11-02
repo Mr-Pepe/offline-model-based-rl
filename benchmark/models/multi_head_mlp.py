@@ -6,7 +6,7 @@ class MultiHeadMlp(nn.Module):
     def __init__(self, sizes, obs_dim, double_output=False):
         """
             A multi headed network to use in an environment model.
-            The output is multiheaded for observations, reward, and done signal.
+            The output is multiheaded for observations and reward.
             If double_output is true, it will output two values for each output
             value, i.e., mean and logvar.
         """
@@ -35,13 +35,6 @@ class MultiHeadMlp(nn.Module):
             nn.Linear(sizes[-1], other_out_dim)
         )
 
-        self.done_layer = nn.Sequential(
-            nn.Linear(sizes[-2], sizes[-1]),
-            nn.ReLU(),
-            nn.Linear(sizes[-1], other_out_dim),
-            nn.Sigmoid()
-        )
-
     def forward(self, x):
         """
         Returns three separate outputs for observation, reward, done signal.
@@ -50,6 +43,5 @@ class MultiHeadMlp(nn.Module):
 
         obs = self.obs_layer(features)
         reward = self.reward_layer(features)
-        done = self.done_layer(features)
 
-        return obs, reward, done
+        return obs, reward

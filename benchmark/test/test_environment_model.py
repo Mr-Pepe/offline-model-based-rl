@@ -338,3 +338,27 @@ def test_probabilistic_model_returns_binary_done_signal():
 
     for value in output[:, -1]:
         assert (value == 0 or value == 1)
+
+
+def test_throws_error_if_termination_function_unknown():
+    model = EnvironmentModel(1, 1)
+
+    x = torch.as_tensor([3, 3], dtype=torch.float32)
+
+    with pytest.raises(ValueError):
+        model.get_prediction(x, term_fn='asd')
+
+
+def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
+    obs_dim = 5
+    act_dim = 6
+    torch.manual_seed(2)
+
+    model = EnvironmentModel(obs_dim, act_dim, n_networks=500)
+
+    tensor_size = (100, obs_dim+act_dim)
+    input = torch.rand(tensor_size)
+    output = model.get_prediction(input, term_fn='hopper')
+
+    for value in output[:, -1]:
+        assert (value == 0 or value == 1)

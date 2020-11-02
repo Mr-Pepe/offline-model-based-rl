@@ -1,4 +1,4 @@
-from benchmark.utils.termination_functions import termination_fn
+from benchmark.utils.termination_functions import hopper_termination_fn
 import gym
 import numpy as np
 
@@ -22,4 +22,4 @@ def test_hopper_termination_function():
     next_obss = np.array(next_obss)
     dones = np.array(dones).reshape(-1, 1)
 
-    np.testing.assert_array_equal(dones, termination_fn(next_obss))
+    np.testing.assert_array_equal(dones, hopper_termination_fn(next_obss))
