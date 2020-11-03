@@ -3,7 +3,7 @@ import torch
 
 
 def generate_virtual_rollout(model, agent, start_observation, steps,
-                             term_fn=None):
+                             term_fn=None, stop_on_terminal=True):
 
     model_is_training = model.training
     agent_is_training = agent.training
@@ -31,7 +31,7 @@ def generate_virtual_rollout(model, agent, start_observation, steps,
 
         this_observation = next_observation
 
-        if done:
+        if done and stop_on_terminal:
             break
 
     if model_is_training:
