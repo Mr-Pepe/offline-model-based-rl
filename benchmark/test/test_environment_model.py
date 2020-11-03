@@ -1,3 +1,9 @@
+from benchmark.utils.replay_buffer import ReplayBuffer
+from benchmark.utils.random_agent import RandomAgent
+from benchmark.utils.virtual_rollouts import generate_virtual_rollout
+from benchmark.utils.loss_functions import deterministic_loss, \
+    probabilistic_loss
+from benchmark.utils.load_dataset import load_dataset_from_env
 import pytest
 import matplotlib.pyplot as plt
 from benchmark.models.environment_model import EnvironmentModel
@@ -118,7 +124,8 @@ def test_deterministic_model_trains_on_offline_data():
         y_pred, _, _, _, _ = model(x)
         obs_rew_loss = obs_rew_criterion(y_pred[:, :-1], y[:, :-1])
         done_loss = done_criterion(y_pred[:, -1], y[:, -1])
-        print("Obs/Reward loss: {}   Done loss: {}".format(obs_rew_loss, done_loss))
+        print("Obs/Reward loss: {}   Done loss: {}".format(obs_rew_loss,
+                                                           done_loss))
         loss = obs_rew_loss + done_loss
         losses.append(loss.item())
         loss.backward()
@@ -362,3 +369,109 @@ def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
 
     for value in output[:, -1]:
         assert (value == 0 or value == 1)
+
+
+def test_deterministic_model_does_not_always_output_terminal():
+    # First train a model on random hopper data
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    torch.manual_seed(0)
+    env = gym.make('hopper-random-v0')
+    real_buffer, obs_dim, act_dim = load_dataset_from_env(env, 10000)
+    model = EnvironmentModel(obs_dim, act_dim, type='deterministic')
+    model.to(device)
+    optim = Adam(model.parameters(), lr=1e-3)
+
+    for i in range(500):
+
+        batch = real_buffer.sample_train_batch(256, 0)
+        x = torch.cat((batch['obs'], batch['act']), dim=1)
+        y = torch.cat((batch['obs2'],
+                       batch['rew'].unsqueeze(1)), dim=1)
+
+        x = x.to(device)
+        y = y.to(device)
+
+        optim.zero_grad()
+        loss = deterministic_loss(x, y, model)
+
+        if i % 100 == 0:
+            print("Step: {} Loss: {:.3f}".format(i, loss.item()))
+        loss.backward(retain_graph=True)
+        optim.step()
+
+    # Generate virtual rollouts and make sure that not everything is a terminal
+    # state
+    agent = RandomAgent(env)
+    virtual_buffer = ReplayBuffer(obs_dim, act_dim, 10000)
+
+    for model_rollout in range(10):
+        start_observation = real_buffer.sample_batch(1)['obs']
+
+        rollout = generate_virtual_rollout(model,
+                                           agent,
+                                           start_observation,
+                                           50,
+                                           term_fn='hopper')
+        for step in rollout:
+            virtual_buffer.store(
+                step['o'], step['act'], step['rew'],
+                step['o2'], step['d'])
+
+    terminal_ratio = virtual_buffer.get_terminal_ratio()
+
+    print(terminal_ratio)
+    assert terminal_ratio < 1
+    assert terminal_ratio > 0
+
+
+def test_probabilistic_model_does_not_always_output_terminal():
+    # First train a model on random hopper data
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    torch.manual_seed(0)
+    env = gym.make('hopper-random-v0')
+    real_buffer, obs_dim, act_dim = load_dataset_from_env(env, 10000)
+    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
+    model.to(device)
+    optim = Adam(model.parameters(), lr=1e-3)
+
+    for i in range(500):
+
+        batch = real_buffer.sample_train_batch(256, 0)
+        x = torch.cat((batch['obs'], batch['act']), dim=1)
+        y = torch.cat((batch['obs2'],
+                       batch['rew'].unsqueeze(1)), dim=1)
+
+        x = x.to(device)
+        y = y.to(device)
+
+        optim.zero_grad()
+        loss = probabilistic_loss(x, y, model)
+
+        if i % 100 == 0:
+            print("Step: {} Loss: {:.3f}".format(i, loss.item()))
+        loss.backward(retain_graph=True)
+        optim.step()
+
+    # Generate virtual rollouts and make sure that not everything is a terminal
+    # state
+    agent = RandomAgent(env)
+    virtual_buffer = ReplayBuffer(obs_dim, act_dim, 10000)
+
+    for model_rollout in range(10):
+        start_observation = real_buffer.sample_batch(1)['obs']
+
+        rollout = generate_virtual_rollout(model,
+                                           agent,
+                                           start_observation,
+                                           50,
+                                           term_fn='hopper')
+        for step in rollout:
+            virtual_buffer.store(
+                step['o'], step['act'], step['rew'],
+                step['o2'], step['d'])
+
+    terminal_ratio = virtual_buffer.get_terminal_ratio()
+
+    print(terminal_ratio)
+    assert terminal_ratio < 1
+    assert terminal_ratio > 0

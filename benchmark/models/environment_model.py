@@ -72,18 +72,7 @@ class EnvironmentModel(nn.Module):
 
         obs, reward = network(obs_act)
 
-        if self.type == 'deterministic':
-            if term_fn:
-                done = termination_functions[term_fn](obs)
-            else:
-                done = self.done_network(obs)
-
-            out = torch.cat((obs, reward, done), dim=1)
-        else:
-            out = torch.cat((obs[:, :self.obs_dim],
-                             reward[:, 0].unsqueeze(1),
-                             obs[:, self.obs_dim:],
-                             reward[:, 1].unsqueeze(1)), dim=1)
+        out = 0
         mean = 0
         logvar = 0
         max_logvar = 0
@@ -91,31 +80,37 @@ class EnvironmentModel(nn.Module):
 
         # The model only learns a residual, so the input has to be added
         if self.type == 'deterministic':
-            out += torch.cat((obs_act[:, :self.obs_dim],
-                              torch.zeros((obs_act.shape[0], 2),
-                                          device=device)),
-                             dim=1)
-
-        elif self.type == 'probabilistic':
-            mean = out[:, :self.out_dim] + \
-                torch.cat((obs_act[:, :self.obs_dim],
-                           torch.zeros((obs_act.shape[0], 1), device=device)),
-                          dim=1)
-
-            max_logvar = network.max_logvar
-            min_logvar = network.min_logvar
-
-            logvar = out[:, self.out_dim:]
-            logvar = max_logvar - softplus(max_logvar - logvar)
-            logvar = min_logvar + softplus(logvar - min_logvar)
-
-            std = torch.exp(0.5*logvar)
-            out = torch.normal(mean, std)
+            obs = obs + obs_act[:, :self.obs_dim]
 
             if term_fn:
                 done = termination_functions[term_fn](obs)
             else:
-                done = self.done_network(out[:, :self.obs_dim])
+                done = self.done_network(obs)
+
+            out = torch.cat((obs, reward, done), dim=1)
+
+        elif self.type == 'probabilistic':
+            obs_mean = obs[:, :self.obs_dim] + obs_act[:, :self.obs_dim]
+            reward_mean = reward[:, 0].unsqueeze(1)
+            mean = torch.cat((obs_mean, reward_mean), dim=1)
+
+            obs_logvar = obs[:, self.obs_dim:]
+            reward_logvar = reward[:, 1].unsqueeze(1)
+            max_logvar = network.max_logvar
+            min_logvar = network.min_logvar
+
+            logvar = torch.cat((obs_logvar, reward_logvar), dim=1)
+            logvar = max_logvar - softplus(max_logvar - logvar)
+            logvar = min_logvar + softplus(logvar - min_logvar)
+
+            std = torch.exp(0.5*logvar)
+
+            out = torch.normal(mean, std)
+
+            if term_fn:
+                done = termination_functions[term_fn](out[:, :-1])
+            else:
+                done = self.done_network(out[:, :-1])
 
             out = torch.cat((out, done), dim=1)
 
