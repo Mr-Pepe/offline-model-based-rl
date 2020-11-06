@@ -11,7 +11,7 @@ def test_train_deterministic_environment_model():
     torch.manual_seed(0)
 
     env = gym.make('halfcheetah-random-v0')
-    buffer, obs_dim, act_dim = load_dataset_from_env(env)
+    buffer, obs_dim, act_dim = load_dataset_from_env(env, buffer_device=device)
 
     model = EnvironmentModel(obs_dim, act_dim)
     model.to(device)
@@ -42,7 +42,7 @@ def test_train_probabilistic_model():
     torch.manual_seed(0)
 
     env = gym.make('halfcheetah-random-v0')
-    buffer, obs_dim, act_dim = load_dataset_from_env(env)
+    buffer, obs_dim, act_dim = load_dataset_from_env(env, buffer_device=device)
 
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
 
@@ -63,7 +63,7 @@ def test_train_deterministic_ensemble():
     torch.manual_seed(0)
 
     env = gym.make('halfcheetah-random-v0')
-    buffer, obs_dim, act_dim = load_dataset_from_env(env)
+    buffer, obs_dim, act_dim = load_dataset_from_env(env, buffer_device=device)
 
     model = EnvironmentModel(obs_dim, act_dim, n_networks=5)
     model.to(device)
@@ -85,7 +85,7 @@ def test_train_probabilistic_ensemble():
     torch.manual_seed(0)
 
     env = gym.make('halfcheetah-random-v0')
-    buffer, obs_dim, act_dim = load_dataset_from_env(env)
+    buffer, obs_dim, act_dim = load_dataset_from_env(env, buffer_device=device)
 
     model = EnvironmentModel(obs_dim,
                              act_dim,

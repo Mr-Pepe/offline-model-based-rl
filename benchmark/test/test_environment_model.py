@@ -372,11 +372,11 @@ def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
 
 
 def test_deterministic_model_does_not_always_output_terminal():
-    # First train a model on random hopper data
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
     env = gym.make('hopper-random-v0')
-    real_buffer, obs_dim, act_dim = load_dataset_from_env(env, 10000)
+    real_buffer, obs_dim, act_dim = load_dataset_from_env(
+        env, n_samples=10000, buffer_device=device)
     model = EnvironmentModel(obs_dim, act_dim, type='deterministic')
     model.to(device)
     optim = Adam(model.parameters(), lr=1e-3)
@@ -402,7 +402,7 @@ def test_deterministic_model_does_not_always_output_terminal():
     # Generate virtual rollouts and make sure that not everything is a terminal
     # state
     agent = RandomAgent(env)
-    virtual_buffer = ReplayBuffer(obs_dim, act_dim, 10000)
+    virtual_buffer = ReplayBuffer(obs_dim, act_dim, 10000, device=device)
 
     for model_rollout in range(10):
         start_observation = real_buffer.sample_batch(1)['obs']
@@ -425,11 +425,11 @@ def test_deterministic_model_does_not_always_output_terminal():
 
 
 def test_probabilistic_model_does_not_always_output_terminal():
-    # First train a model on random hopper data
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
     env = gym.make('hopper-random-v0')
-    real_buffer, obs_dim, act_dim = load_dataset_from_env(env, 10000)
+    real_buffer, obs_dim, act_dim = load_dataset_from_env(
+        env, 10000, buffer_device=device)
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
     model.to(device)
     optim = Adam(model.parameters(), lr=1e-3)
@@ -455,7 +455,7 @@ def test_probabilistic_model_does_not_always_output_terminal():
     # Generate virtual rollouts and make sure that not everything is a terminal
     # state
     agent = RandomAgent(env)
-    virtual_buffer = ReplayBuffer(obs_dim, act_dim, 10000)
+    virtual_buffer = ReplayBuffer(obs_dim, act_dim, 10000, device=device)
 
     for model_rollout in range(10):
         start_observation = real_buffer.sample_batch(1)['obs']

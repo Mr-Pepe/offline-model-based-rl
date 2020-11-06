@@ -28,21 +28,12 @@ class ReplayBuffer:
         self.device = device
 
     def store(self, obs, act, rew, next_obs, done):
-        self.obs_buf[self.ptr] = torch.as_tensor(obs,
-                                                 dtype=torch.float32,
-                                                 device=self.device)
+        self.obs_buf[self.ptr] = torch.as_tensor(obs, dtype=torch.float32)
         self.obs2_buf[self.ptr] = torch.as_tensor(next_obs,
-                                                  dtype=torch.float32,
-                                                  device=self.device)
-        self.act_buf[self.ptr] = torch.as_tensor(act,
-                                                 dtype=torch.float32,
-                                                 device=self.device)
-        self.rew_buf[self.ptr] = torch.as_tensor(rew,
-                                                 dtype=torch.float32,
-                                                 device=self.device)
-        self.done_buf[self.ptr] = torch.as_tensor(done,
-                                                  dtype=torch.float32,
-                                                  device=self.device)
+                                                  dtype=torch.float32)
+        self.act_buf[self.ptr] = torch.as_tensor(act, dtype=torch.float32)
+        self.rew_buf[self.ptr] = torch.as_tensor(rew, dtype=torch.float32)
+        self.done_buf[self.ptr] = torch.as_tensor(done, dtype=torch.float32)
         self.ptr = (self.ptr+1) % self.max_size
         self.size = min(self.size+1, self.max_size)
 
@@ -55,43 +46,18 @@ class ReplayBuffer:
         if self.max_size < batch_size:
             raise ValueError("Buffer not big enough to add batch.")
 
-        print("Pushing batch to GPU if necessary.")
-        obs = torch.as_tensor(obs,
-                              dtype=torch.float32,
-                              device=self.device)
-        next_obs = torch.as_tensor(next_obs,
-                                   dtype=torch.float32,
-                                   device=self.device)
-        act = torch.as_tensor(act,
-                              dtype=torch.float32,
-                              device=self.device)
-        rew = torch.as_tensor(rew,
-                              dtype=torch.float32,
-                              device=self.device)
-        done = torch.as_tensor(done,
-                               dtype=torch.float32,
-                               device=self.device)
-
-        print("Adding batch to buffer.")
-
-        self.obs_buf[:batch_size] = obs
-        self.obs2_buf[:batch_size] = next_obs
-        self.act_buf[:batch_size] = act
-        self.rew_buf[:batch_size] = rew
-        self.done_buf[:batch_size] = done
+        self.obs_buf[:batch_size] = torch.as_tensor(obs, dtype=torch.float32)
+        self.obs2_buf[:batch_size] = torch.as_tensor(next_obs,
+                                                     dtype=torch.float32)
+        self.act_buf[:batch_size] = torch.as_tensor(act, dtype=torch.float32)
+        self.rew_buf[:batch_size] = torch.as_tensor(rew, dtype=torch.float32)
+        self.done_buf[:batch_size] = torch.as_tensor(done, dtype=torch.float32)
 
         self.ptr = batch_size
         self.size = batch_size
 
-        # for i in range(len(obs)):
-        #     self.store(obs[i],
-        #                act[i],
-        #                rew[i],
-        #                next_obs[i],
-        #                done[i])
-
     def sample_batch(self, batch_size=32):
-        idxs = torch.random.randint(0, self.size, size=batch_size)
+        idxs = torch.randint(0, self.size, (batch_size,))
         batch = dict(obs=self.obs_buf[idxs],
                      obs2=self.obs2_buf[idxs],
                      act=self.act_buf[idxs],
@@ -135,8 +101,8 @@ class ReplayBuffer:
         self.val_idxs = np.random.choice(
             np.arange(self.size), int(self.size*val_split), replace=False)
         self.train_idxs = np.setdiff1d(np.arange(self.size), self.val_idxs)
-        self.done_idx = np.argwhere(self.done_buf == True).reshape((-1))
-        self.not_done_idx = np.argwhere(self.done_buf == False).reshape((-1))
+        self.done_idx = self.done_buf.nonzero().view(-1)
+        self.not_done_idx = (self.done_buf == 0).nonzero().reshape((-1))
 
     def get_terminal_ratio(self):
         return self.done_buf.sum()/self.size
@@ -156,15 +122,15 @@ class ReplayBuffer:
         not_done_idxs = np.random.choice(self.not_done_idx, batch_size//2)
 
         batch = dict(obs=torch.cat((self.obs_buf[done_idxs],
-                                   self.obs_buf[not_done_idxs])),
+                                    self.obs_buf[not_done_idxs])),
                      obs2=torch.cat((self.obs2_buf[done_idxs],
-                                    self.obs2_buf[not_done_idxs])),
+                                     self.obs2_buf[not_done_idxs])),
                      act=torch.cat((self.act_buf[done_idxs],
-                                   self.act_buf[not_done_idxs])),
+                                    self.act_buf[not_done_idxs])),
                      rew=torch.cat((self.rew_buf[done_idxs],
-                                   self.rew_buf[not_done_idxs])),
+                                    self.rew_buf[not_done_idxs])),
                      done=torch.cat((self.done_buf[done_idxs],
-                                    self.done_buf[not_done_idxs])))
+                                     self.done_buf[not_done_idxs])))
 
         return {k: torch.as_tensor(v, dtype=torch.float32)
                 for k, v in batch.items()}
