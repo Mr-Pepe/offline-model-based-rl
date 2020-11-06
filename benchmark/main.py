@@ -3,6 +3,7 @@ from benchmark.utils.str2bool import str2bool
 
 import gym
 import torch
+import d4rl  # noqa
 
 from benchmark.train import train
 from benchmark.utils.run_utils import setup_logger_kwargs
