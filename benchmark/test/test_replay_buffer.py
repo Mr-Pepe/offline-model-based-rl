@@ -37,7 +37,7 @@ def test_add_batch_to_buffer():
 
     buffer = ReplayBuffer(len(observations[0]),
                           len(actions[0]),
-                          1000000,
+                          2000000,
                           device=device)
 
     assert buffer.size == 0
