@@ -37,6 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_test_episodes', type=int, default=10)
     parser.add_argument('--exp_name', type=str, default='mbpo')
     parser.add_argument('--device', type=str, default='cuda')
+    parser.add_argument('--render', type=str2bool, default=True)
     args = parser.parse_args()
 
     logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
@@ -70,4 +71,5 @@ if __name__ == '__main__':
           model_val_split=args.model_val_split,
           model_batch_size=args.model_batch_size,
           model_patience=args.model_patience,
-          num_test_episodes=args.num_test_episodes)
+          num_test_episodes=args.num_test_episodes,
+          render=args.render)

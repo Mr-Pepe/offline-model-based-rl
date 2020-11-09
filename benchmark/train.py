@@ -25,7 +25,7 @@ def train(env_fn, term_fn=None, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
           model_batch_size=128, model_lr=1e-3, model_val_split=0.2,
           model_patience=3,
           agent_updates=1,
-          logger_kwargs=dict(), save_freq=1, device='cpu'):
+          logger_kwargs=dict(), save_freq=1, device='cpu', render=False):
     """
 
     Args:
@@ -220,7 +220,7 @@ def train(env_fn, term_fn=None, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
 
         # Test the performance of the deterministic version of the agent.
         final_return = test_agent(
-            test_env, agent, max_ep_len, num_test_episodes, logger)
+            test_env, agent, max_ep_len, num_test_episodes, logger, render)
 
         log_end_of_epoch(logger, epoch, step_total, start_time,
                          agent_update_performed, model_trained, rollout_length)
