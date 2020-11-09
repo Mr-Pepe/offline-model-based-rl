@@ -102,10 +102,10 @@ def train(env_fn, term_fn=None, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
     logger.setup_pytorch_saver(agent)
 
     real_replay_buffer = ReplayBuffer(
-        obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
+        obs_dim=obs_dim, act_dim=act_dim, size=replay_size, device=device)
 
     virtual_replay_buffer = ReplayBuffer(
-        obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
+        obs_dim=obs_dim, act_dim=act_dim, size=replay_size, device=device)
 
     var_counts = tuple(count_vars(module)
                        for module in [agent.pi, agent.q1, agent.q2])
