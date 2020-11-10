@@ -101,17 +101,23 @@ def run_policy(env, get_action, max_ep_len=None, num_episodes=100, render=True):
     logger.dump_tabular()
 
 
-def test_agent(test_env, agent, max_ep_len, num_test_episodes, logger):
+def test_agent(test_env, agent, max_ep_len, num_test_episodes, logger,
+               render=False):
     sum_ep_ret = 0
     for j in range(num_test_episodes):
         o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
         while not(d or (ep_len == max_ep_len)):
             # Take deterministic actions at test time
             o, r, d, _ = test_env.step(agent.get_action(o, True))
+            if render:
+                test_env.render()
+
             ep_ret += r
             ep_len += 1
         logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
         sum_ep_ret += ep_ret
+
+        render = False
 
     return sum_ep_ret / num_test_episodes
 
@@ -121,7 +127,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--fpath', type=str,
-        default="/home/felipe/Projects/benchmark/data/sac/sac_s0")
+        default="/home/felipe/Projects/thesis-evaluation/hopper/hopper_mbpo_probabilistic_ensemble_use_term_fn/hopper_mbpo_probabilistic_ensemble_use_term_fn_s0")
     parser.add_argument('--len', '-l', type=int, default=0)
     parser.add_argument('--episodes', '-n', type=int, default=100)
     parser.add_argument('--norender', '-nr', action='store_true')
