@@ -10,230 +10,260 @@ import numpy as np
 import torch
 
 from benchmark.actors.sac import SAC
-from benchmark.utils.count_vars import count_vars
 from benchmark.utils.logx import EpochLogger
 from benchmark.utils.replay_buffer import ReplayBuffer
 
 
-def train(env_fn, term_fn=None, sac_kwargs=dict(), model_kwargs=dict(), seed=0,
-          steps_per_epoch=4000, epochs=100, replay_size=int(1e6),
-          agent_batch_size=100, random_steps=10000,
-          init_steps=1000, num_test_episodes=10, max_ep_len=1000,
-          use_model=False,
-          model_rollouts=10, rollout_schedule=[1, 1, 20, 100],
-          train_model_every=250,
-          model_batch_size=128, model_lr=1e-3, model_val_split=0.2,
-          model_patience=3,
-          agent_updates=1,
-          logger_kwargs=dict(), save_freq=1, device='cpu', render=False):
-    """
+class Trainer():
 
-    Args:
-        term_fn (str): A termination function as specified in
-            termination_functions.py. If None, the termination function will
-            be learned with an extra network.
+    def __init__(self, env_fn, term_fn=None, sac_kwargs=dict(),
+                 model_kwargs=dict(),
+                 seed=0,
+                 steps_per_epoch=4000, epochs=100, replay_size=int(1e6),
+                 random_steps=10000,
+                 init_steps=1000, num_test_episodes=10, max_ep_len=1000,
+                 agent_updates_per_step=1,
+                 use_model=False,
+                 rollouts_per_step=10, rollout_schedule=[1, 1, 20, 100],
+                 train_model_every=250,
+                 model_batch_size=128, model_lr=1e-3, model_val_split=0.2,
+                 model_patience=3,
+                 logger_kwargs=dict(), save_freq=1, device='cpu', render=False):
+        """
 
-        epochs (int): Number of epochs to run and train agent.
+        Args:
+            term_fn (str): A termination function as specified in
+                termination_functions.py. If None, the termination function will
+                be learned with an extra network.
 
-        steps_per_epoch (int): Number of steps of interaction (state-action
-            pairs) for the agent and the environment in each epoch.
+            epochs (int): Number of epochs to run and train agent.
 
-        replay_size (int): Maximum length of replay buffer.
+            steps_per_epoch (int): Number of steps of interaction (state-action
+                pairs) for the agent and the environment in each epoch.
 
-        batch_size (int): Minibatch size for SGD.
+            replay_size (int): Maximum length of replay buffer.
 
-        random_steps (int): Number of steps for uniform-random action selection,
-            before running real policy. Helps exploration.
+            batch_size (int): Minibatch size for SGD.
 
-        init_steps (int): Number of env interactions to collect before
-            starting to do gradient descent updates or training an environment
-            model. Ensures replay buffer is full enough for useful updates.
+            random_steps (int): Number of steps for uniform-random action
+            selection, before running real policy. Helps exploration.
 
-        num_test_episodes (int): Number of episodes to test the deterministic
-            policy at the end of each epoch.
+            init_steps (int): Number of env interactions to collect before
+                starting to do gradient descent updates or training an
+                environment model. Ensures replay buffer is full enough for
+                useful updates.
 
-        max_ep_len (int): Maximum length of trajectory / episode / rollout.
+            num_test_episodes (int): Number of episodes to test the
+            deterministic policy at the end of each epoch.
 
-        use_model (bool): Whether to augment data with virtual rollouts.
+            max_ep_len (int): Maximum length of trajectory / episode / rollout.
 
-        model_rollouts (int): The number of model rollouts to perform per
-            environment step.
+            use_model (bool): Whether to augment data with virtual rollouts.
 
-        train_model_every (int): After how many steps the model should be
-            retrained.
+            model_rollouts (int): The number of model rollouts to perform per
+                environment step.
 
-        model_batch_size (int): Batch size for training the environment model.
+            train_model_every (int): After how many steps the model should be
+                retrained.
 
-        model_lr (float): Learning rate for training the environment model.
+            model_batch_size (int): Batch size for training the environment
+                model.
 
-        model_val_split (float): Fraction of data to use as validation set for
-            training of environment model.
+            model_lr (float): Learning rate for training the environment model.
 
-        agent_updates (int): The number of agent updates to perform per
-            environment step.
+            model_val_split (float): Fraction of data to use as validation set
+                for training of environment model.
 
-        save_freq (int): How often (in terms of gap between epochs) to save
-            the current policy and value function.
+            agent_updates_per_step (int): The number of agent updates to
+                perform per environment step.
 
-    """
-    # Based on https://spinningup.openai.com
+            save_freq (int): How often (in terms of gap between epochs) to save
+                the current policy and value function.
 
-    logger = EpochLogger(**logger_kwargs)
-    logger.save_config(locals())
-    final_return = None
+        """
 
-    torch.cuda.manual_seed_all(seed)
-    torch.manual_seed(seed)
-    np.random.seed(seed)
+        torch.manual_seed(seed)
+        np.random.seed(seed)
 
-    env, test_env = env_fn(), env_fn()
-    obs_dim = env.observation_space.shape
-    act_dim = env.action_space.shape[0]
+        self.logger = EpochLogger(**logger_kwargs)
+        self.logger.save_config(locals())
 
-    # Create SAC and environment model
-    sac_kwargs.update({'device': device})
-    agent = SAC(env.observation_space, env.action_space, **sac_kwargs)
-    env_model = EnvironmentModel(obs_dim[0],
-                                 act_dim,
-                                 **model_kwargs)
-    env_model.to(device)
+        self.env, self.test_env = env_fn(), env_fn()
+        obs_dim = self.env.observation_space.shape
+        act_dim = self.env.action_space.shape[0]
 
-    # TODO: Save environment model
-    logger.setup_pytorch_saver(agent)
+        # Create SAC and environment model
+        sac_kwargs.update({'device': device})
+        self.agent = SAC(self.env.observation_space,
+                         self.env.action_space,
+                         **sac_kwargs)
+        self.env_model = EnvironmentModel(obs_dim[0],
+                                          act_dim,
+                                          **model_kwargs)
+        self.env_model.to(device)
 
-    real_replay_buffer = ReplayBuffer(
-        obs_dim=obs_dim, act_dim=act_dim, size=replay_size, device=device)
+        self.logger.setup_pytorch_saver(self.agent)
 
-    virtual_replay_buffer = ReplayBuffer(
-        obs_dim=obs_dim, act_dim=act_dim, size=replay_size, device=device)
+        self.real_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
+                                               act_dim=act_dim,
+                                               size=replay_size,
+                                               device=device)
 
-    var_counts = tuple(count_vars(module)
-                       for module in [agent.pi, agent.q1, agent.q2])
-    logger.log(
-        '\nNumber of parameters: \t pi: {}, \t q1: {}, \t q2: {}\n'
-        .format(*var_counts))
+        self.virtual_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
+                                                  act_dim=act_dim,
+                                                  size=replay_size,
+                                                  device=device)
 
-    # Prepare for interaction with environment
-    total_steps = steps_per_epoch * epochs
-    start_time = time.time()
-    o, ep_ret, ep_len = env.reset(), 0, 0
+        self.term_fn = term_fn
+        self.epochs = epochs
+        self.steps_per_epoch = steps_per_epoch
+        self.init_steps = init_steps
+        self.random_steps = random_steps
+        self.total_steps = steps_per_epoch * epochs
+        self.max_ep_len = min(max_ep_len, self.total_steps)
 
-    max_ep_len = min(max_ep_len, total_steps)
+        self.agent_updates_per_step = agent_updates_per_step
 
-    if total_steps < init_steps:
-        raise ValueError(
-            """Number of total steps too low. Increase number of epochs or
-            steps per epoch.""")
+        self.use_model = use_model
+        self.rollouts_per_step = rollouts_per_step
+        self.rollout_schedule = rollout_schedule
+        self.train_model_every = train_model_every
+        self.model_batch_size = model_batch_size
+        self.model_lr = model_lr
+        self.model_val_split = model_val_split
+        self.model_patience = model_patience
 
-    step_total = 0
-    steps_since_model_training = 1e10
+        self.num_test_episodes = num_test_episodes
+        self.save_freq = save_freq
+        self.render = render
 
-    for epoch in range(1, epochs + 1):
+    def train(self):
 
-        agent_update_performed = False
-        model_trained = False
+        final_return = None
 
-        rollout_length = get_rollout_length_from_schedule(
-            rollout_schedule, epoch)
+        start_time = time.time()
+        o, ep_ret, ep_len = self.env.reset(), 0, 0
 
-        print("Epoch {}\tRollout length: {}".format(epoch, rollout_length))
+        if self.total_steps < self.init_steps:
+            raise ValueError(
+                """Number of total steps too low. Increase number of epochs or
+                steps per epoch.""")
 
-        # Main loop: collect experience in env and update/log each epoch
-        for step_epoch in range(steps_per_epoch):
+        step_total = 0
+        steps_since_model_training = 1e10
 
-            # Train environment model on real experience
-            if use_model and \
-                    real_replay_buffer.size > 0 and \
-                    step_total > init_steps and \
-                    steps_since_model_training >= train_model_every:
-                model_val_error = train_environment_model(
-                    env_model, real_replay_buffer, model_lr, model_batch_size,
-                    model_val_split, patience=model_patience,
-                    train_term=(term_fn == None))
+        for epoch in range(1, self.epochs + 1):
 
-                model_trained = True
-                steps_since_model_training = 0
-                logger.store(LossEnvModel=model_val_error)
-                print('')
-                print('Environment model error: {}'.format(model_val_error))
+            agent_update_performed = False
+            model_trained = False
 
-            print("Epoch {}, step {}/{}".format(epoch,
-                                                step_epoch+1,
-                                                steps_per_epoch), end='\r')
+            rollout_length = get_rollout_length_from_schedule(
+                self.rollout_schedule,
+                epoch)
 
-            if step_total > random_steps:
-                a = agent.get_action(o)
-            else:
-                a = env.action_space.sample()
+            print("Epoch {}\tRollout length: {}".format(epoch, rollout_length))
 
-            o2, r, d, _ = env.step(a)
-            ep_ret += r
-            ep_len += 1
+            # Main loop: collect experience in env and update/log each epoch
+            for step_epoch in range(self.steps_per_epoch):
 
-            # Ignore the "done" signal if it comes from hitting the time
-            # horizon (that is, when it's an artificial terminal signal
-            # that isn't based on the agent's state)
-            d = False if ep_len == max_ep_len else d
+                # Train environment model on real experience
+                if self.use_model and \
+                        self.real_replay_buffer.size > 0 and \
+                        step_total > self.init_steps and \
+                        steps_since_model_training >= self.train_model_every:
 
-            real_replay_buffer.store(o, a, r, o2, d)
-            o = o2
+                    model_val_error = train_environment_model(
+                        self.env_model,
+                        self.real_replay_buffer,
+                        self.model_lr, self.model_batch_size,
+                        self.model_val_split, patience=self.model_patience,
+                        train_term=(self.term_fn == None))
 
-            # End of trajectory handling
-            if d or (ep_len == max_ep_len):
-                logger.store(EpRet=ep_ret, EpLen=ep_len)
-                o, ep_ret, ep_len = env.reset(), 0, 0
+                    model_trained = True
+                    steps_since_model_training = 0
+                    self.logger.store(LossEnvModel=model_val_error)
+                    print('')
+                    print('Environment model error: {}'.format(model_val_error))
 
-            # Update agent
-            if step_total >= init_steps:
-                agent_update_performed = True
+                print("Epoch {}, step {}/{}".format(epoch,
+                                                    step_epoch+1,
+                                                    self.steps_per_epoch),
+                      end='\r')
 
-                if use_model:
-                    for model_rollout in range(model_rollouts):
-                        start_observation = real_replay_buffer.sample_batch(1)[
-                            'obs']
-
-                        rollout = generate_virtual_rollout(
-                            env_model, agent, start_observation, rollout_length,
-                            term_fn=term_fn)
-                        for step in rollout:
-                            virtual_replay_buffer.store(
-                                step['o'], step['act'], step['rew'],
-                                step['o2'], step['d'])
-
-                    update_agent(agent, agent_updates,
-                                 virtual_replay_buffer, agent_batch_size,
-                                 logger)
+                if step_total > self.random_steps:
+                    a = self.agent.get_action(o)
                 else:
-                    # Update regular SAC
-                    update_agent(agent, agent_updates,
-                                 real_replay_buffer, agent_batch_size, logger)
+                    a = self.env.action_space.sample()
 
-            steps_since_model_training += 1
+                o2, r, d, _ = self.env.step(a)
+                ep_ret += r
+                ep_len += 1
 
-            step_total += 1
+                # Ignore the "done" signal if it comes from hitting the time
+                # horizon (that is, when it's an artificial terminal signal
+                # that isn't based on the agent's state)
+                d = False if ep_len == self.max_ep_len else d
 
-        print('')
+                self.real_replay_buffer.store(o, a, r, o2, d)
+                o = o2
 
-        # Save model
-        if (epoch % save_freq == 0) or (epoch == epochs):
-            logger.save_state({'env': env}, None)
+                # End of trajectory handling
+                if d or (ep_len == self.max_ep_len):
+                    self.logger.store(EpRet=ep_ret, EpLen=ep_len)
+                    o, ep_ret, ep_len = self.env.reset(), 0, 0
 
-        # Test the performance of the deterministic version of the agent.
-        final_return = test_agent(
-            test_env, agent, max_ep_len, num_test_episodes, logger, render)
+                # Update agent
+                if step_total >= self.init_steps:
+                    agent_update_performed = True
 
-        log_end_of_epoch(logger, epoch, step_total, start_time,
-                         agent_update_performed, model_trained, rollout_length)
+                    if self.use_model:
+                        for model_rollout in range(self.model_rollouts):
+                            start_observation = self \
+                                .real_replay_buffer \
+                                .sample_batch(1)['obs']
 
-    return final_return
+                            rollout = generate_virtual_rollout(
+                                self.env_model,
+                                self.agent,
+                                start_observation,
+                                rollout_length,
+                                term_fn=self.term_fn)
+                            for step in rollout:
+                                self.virtual_replay_buffer.store(
+                                    step['o'], step['act'], step['rew'],
+                                    step['o2'], step['d'])
 
+                        self.agent.multi_update(self.agent_updates_per_step,
+                                                self.virtual_replay_buffer,
+                                                self.logger)
+                    else:
+                        self.agent.multi_update(self.agent_updates_per_step,
+                                                self.real_replay_buffer,
+                                                self.logger)
 
-def update_agent(agent, n_updates, buffer, batch_size, logger):
-    for j in range(n_updates):
-        batch = buffer.sample_batch(batch_size)
-        loss_q, q_info, loss_pi, pi_info = agent.update(data=batch)
-        logger.store(LossQ=loss_q.item(), **q_info)
-        logger.store(LossPi=loss_pi.item(), **pi_info)
+                steps_since_model_training += 1
+
+                step_total += 1
+
+            print('')
+
+            # Save model
+            if (epoch % self.save_freq == 0) or (epoch == self.epochs):
+                self.logger.save_state({'env': self.env}, None)
+
+            # Test the performance of the deterministic version of the agent.
+            final_return = test_agent(self.test_env,
+                                      self.agent,
+                                      self.max_ep_len,
+                                      self.num_test_episodes,
+                                      self.logger,
+                                      self.render)
+
+            log_end_of_epoch(self.logger, epoch, step_total, start_time,
+                             agent_update_performed, model_trained,
+                             rollout_length)
+
+        return final_return
 
 
 def log_end_of_epoch(logger, epoch, step_total, start_time,

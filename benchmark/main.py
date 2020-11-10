@@ -5,7 +5,7 @@ import gym
 import torch
 import d4rl  # noqa
 
-from benchmark.train import train
+from benchmark.train import Trainer
 from benchmark.utils.run_utils import setup_logger_kwargs
 
 if __name__ == '__main__':
@@ -50,26 +50,33 @@ if __name__ == '__main__':
 
     term_fn = None if len(args.term_fn) == 0 else args.term_fn
 
-    train(lambda: gym.make(args.env),
-          term_fn=term_fn,
-          sac_kwargs=dict(hidden_sizes=[args.hid]*args.l,
-                          gamma=args.gamma,
-                          pi_lr=args.agent_lr,
-                          q_lr=args.agent_lr),
-          model_kwargs=dict(type=args.model_type,
-                            n_networks=args.n_networks,
-                            hidden=[args.hid]*args.l),
-          seed=args.seed, epochs=args.epochs,
-          logger_kwargs=logger_kwargs, device=device,
-          init_steps=args.init_steps, random_steps=args.random_steps,
-          agent_batch_size=args.agent_batch_size,
-          use_model=args.use_model,
-          steps_per_epoch=args.steps_per_epoch,
-          agent_updates=args.agent_updates, model_rollouts=args.model_rollouts,
-          rollout_schedule=args.rollout_schedule,
-          train_model_every=args.train_model_every, model_lr=args.model_lr,
-          model_val_split=args.model_val_split,
-          model_batch_size=args.model_batch_size,
-          model_patience=args.model_patience,
-          num_test_episodes=args.num_test_episodes,
-          render=args.render)
+    trainer = Trainer(lambda: gym.make(args.env),
+                      term_fn=term_fn,
+                      sac_kwargs=dict(hidden_sizes=[args.hid]*args.l,
+                                      gamma=args.gamma,
+                                      pi_lr=args.agent_lr,
+                                      q_lr=args.agent_lr,
+                                      batch_size=args.agent_batch_size),
+                      model_kwargs=dict(type=args.model_type,
+                                        n_networks=args.n_networks,
+                                        hidden=[args.hid]*args.l),
+                      seed=args.seed,
+                      epochs=args.epochs,
+                      steps_per_epoch=args.steps_per_epoch,
+                      init_steps=args.init_steps,
+                      random_steps=args.random_steps,
+                      logger_kwargs=logger_kwargs,
+                      device=device,
+                      use_model=args.use_model,
+                      agent_updates_per_step=args.agent_updates,
+                      rollouts_per_step=args.rollouts_per_step,
+                      rollout_schedule=args.rollout_schedule,
+                      train_model_every=args.train_model_every,
+                      model_lr=args.model_lr,
+                      model_val_split=args.model_val_split,
+                      model_batch_size=args.model_batch_size,
+                      model_patience=args.model_patience,
+                      num_test_episodes=args.num_test_episodes,
+                      render=args.render)
+
+    trainer.train()

@@ -13,24 +13,25 @@ class SAC(nn.Module):
     # Based on https://spinningup.openai.com
 
     def __init__(self, observation_space, action_space, hidden_sizes=(256, 256),
-                 activation=nn.ReLU, pi_lr=3e-4, q_lr=3e-4, gamma=0.99, alpha=0.2,
-                 polyak=0.995, device='cpu'):
+                 activation=nn.ReLU, pi_lr=3e-4, q_lr=3e-4, gamma=0.99,
+                 alpha=0.2,
+                 polyak=0.995, batch_size=100, device='cpu'):
         '''
             gamma (float): Discount factor. (Always between 0 and 1.)
 
-            polyak (float): Interpolation factor in polyak averaging for target 
-                networks. Target networks are updated towards main networks 
+            polyak (float): Interpolation factor in polyak averaging for target
+                networks. Target networks are updated towards main networks
                 according to:
 
-                .. math:: \\theta_{\\text{targ}} \\leftarrow 
+                .. math:: \\theta_{\\text{targ}} \\leftarrow
                     \\rho \\theta_{\\text{targ}} + (1-\\rho) \\theta
 
-                where :math:`\\rho` is polyak. (Always between 0 and 1, usually 
+                where :math:`\\rho` is polyak. (Always between 0 and 1, usually
                 close to 1.)
 
             lr (float): Learning rate (used for both policy and value learning).
 
-            alpha (float): Entropy regularization coefficient. (Equivalent to 
+            alpha (float): Entropy regularization coefficient. (Equivalent to
                 inverse of reward scale in the original SAC paper.)
 
         '''
@@ -40,12 +41,14 @@ class SAC(nn.Module):
         self.gamma = gamma
         self.alpha = alpha
         self.polyak = polyak
+        self.batch_size = batch_size
         self.device = device
 
         obs_dim = observation_space.shape[0]
         act_dim = action_space.shape[0]
 
-        # TODO: Action limit for clamping: critically, assumes all dimensions share the same bound!
+        # TODO: Action limit for clamping: critically, assumes all dimensions
+        # share the same bound!
         act_limit = action_space.high[0]
 
         # build policy and value functions
@@ -69,12 +72,14 @@ class SAC(nn.Module):
 
         self.target = deepcopy(self)
 
-        # Freeze target networks with respect to optimizers (only update via polyak averaging)
+        # Freeze target networks with respect to optimizers (only update via
+        # polyak averaging)
         for p in self.target.parameters():
             p.requires_grad = False
 
     def compute_loss_q(self, data):
-        o, a, r, o2, d = data['obs'], data['act'], data['rew'], data['obs2'], data['done']
+        o, a, r, o2, d = data['obs'], data['act'], \
+            data['rew'], data['obs2'], data['done']
 
         q1 = self.q1(o, a)
         q2 = self.q2(o, a)
@@ -145,12 +150,20 @@ class SAC(nn.Module):
         # Finally, update target networks by polyak averaging.
         with torch.no_grad():
             for p, p_targ in zip(self.parameters(), self.target.parameters()):
-                # NB: We use an in-place operations "mul_", "add_" to update target
-                # params, as opposed to "mul" and "add", which would make new tensors.
+                # NB: We use an in-place operations "mul_", "add_" to
+                # update target params, as opposed to "mul" and "add", which
+                # would make new tensors.
                 p_targ.data.mul_(self.polyak)
                 p_targ.data.add_((1 - self.polyak) * p.data)
 
         return loss_q, q_info, loss_pi, pi_info
+
+    def multi_update(self, n_updates, buffer, logger):
+        for _ in range(n_updates):
+            batch = buffer.sample_batch(self.batch_size)
+            loss_q, q_info, loss_pi, pi_info = self.update(data=batch)
+            logger.store(LossQ=loss_q.item(), **q_info)
+            logger.store(LossPi=loss_pi.item(), **pi_info)
 
     def act(self, obs, deterministic=False):
         with torch.no_grad():
@@ -158,5 +171,7 @@ class SAC(nn.Module):
             return a.cpu().numpy()
 
     def get_action(self, o, deterministic=False):
-        return self.act(torch.as_tensor(o, dtype=torch.float32, device=self.device),
+        return self.act(torch.as_tensor(o,
+                                        dtype=torch.float32,
+                                        device=self.device),
                         deterministic)
