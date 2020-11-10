@@ -1,7 +1,6 @@
 from benchmark.utils.rollout_length_from_schedule import \
     get_rollout_length_from_schedule
 from benchmark.utils.virtual_rollouts import generate_virtual_rollout
-from benchmark.utils.train_environment_model import train_environment_model
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.evaluate_policy import test_agent
 import time
@@ -16,19 +15,28 @@ from benchmark.utils.replay_buffer import ReplayBuffer
 
 class Trainer():
 
-    def __init__(self, env_fn, term_fn=None, sac_kwargs=dict(),
+    def __init__(self,
+                 env_fn,
+                 term_fn=None,
+                 sac_kwargs=dict(),
                  model_kwargs=dict(),
                  seed=0,
-                 steps_per_epoch=4000, epochs=100, replay_size=int(1e6),
+                 epochs=100,
+                 steps_per_epoch=4000,
                  random_steps=10000,
-                 init_steps=1000, num_test_episodes=10, max_ep_len=1000,
+                 init_steps=1000,
                  agent_updates_per_step=1,
+                 num_test_episodes=10,
+                 max_ep_len=1000,
                  use_model=False,
-                 rollouts_per_step=10, rollout_schedule=[1, 1, 20, 100],
+                 rollouts_per_step=10,
+                 rollout_schedule=[1, 1, 20, 100],
                  train_model_every=250,
-                 model_batch_size=128, model_lr=1e-3, model_val_split=0.2,
-                 model_patience=3,
-                 logger_kwargs=dict(), save_freq=1, device='cpu', render=False):
+                 replay_size=int(1e6),
+                 logger_kwargs=dict(),
+                 save_freq=1,
+                 device='cpu',
+                 render=False):
         """
 
         Args:
@@ -42,8 +50,6 @@ class Trainer():
                 pairs) for the agent and the environment in each epoch.
 
             replay_size (int): Maximum length of replay buffer.
-
-            batch_size (int): Minibatch size for SGD.
 
             random_steps (int): Number of steps for uniform-random action
             selection, before running real policy. Helps exploration.
@@ -66,14 +72,6 @@ class Trainer():
             train_model_every (int): After how many steps the model should be
                 retrained.
 
-            model_batch_size (int): Batch size for training the environment
-                model.
-
-            model_lr (float): Learning rate for training the environment model.
-
-            model_val_split (float): Fraction of data to use as validation set
-                for training of environment model.
-
             agent_updates_per_step (int): The number of agent updates to
                 perform per environment step.
 
@@ -94,6 +92,9 @@ class Trainer():
 
         # Create SAC and environment model
         sac_kwargs.update({'device': device})
+        model_kwargs.update({'device': device})
+        self.sac_kwargs = sac_kwargs
+        self.model_kwargs = model_kwargs
         self.agent = SAC(self.env.observation_space,
                          self.env.action_space,
                          **sac_kwargs)
@@ -128,10 +129,6 @@ class Trainer():
         self.rollouts_per_step = rollouts_per_step
         self.rollout_schedule = rollout_schedule
         self.train_model_every = train_model_every
-        self.model_batch_size = model_batch_size
-        self.model_lr = model_lr
-        self.model_val_split = model_val_split
-        self.model_patience = model_patience
 
         self.num_test_episodes = num_test_episodes
         self.save_freq = save_freq
@@ -172,12 +169,9 @@ class Trainer():
                         step_total > self.init_steps and \
                         steps_since_model_training >= self.train_model_every:
 
-                    model_val_error = train_environment_model(
-                        self.env_model,
+                    model_val_error = self.env_model.train_to_convergence(
                         self.real_replay_buffer,
-                        self.model_lr, self.model_batch_size,
-                        self.model_val_split, patience=self.model_patience,
-                        train_term=(self.term_fn == None))
+                        self.model_kwargs)
 
                     model_trained = True
                     steps_since_model_training = 0

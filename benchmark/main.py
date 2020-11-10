@@ -25,7 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_model', type=str2bool, default=True)
     parser.add_argument('--model_type', type=str, default='deterministic')
     parser.add_argument('--n_networks', type=int, default=1)
-    parser.add_argument('--model_rollouts', type=int, default=100)
+    parser.add_argument('--rollouts_per_step', type=int, default=100)
     parser.add_argument('--rollout_schedule', nargs='+',
                         type=int, default=[1, 1, 20, 100])
     parser.add_argument('--train_model_every', type=int, default=250)
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_lr', type=float, default=1e-3)
     parser.add_argument('--model_val_split', type=float, default=0.2)
     parser.add_argument('--model_patience', type=int, default=20)
-    parser.add_argument('--agent_updates', type=int, default=10)
+    parser.add_argument('--agent_updates_per_step', type=int, default=1)
     parser.add_argument('--num_test_episodes', type=int, default=10)
     parser.add_argument('--exp_name', type=str, default='mbpo')
     parser.add_argument('--device', type=str, default='cuda')
@@ -59,7 +59,11 @@ if __name__ == '__main__':
                                       batch_size=args.agent_batch_size),
                       model_kwargs=dict(type=args.model_type,
                                         n_networks=args.n_networks,
-                                        hidden=[args.hid]*args.l),
+                                        hidden=[args.hid]*args.l,
+                                        lr=args.model_lr,
+                                        val_split=args.model_val_split,
+                                        batch_size=args.model_batch_size,
+                                        patience=args.model_patience),
                       seed=args.seed,
                       epochs=args.epochs,
                       steps_per_epoch=args.steps_per_epoch,

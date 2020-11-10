@@ -2,7 +2,6 @@ from benchmark.utils.load_dataset import load_dataset_from_env
 import gym
 import torch
 from benchmark.models.environment_model import EnvironmentModel
-from benchmark.utils.train_environment_model import train_environment_model
 import pytest
 
 
@@ -16,8 +15,10 @@ def test_train_deterministic_environment_model():
     model = EnvironmentModel(obs_dim, act_dim)
     model.to(device)
 
-    val_losses = train_environment_model(
-        model, buffer, val_split=0.2, patience=5, debug=True)
+    val_losses = model.train_to_convergence(buffer,
+                                            val_split=0.2,
+                                            patience=5,
+                                            debug=True)
 
     for val_loss in val_losses:
         assert val_loss < 0.3
@@ -30,11 +31,10 @@ def test_raise_error_if_data_not_enough_for_split_at_given_batch_size():
     with pytest.raises(ValueError):
         model = EnvironmentModel(obs_dim, act_dim)
 
-        train_environment_model(model,
-                                buffer,
-                                val_split=0.2,
-                                patience=10,
-                                debug=True)
+        model.train_to_convergence(buffer,
+                                   val_split=0.2,
+                                   patience=10,
+                                   debug=True)
 
 
 def test_train_probabilistic_model():
@@ -48,11 +48,10 @@ def test_train_probabilistic_model():
 
     model.to(device)
 
-    val_losses = train_environment_model(model,
-                                         buffer,
-                                         val_split=0.2,
-                                         patience=20,
-                                         debug=True)
+    val_losses = model.train_to_convergence(buffer,
+                                            val_split=0.2,
+                                            patience=20,
+                                            debug=True)
 
     for val_loss in val_losses:
         assert val_loss < 0.8
@@ -65,14 +64,13 @@ def test_train_deterministic_ensemble():
     env = gym.make('halfcheetah-random-v0')
     buffer, obs_dim, act_dim = load_dataset_from_env(env, buffer_device=device)
 
-    model = EnvironmentModel(obs_dim, act_dim, n_networks=5)
+    model = EnvironmentModel(obs_dim, act_dim, n_networks=2)
     model.to(device)
 
-    val_losses = train_environment_model(model,
-                                         buffer,
-                                         val_split=0.2,
-                                         patience=5,
-                                         debug=True)
+    val_losses = model.train_to_convergence(buffer,
+                                            val_split=0.2,
+                                            patience=5,
+                                            debug=True)
 
     for val_loss in val_losses:
         assert val_loss < 0.3
@@ -94,11 +92,10 @@ def test_train_probabilistic_ensemble():
 
     model.to(device)
 
-    val_losses = train_environment_model(model,
-                                         buffer,
-                                         val_split=0.2,
-                                         patience=20,
-                                         debug=True)
+    val_losses = model.train_to_convergence(buffer,
+                                            val_split=0.2,
+                                            patience=20,
+                                            debug=True)
 
     for val_loss in val_losses:
         assert val_loss < 0.8

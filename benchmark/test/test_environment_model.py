@@ -1,3 +1,4 @@
+from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.replay_buffer import ReplayBuffer
 from benchmark.utils.random_agent import RandomAgent
 from benchmark.utils.virtual_rollouts import generate_virtual_rollout
@@ -383,13 +384,8 @@ def test_deterministic_model_does_not_always_output_terminal():
 
     for i in range(500):
 
-        batch = real_buffer.sample_train_batch(256, 0)
-        x = torch.cat((batch['obs'], batch['act']), dim=1)
-        y = torch.cat((batch['obs2'],
-                       batch['rew'].unsqueeze(1)), dim=1)
-
-        x = x.to(device)
-        y = y.to(device)
+        x, y = get_x_y_from_batch(real_buffer.sample_train_batch(256, 0),
+                                  device)
 
         optim.zero_grad()
         loss = deterministic_loss(x, y, model)
@@ -436,13 +432,8 @@ def test_probabilistic_model_does_not_always_output_terminal():
 
     for i in range(500):
 
-        batch = real_buffer.sample_train_batch(256, 0)
-        x = torch.cat((batch['obs'], batch['act']), dim=1)
-        y = torch.cat((batch['obs2'],
-                       batch['rew'].unsqueeze(1)), dim=1)
-
-        x = x.to(device)
-        y = y.to(device)
+        x, y = get_x_y_from_batch(real_buffer.sample_train_batch(256, 0),
+                                  device)
 
         optim.zero_grad()
         loss = probabilistic_loss(x, y, model)
