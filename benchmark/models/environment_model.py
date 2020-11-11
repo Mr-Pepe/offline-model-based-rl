@@ -19,7 +19,8 @@ class EnvironmentModel(nn.Module):
                  act_dim,
                  hidden=[128, 128],
                  type='deterministic',
-                 n_networks=1):
+                 n_networks=1,
+                 device=''):
         """
             type (string): deterministic or probabilistic
 

@@ -76,10 +76,6 @@ if __name__ == '__main__':
                       rollouts_per_step=args.rollouts_per_step,
                       rollout_schedule=args.rollout_schedule,
                       train_model_every=args.train_model_every,
-                      model_lr=args.model_lr,
-                      model_val_split=args.model_val_split,
-                      model_batch_size=args.model_batch_size,
-                      model_patience=args.model_patience,
                       num_test_episodes=args.num_test_episodes,
                       render=args.render)
 

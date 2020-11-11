@@ -6,6 +6,7 @@ import torch
 import pytest
 
 
+@pytest.mark.medium
 def test_buffer_returns_percentage_of_terminal_states():
     env = gym.make('hopper-random-v0')
     dataset = d4rl.qlearning_dataset(env)
@@ -25,6 +26,7 @@ def test_buffer_returns_percentage_of_terminal_states():
         buffer.get_terminal_ratio(), dones.sum()/dones.size)
 
 
+@pytest.mark.medium
 def test_add_batch_to_buffer():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     env = gym.make('maze2d-open-v0')
@@ -49,6 +51,7 @@ def test_add_batch_to_buffer():
     assert buffer.ptr == 977851
 
 
+@pytest.mark.medium
 def test_store_batch_throws_error_if_buffer_not_empty():
     env = gym.make('maze2d-open-v0')
     dataset = d4rl.qlearning_dataset(env)
@@ -75,6 +78,7 @@ def test_store_batch_throws_error_if_buffer_not_empty():
                            next_observations, dones)
 
 
+@pytest.mark.medium
 def test_store_batch_throws_error_if_buffer_too_small():
     env = gym.make('maze2d-open-v0')
     dataset = d4rl.qlearning_dataset(env)
@@ -93,22 +97,24 @@ def test_store_batch_throws_error_if_buffer_too_small():
                            next_observations, dones)
 
 
+@pytest.mark.fast
 def test_buffer_returns_whether_it_contains_a_done_state():
-    buffer = ReplayBuffer(1, 1, 1000)
+    buffer = ReplayBuffer(1, 1, 100)
 
     assert not buffer.has_terminal_state()
 
-    for step in range(1000):
+    for step in range(100):
         buffer.store(0, 0, 0, 0, False)
 
     assert not buffer.has_terminal_state()
 
-    for step in range(1000):
+    for step in range(100):
         buffer.store(0, 0, 0, 0, True)
 
     assert buffer.has_terminal_state()
 
 
+@pytest.mark.fast
 def test_buffer_returns_batch_with_balanced_terminal_signal():
     buffer = ReplayBuffer(1, 1, 1000)
 

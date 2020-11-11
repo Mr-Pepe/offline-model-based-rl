@@ -8,6 +8,7 @@ logger_kwargs = setup_logger_kwargs('test_sac')
 env = 'HalfCheetah-v2'
 
 
+@pytest.mark.fast
 def test_total_steps_must_be_enough_to_perform_at_least_one_update():
     init_steps = 150
     n_steps_per_epoch = 100
@@ -17,11 +18,13 @@ def test_total_steps_must_be_enough_to_perform_at_least_one_update():
         trainer = Trainer(lambda: gym.make(env),
                           epochs=n_epochs,
                           steps_per_epoch=n_steps_per_epoch,
-                          init_steps=init_steps)
+                          init_steps=init_steps,
+                          replay_size=5)
 
         trainer.train()
 
 
+@pytest.mark.slow
 def test_sac_converges():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(1)

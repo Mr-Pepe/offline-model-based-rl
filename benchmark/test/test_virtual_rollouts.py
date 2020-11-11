@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import torch
 from benchmark.utils.virtual_rollouts import generate_virtual_rollout
 from benchmark.actors.sac import SAC
@@ -6,6 +7,7 @@ from benchmark.models.environment_model import EnvironmentModel
 import gym
 
 
+@pytest.mark.fast
 def test_generate_rollout_of_desired_length():
     env = gym.make('HalfCheetah-v2')
     observation_space = env.observation_space
@@ -32,6 +34,7 @@ def test_generate_rollout_of_desired_length():
     np.testing.assert_array_equal(virtual_rollout[0]['d'].shape, (1))
 
 
+@pytest.mark.fast
 def test_generate_rollout_stops_on_terminal():
     torch.manual_seed(0)
     env = gym.make('HalfCheetah-v2')

@@ -1,7 +1,9 @@
 from benchmark.utils.rollout_length_from_schedule import \
     get_rollout_length_from_schedule
+import pytest
 
 
+@pytest.mark.fast
 def test_rollout_length_from_schedule():
     schedule = [1, 15, 20, 100]
 

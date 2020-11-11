@@ -101,8 +101,9 @@ class ReplayBuffer:
         self.val_idxs = np.random.choice(
             np.arange(self.size), int(self.size*val_split), replace=False)
         self.train_idxs = np.setdiff1d(np.arange(self.size), self.val_idxs)
-        self.done_idx = self.done_buf.nonzero().view(-1)
-        self.not_done_idx = (self.done_buf == 0).nonzero().reshape((-1))
+        self.done_idx = torch.nonzero(self.done_buf, as_tuple=False).view(-1)
+        self.not_done_idx = torch.nonzero((self.done_buf == 0),
+                                          as_tuple=False).reshape((-1))
 
     def get_terminal_ratio(self):
         return self.done_buf.sum()/self.size

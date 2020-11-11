@@ -1,67 +1,60 @@
-from benchmark.utils.termination_functions import half_cheetah_termination_fn, hopper_termination_fn, walker2d_termination_fn
+from benchmark.utils.termination_functions import half_cheetah_termination_fn, \
+    hopper_termination_fn, walker2d_termination_fn
 import gym
 import torch
 import numpy as np
+import pytest
 
 
+def run_env(env, n_steps):
+    env.reset()
+
+    next_obss = []
+    dones = []
+
+    for step in range(n_steps):
+        next_obs, _, done, _ = env.step(env.action_space.sample())
+
+        next_obss.append(next_obs)
+        dones.append(done)
+
+        if done:
+            env.reset()
+
+    next_obss = torch.as_tensor(next_obss)
+    dones = torch.as_tensor(dones).reshape(-1, 1)
+
+    return next_obss, dones
+
+
+@pytest.mark.fast
 def test_hopper_termination_function():
-    env = gym.make('Hopper-v2')
-    env.reset()
+    next_observations, dones = run_env(gym.make('Hopper-v2'), 100)
 
-    next_obss = []
-    dones = []
+    assert dones.sum() > 0
 
-    for step in range(1000):
-        next_obs, _, done, _ = env.step(env.action_space.sample())
-
-        next_obss.append(next_obs)
-        dones.append(done)
-
-        if done:
-            env.reset()
-
-    next_obss = torch.as_tensor(next_obss)
-    dones = torch.as_tensor(dones).reshape(-1, 1)
-
-    np.testing.assert_array_equal(dones, hopper_termination_fn(next_obss))
+    np.testing.assert_array_equal(dones,
+                                  hopper_termination_fn(next_observations))
 
 
-def test_half_cheetah_termination_function_always_returns_false():
-    env = gym.make('HalfCheetah-v2')
-    env.reset()
+@pytest.mark.fast
+def test_half_cheetah_termination_function():
+    next_observations, dones = run_env(gym.make('HalfCheetah-v2'), 100)
 
-    next_obss = []
+    # Halg cheetah does not generate terminal states
+    assert dones.sum() == 0
 
-    for step in range(1000):
-        next_obs, _, done, _ = env.step(env.action_space.sample())
-
-        next_obss.append(next_obs)
-
-        if done:
-            env.reset()
-
-    next_obss = torch.as_tensor(next_obss)
-    for done in half_cheetah_termination_fn(next_obss):
-        assert not done
+    np.testing.assert_array_equal(dones,
+                                  half_cheetah_termination_fn(
+                                      next_observations))
 
 
-def test_walker2d_termination_function_always_returns_false():
-    env = gym.make('Walker2d-v2')
-    env.reset()
+@pytest.mark.fast
+def test_walker2d_termination_function():
 
-    next_obss = []
-    dones = []
+    next_observations, dones = run_env(gym.make('Walker2d-v2'), 100)
 
-    for step in range(1000):
-        next_obs, _, done, _ = env.step(env.action_space.sample())
+    assert dones.sum() > 0
 
-        next_obss.append(next_obs)
-        dones.append(done)
-
-        if done:
-            env.reset()
-
-    next_obss = torch.as_tensor(next_obss)
-    dones = torch.as_tensor(dones).reshape(-1, 1)
-
-    np.testing.assert_array_equal(dones, walker2d_termination_fn(next_obss))
+    np.testing.assert_array_equal(dones,
+                                  walker2d_termination_fn(next_observations))

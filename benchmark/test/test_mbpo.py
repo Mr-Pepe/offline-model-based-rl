@@ -2,8 +2,10 @@ import gym
 import torch
 from benchmark.train import Trainer
 from benchmark.utils.run_utils import setup_logger_kwargs
+import pytest
 
 
+@pytest.mark.slow
 def test_mbpo_with_single_deterministic_model_converges():
     logger_kwargs = setup_logger_kwargs('test_mbpo')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

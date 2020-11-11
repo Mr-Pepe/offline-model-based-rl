@@ -16,16 +16,20 @@ import gym
 import numpy as np
 from math import pi as PI
 
+gym.logger.set_level(40)
 
+
+@pytest.mark.fast
 def test_is_nn_module():
     assert issubclass(EnvironmentModel, nn.Module)
 
 
+@pytest.mark.fast
 def test_takes_state_and_action_as_input_and_outputs_state_reward_done():
     obs_dim = 5
     act_dim = 6
 
-    model = EnvironmentModel(obs_dim, act_dim)
+    model = EnvironmentModel(obs_dim, act_dim, [2, 2])
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
@@ -34,6 +38,7 @@ def test_takes_state_and_action_as_input_and_outputs_state_reward_done():
     np.testing.assert_array_equal(output.shape, (3, obs_dim+2))
 
 
+@pytest.mark.medium
 def test_single_deterministic_network_overfits_on_single_sample():
     torch.manual_seed(0)
     model = EnvironmentModel(1, 1)
@@ -50,14 +55,15 @@ def test_single_deterministic_network_overfits_on_single_sample():
     for i in range(1000):
         optim.zero_grad()
         y_pred, _, _, _, _ = model(x)
-        loss = criterion(y_pred[:, :-1], y[:-1])
+        loss = criterion(y_pred[:, :-1].view(-1), y[:-1])
         print("Loss: {}".format(loss))
         loss.backward()
         optim.step()
 
-    assert criterion(y[:-1], y_pred[:, :-1]).item() < 2e-5
+    assert criterion(y[:-1], y_pred[:, :-1].view(-1)).item() < 2e-5
 
 
+@pytest.mark.medium
 def test_single_deterministic_network_overfits_on_batch():
     model = EnvironmentModel(obs_dim=3, act_dim=4)
 
@@ -81,6 +87,7 @@ def test_single_deterministic_network_overfits_on_batch():
     assert criterion(y[:, :-1], y_pred[:, :-1]).item() < 1e-5
 
 
+@pytest.mark.medium
 def test_deterministic_model_trains_on_offline_data():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -91,8 +98,7 @@ def test_deterministic_model_trains_on_offline_data():
     rewards = dataset['rewards'].reshape(-1, 1)
     dones = dataset['terminals'].reshape(-1, 1)
 
-    model = EnvironmentModel(
-        observations.shape[1], actions.shape[1])
+    model = EnvironmentModel(observations.shape[1], actions.shape[1])
 
     model.to(device)
 
@@ -136,11 +142,12 @@ def test_deterministic_model_trains_on_offline_data():
     assert losses[-1] < 1
 
 
+@pytest.mark.fast
 def test_probabilistic_model_returns_different_results_for_same_input():
     obs_dim = 5
     act_dim = 6
 
-    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
+    model = EnvironmentModel(obs_dim, act_dim, [2, 2], type='probabilistic')
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
@@ -153,11 +160,13 @@ def test_probabilistic_model_returns_different_results_for_same_input():
         output2.detach())
 
 
+@pytest.mark.fast
 def test_raises_error_if_type_unknown():
     with pytest.raises(ValueError):
-        EnvironmentModel(1, 2, type="asdasd")
+        EnvironmentModel(1, 2, [2, 2], type="asdasd")
 
 
+@pytest.mark.medium
 def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -220,6 +229,7 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
         plt.show()
 
 
+@pytest.mark.fast
 def test_deterministic_ensemble_gives_different_predictions_per_model():
     obs_dim = 5
     act_dim = 6
@@ -248,6 +258,7 @@ def test_deterministic_ensemble_gives_different_predictions_per_model():
         output3.detach())
 
 
+@pytest.mark.medium
 def test_deterministic_ensemble_overfits_on_batch():
     n_networks = 5
     torch.manual_seed(0)
@@ -282,13 +293,14 @@ def test_deterministic_ensemble_overfits_on_batch():
         assert losses[i_network] < 2e-5
 
 
+@pytest.mark.fast
 def test_model_returns_prediction_of_random_network_if_not_specified():
     obs_dim = 5
     act_dim = 6
 
     torch.manual_seed(0)
 
-    model = EnvironmentModel(obs_dim, act_dim, n_networks=500)
+    model = EnvironmentModel(obs_dim, act_dim, n_networks=40)
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
@@ -301,26 +313,28 @@ def test_model_returns_prediction_of_random_network_if_not_specified():
         output2)
 
 
+@pytest.mark.fast
 def test_model_returns_same_output_if_network_specified():
     obs_dim = 5
     act_dim = 6
 
-    model = EnvironmentModel(obs_dim, act_dim, n_networks=100)
+    model = EnvironmentModel(obs_dim, act_dim, n_networks=10)
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output1 = model.get_prediction(input, i_network=30)
-    output2 = model.get_prediction(input, i_network=30)
+    output1 = model.get_prediction(input, i_network=5)
+    output2 = model.get_prediction(input, i_network=5)
 
     np.testing.assert_array_equal(output1, output2)
 
 
+@pytest.mark.fast
 def test_deterministic_model_returns_binary_done_signal():
     obs_dim = 5
     act_dim = 6
     torch.manual_seed(2)
 
-    model = EnvironmentModel(obs_dim, act_dim, n_networks=500)
+    model = EnvironmentModel(obs_dim, act_dim)
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
@@ -330,13 +344,13 @@ def test_deterministic_model_returns_binary_done_signal():
         assert (value == 0 or value == 1)
 
 
+@pytest.mark.fast
 def test_probabilistic_model_returns_binary_done_signal():
     obs_dim = 5
     act_dim = 6
     torch.manual_seed(0)
 
-    model = EnvironmentModel(obs_dim, act_dim, n_networks=500,
-                             type='probabilistic')
+    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
@@ -348,6 +362,7 @@ def test_probabilistic_model_returns_binary_done_signal():
         assert (value == 0 or value == 1)
 
 
+@pytest.mark.fast
 def test_throws_error_if_termination_function_unknown():
     model = EnvironmentModel(1, 1)
 
@@ -357,12 +372,13 @@ def test_throws_error_if_termination_function_unknown():
         model.get_prediction(x, term_fn='asd')
 
 
+@pytest.mark.fast
 def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
     obs_dim = 5
     act_dim = 6
     torch.manual_seed(2)
 
-    model = EnvironmentModel(obs_dim, act_dim, n_networks=500)
+    model = EnvironmentModel(obs_dim, act_dim)
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
@@ -372,6 +388,7 @@ def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
         assert (value == 0 or value == 1)
 
 
+@pytest.mark.medium
 def test_deterministic_model_does_not_always_output_terminal():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
@@ -420,6 +437,7 @@ def test_deterministic_model_does_not_always_output_terminal():
     assert terminal_ratio > 0
 
 
+@pytest.mark.medium
 def test_probabilistic_model_does_not_always_output_terminal():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
