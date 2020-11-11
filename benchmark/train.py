@@ -1,3 +1,4 @@
+from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.rollout_length_from_schedule import \
     get_rollout_length_from_schedule
 from benchmark.utils.virtual_rollouts import generate_virtual_rollout
@@ -5,7 +6,6 @@ from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.evaluate_policy import test_agent
 import time
 
-import numpy as np
 import torch
 
 from benchmark.actors.sac import SAC
@@ -33,6 +33,7 @@ class Trainer():
                  rollout_schedule=[1, 1, 20, 100],
                  train_model_every=250,
                  replay_size=int(1e6),
+                 pretrain_epochs=0,
                  logger_kwargs=dict(),
                  save_freq=1,
                  device='cpu',
@@ -81,7 +82,6 @@ class Trainer():
         """
 
         torch.manual_seed(seed)
-        np.random.seed(seed)
 
         self.logger = EpochLogger(**logger_kwargs)
         self.logger.save_config(locals())
@@ -105,10 +105,15 @@ class Trainer():
 
         self.logger.setup_pytorch_saver(self.agent)
 
-        self.real_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
-                                               act_dim=act_dim,
-                                               size=replay_size,
-                                               device=device)
+        if pretrain_epochs > 0:
+            self.real_replay_buffer, _, _ = load_dataset_from_env(
+                self.env,
+                buffer_size=replay_size)
+        else:
+            self.real_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
+                                                   act_dim=act_dim,
+                                                   size=replay_size,
+                                                   device=device)
 
         self.virtual_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
                                                   act_dim=act_dim,
@@ -120,8 +125,10 @@ class Trainer():
         self.steps_per_epoch = steps_per_epoch
         self.init_steps = init_steps
         self.random_steps = random_steps
-        self.total_steps = steps_per_epoch * epochs
+        self.total_steps = steps_per_epoch * epochs + \
+            steps_per_epoch * pretrain_epochs
         self.max_ep_len = min(max_ep_len, self.total_steps)
+        self.pretrain_epochs = pretrain_epochs
 
         self.agent_updates_per_step = agent_updates_per_step
 
@@ -136,20 +143,20 @@ class Trainer():
 
     def train(self):
 
-        final_return = None
-
         start_time = time.time()
         o, ep_ret, ep_len = self.env.reset(), 0, 0
 
         if self.total_steps < self.init_steps:
             raise ValueError(
-                """Number of total steps too low. Increase number of epochs or
-                steps per epoch.""")
+                """Number of total steps lower than init steps.
+                Increase number of epochs or steps per epoch.""")
 
-        step_total = 0
+        step_total = -self.pretrain_epochs*self.steps_per_epoch
         steps_since_model_training = 1e10
 
-        for epoch in range(1, self.epochs + 1):
+        test_performances = []
+
+        for epoch in range(-self.pretrain_epochs+1, self.epochs + 1):
 
             agent_update_performed = False
             model_trained = False
@@ -246,18 +253,20 @@ class Trainer():
                 self.logger.save_state({'env': self.env}, None)
 
             # Test the performance of the deterministic version of the agent.
-            final_return = test_agent(self.test_env,
-                                      self.agent,
-                                      self.max_ep_len,
-                                      self.num_test_episodes,
-                                      self.logger,
-                                      self.render)
+            test_return = test_agent(self.test_env,
+                                     self.agent,
+                                     self.max_ep_len,
+                                     self.num_test_episodes,
+                                     self.logger,
+                                     self.render)
+
+            test_performances.append([epoch, test_return])
 
             log_end_of_epoch(self.logger, epoch, step_total, start_time,
                              agent_update_performed, model_trained,
                              rollout_length)
 
-        return final_return
+        return torch.as_tensor(test_performances, dtype=torch.float32)
 
 
 def log_end_of_epoch(logger, epoch, step_total, start_time,

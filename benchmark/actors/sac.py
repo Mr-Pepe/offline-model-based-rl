@@ -12,7 +12,7 @@ from benchmark.models.squashed_gaussian_mlp_actor import \
 class SAC(nn.Module):
     # Based on https://spinningup.openai.com
 
-    def __init__(self, observation_space, action_space, hidden_sizes=(256, 256),
+    def __init__(self, observation_space, action_space, hidden=(256, 256),
                  activation=nn.ReLU, pi_lr=3e-4, q_lr=3e-4, gamma=0.99,
                  alpha=0.2,
                  polyak=0.995, batch_size=100, device='cpu'):
@@ -53,9 +53,9 @@ class SAC(nn.Module):
 
         # build policy and value functions
         self.pi = SquashedGaussianMLPActor(
-            obs_dim, act_dim, hidden_sizes, activation, act_limit)
-        self.q1 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
-        self.q2 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation)
+            obs_dim, act_dim, hidden, activation, act_limit)
+        self.q1 = MLPQFunction(obs_dim, act_dim, hidden, activation)
+        self.q2 = MLPQFunction(obs_dim, act_dim, hidden, activation)
 
         # List of parameters for both Q-networks (save this for convenience)
         self.q_params = itertools.chain(

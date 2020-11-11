@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     trainer = Trainer(lambda: gym.make(args.env),
                       term_fn=term_fn,
-                      sac_kwargs=dict(hidden_sizes=[args.hid]*args.l,
+                      sac_kwargs=dict(hidden=[args.hid]*args.l,
                                       gamma=args.gamma,
                                       pi_lr=args.agent_lr,
                                       q_lr=args.agent_lr,

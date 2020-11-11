@@ -30,7 +30,7 @@ def test_sac_converges():
     torch.manual_seed(1)
 
     trainer = Trainer(lambda: gym.make(env),
-                      sac_kwargs=dict(hidden_sizes=[256, 256, 256, 256],
+                      sac_kwargs=dict(hidden=[256, 256, 256, 256],
                                       batch_size=256),
                       random_steps=10000,
                       init_steps=1000,
