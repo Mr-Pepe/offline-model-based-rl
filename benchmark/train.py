@@ -194,7 +194,7 @@ class Trainer():
                                                     self.steps_per_epoch),
                       end='\r')
 
-                if step_total < self.random_steps:
+                if step_total < self.random_steps and self.pretrain_epochs < 1:
                     a = self.env.action_space.sample()
                     actions_this_step[Actions.RANDOM_ACTION] = 1
                 else:
