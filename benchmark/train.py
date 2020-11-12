@@ -1,3 +1,4 @@
+from benchmark.utils.actions import Actions
 from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.rollout_length_from_schedule import \
     get_rollout_length_from_schedule
@@ -67,7 +68,7 @@ class Trainer():
 
             use_model (bool): Whether to augment data with virtual rollouts.
 
-            model_rollouts (int): The number of model rollouts to perform per
+            rollouts_per_step (int): The number of model rollouts to perform per
                 environment step.
 
             train_model_every (int): After how many steps the model should be
@@ -155,6 +156,7 @@ class Trainer():
         steps_since_model_training = 1e10
 
         test_performances = []
+        action_log = []
 
         for epoch in range(-self.pretrain_epochs+1, self.epochs + 1):
 
@@ -167,22 +169,23 @@ class Trainer():
 
             print("Epoch {}\tRollout length: {}".format(epoch, rollout_length))
 
-            # Main loop: collect experience in env and update/log each epoch
             for step_epoch in range(self.steps_per_epoch):
+                actions_this_step = [0 for i in range(len(Actions))]
 
                 # Train environment model on real experience
                 if self.use_model and \
                         self.real_replay_buffer.size > 0 and \
-                        step_total > self.init_steps and \
+                        step_total >= self.init_steps and \
                         steps_since_model_training >= self.train_model_every:
 
                     model_val_error = self.env_model.train_to_convergence(
                         self.real_replay_buffer,
-                        self.model_kwargs)
+                        **self.model_kwargs)
 
                     model_trained = True
                     steps_since_model_training = 0
                     self.logger.store(LossEnvModel=model_val_error)
+                    actions_this_step[Actions.TRAIN_MODEL] = 1
                     print('')
                     print('Environment model error: {}'.format(model_val_error))
 
@@ -191,10 +194,11 @@ class Trainer():
                                                     self.steps_per_epoch),
                       end='\r')
 
-                if step_total > self.random_steps:
-                    a = self.agent.get_action(o)
-                else:
+                if step_total < self.random_steps:
                     a = self.env.action_space.sample()
+                    actions_this_step[Actions.RANDOM_ACTION] = 1
+                else:
+                    a = self.agent.get_action(o)
 
                 o2, r, d, _ = self.env.step(a)
                 ep_ret += r
@@ -214,11 +218,9 @@ class Trainer():
                     o, ep_ret, ep_len = self.env.reset(), 0, 0
 
                 # Update agent
-                if step_total >= self.init_steps:
-                    agent_update_performed = True
-
+                if step_total >= self.init_steps or self.pretrain_epochs > 0:
                     if self.use_model:
-                        for model_rollout in range(self.model_rollouts):
+                        for _ in range(self.rollouts_per_step):
                             start_observation = self \
                                 .real_replay_buffer \
                                 .sample_batch(1)['obs']
@@ -237,13 +239,18 @@ class Trainer():
                         self.agent.multi_update(self.agent_updates_per_step,
                                                 self.virtual_replay_buffer,
                                                 self.logger)
+
+                        actions_this_step[Actions.GENERATE_ROLLOUTS] = 1
                     else:
                         self.agent.multi_update(self.agent_updates_per_step,
                                                 self.real_replay_buffer,
                                                 self.logger)
 
-                steps_since_model_training += 1
+                    agent_update_performed = True
+                    actions_this_step[Actions.UPDATE_AGENT] = 1
 
+                steps_since_model_training += 1
+                action_log.append(actions_this_step)
                 step_total += 1
 
             print('')
@@ -266,7 +273,8 @@ class Trainer():
                              agent_update_performed, model_trained,
                              rollout_length)
 
-        return torch.as_tensor(test_performances, dtype=torch.float32)
+        return torch.as_tensor(test_performances, dtype=torch.float32), \
+            torch.as_tensor(action_log, dtype=torch.float32)
 
 
 def log_end_of_epoch(logger, epoch, step_total, start_time,

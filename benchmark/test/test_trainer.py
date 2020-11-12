@@ -1,3 +1,4 @@
+from benchmark.utils.actions import Actions
 import gym
 from benchmark.train import Trainer
 import pytest
@@ -21,39 +22,91 @@ def test_replay_buffer_is_filled_for_offline_training():
 
 
 @pytest.mark.fast
-def test_training_returns_test_performance_for_online_training():
+def test_actions_for_online_model_free_training():
+    epochs = 3
+    steps_per_epoch = 50
+    total_steps = epochs*steps_per_epoch
+    init_steps = 100
+    random_steps = 50
+
     trainer = Trainer(lambda: gym.make('maze2d-open-dense-v0'),
-                      epochs=3,
+                      epochs=epochs,
                       sac_kwargs=dict(hidden=[32, 32, 32],
                                       batch_size=32),
-                      steps_per_epoch=50,
+                      steps_per_epoch=steps_per_epoch,
                       max_ep_len=30,
-                      init_steps=100)
+                      init_steps=init_steps,
+                      random_steps=random_steps
+                      )
 
-    test_performances = trainer.train()
+    test_performances, action_log = trainer.train()
 
-    np.testing.assert_array_equal(test_performances.shape, (3, 2))
+    np.testing.assert_array_equal(test_performances.shape, (epochs, 2))
 
     for epoch, performance in enumerate(test_performances):
         assert performance[0] == epoch+1
         assert performance[1] != 0
 
+    np.testing.assert_array_equal(action_log.shape,
+                                  (total_steps, len(Actions)))
 
+    np.testing.assert_array_equal(action_log[:, Actions.TRAIN_MODEL],
+                                  [0]*total_steps)
+    np.testing.assert_array_equal(action_log[:, Actions.UPDATE_AGENT],
+                                  [0]*init_steps + [1]*(total_steps-init_steps))
+    np.testing.assert_array_equal(action_log[:, Actions.RANDOM_ACTION],
+                                  [1]*random_steps +
+                                  [0]*(total_steps-random_steps))
+    np.testing.assert_array_equal(action_log[:, Actions.GENERATE_ROLLOUTS],
+                                  [0]*total_steps)
+
+
+@pytest.mark.current
 @pytest.mark.fast
-def test_trainer_return_test_performances_for_offline_training():
+def test_actions_for_online_model_based_training():
+    epochs = 5
+    steps_per_epoch = 100
+    total_steps = epochs*steps_per_epoch
+    init_steps = 300
+    random_steps = 50
+    train_model_every = 50
+
     trainer = Trainer(lambda: gym.make('maze2d-open-dense-v0'),
-                      epochs=0,
-                      pretrain_epochs=20,
+                      epochs=epochs,
                       sac_kwargs=dict(hidden=[32, 32, 32],
                                       batch_size=32),
-                      steps_per_epoch=50,
+                      model_kwargs=dict(hidden=[32, 32],
+                                        batch_size=32,
+                                        patience=1),
+                      use_model=True,
+                      train_model_every=train_model_every,
+                      steps_per_epoch=steps_per_epoch,
                       max_ep_len=30,
-                      init_steps=100)
+                      init_steps=init_steps,
+                      random_steps=random_steps
+                      )
 
-    test_performances = trainer.train()
+    test_performances, action_log = trainer.train()
 
-    np.testing.assert_array_equal(test_performances.shape, (20, 2))
+    np.testing.assert_array_equal(test_performances.shape, (epochs, 2))
 
     for epoch, performance in enumerate(test_performances):
-        assert performance[0] == epoch - 20 + 1
+        assert performance[0] == epoch+1
         assert performance[1] != 0
+
+    np.testing.assert_array_equal(action_log.shape,
+                                  (total_steps, len(Actions)))
+
+    np.testing.assert_array_equal(action_log[:, Actions.TRAIN_MODEL],
+                                  [0]*(init_steps) + [1] +
+                                  ([0]*(train_model_every-1) + [1]) * 3 +
+                                  [0]*(total_steps - init_steps -
+                                       3*train_model_every - 1))
+    np.testing.assert_array_equal(action_log[:, Actions.UPDATE_AGENT],
+                                  [0]*init_steps + [1]*(total_steps-init_steps))
+    np.testing.assert_array_equal(action_log[:, Actions.RANDOM_ACTION],
+                                  [1]*random_steps +
+                                  [0]*(total_steps-random_steps))
+    np.testing.assert_array_equal(action_log[:, Actions.GENERATE_ROLLOUTS],
+                                  [0]*init_steps + [1]*(total_steps-init_steps))
+
