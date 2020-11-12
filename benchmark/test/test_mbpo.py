@@ -13,15 +13,15 @@ def test_mbpo_with_single_deterministic_model_converges():
     trainer = Trainer(lambda: gym.make('Hopper-v2'),
                       term_fn='hopper',
                       steps_per_epoch=1000,
+                      model_kwargs=dict(batch_size=256),
+                      init_steps=1300,
                       random_steps=1000,
                       epochs=20,
                       use_model=True,
-                      model_rollouts=1,
+                      rollouts_per_step=1,
                       logger_kwargs=logger_kwargs,
                       device=device)
 
-    final_return = trainer.train()
+    final_return, _ = trainer.train()
 
-    assert final_return
-
-    assert final_return > 200
+    assert final_return[-1, -1] > 200

@@ -40,8 +40,6 @@ def test_sac_converges():
                       logger_kwargs=logger_kwargs,
                       device=device)
 
-    final_return = trainer.train()
+    final_return, _ = trainer.train()
 
-    assert final_return
-
-    assert final_return > 500
+    assert final_return[-1, -1] > 500
