@@ -1,3 +1,4 @@
+from benchmark.utils.model_needs_training import model_needs_training
 from benchmark.utils.actions import Actions
 from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.rollout_length_from_schedule import \
@@ -158,10 +159,13 @@ class Trainer():
         test_performances = []
         action_log = []
 
+        model_trained_at_all = False
+
         for epoch in range(-self.pretrain_epochs+1, self.epochs + 1):
 
             agent_update_performed = False
-            model_trained = False
+            model_trained_this_epoch = False
+            episode_finished = False
 
             rollout_length = get_rollout_length_from_schedule(
                 self.rollout_schedule,
@@ -173,16 +177,17 @@ class Trainer():
                 actions_this_step = [0 for i in range(len(Actions))]
 
                 # Train environment model on real experience
-                if self.use_model and \
-                        self.real_replay_buffer.size > 0 and \
-                        step_total >= self.init_steps and \
-                        steps_since_model_training >= self.train_model_every:
+                if model_needs_training(step_total, self.use_model,
+                                        self.real_replay_buffer.size, self.init_steps,
+                                        steps_since_model_training,
+                                        self.train_model_every, model_trained_at_all):
 
                     model_val_error = self.env_model.train_to_convergence(
                         self.real_replay_buffer,
                         **self.model_kwargs)
 
-                    model_trained = True
+                    model_trained_at_all = True
+                    model_trained_this_epoch = True
                     steps_since_model_training = 0
                     self.logger.store(LossEnvModel=model_val_error)
                     actions_this_step[Actions.TRAIN_MODEL] = 1
@@ -194,28 +199,34 @@ class Trainer():
                                                     self.steps_per_epoch),
                       end='\r')
 
-                if step_total < self.random_steps and self.pretrain_epochs < 1:
-                    a = self.env.action_space.sample()
-                    actions_this_step[Actions.RANDOM_ACTION] = 1
-                else:
-                    a = self.agent.get_action(o)
+                if epoch > 0:
+                    if step_total < self.random_steps and \
+                            self.pretrain_epochs == 0:
+                        a = self.env.action_space.sample()
+                        actions_this_step[Actions.RANDOM_ACTION] = 1
+                    else:
+                        a = self.agent.get_action(o)
 
-                o2, r, d, _ = self.env.step(a)
-                ep_ret += r
-                ep_len += 1
+                    o2, r, d, _ = self.env.step(a)
+                    ep_ret += r
+                    ep_len += 1
 
-                # Ignore the "done" signal if it comes from hitting the time
-                # horizon (that is, when it's an artificial terminal signal
-                # that isn't based on the agent's state)
-                d = False if ep_len == self.max_ep_len else d
+                    # Ignore the "done" signal if it comes from hitting the time
+                    # horizon (that is, when it's an artificial terminal signal
+                    # that isn't based on the agent's state)
+                    d = False if ep_len == self.max_ep_len else d
 
-                self.real_replay_buffer.store(o, a, r, o2, d)
-                o = o2
+                    self.real_replay_buffer.store(o, a, r, o2, d)
+                    o = o2
 
-                # End of trajectory handling
-                if d or (ep_len == self.max_ep_len):
-                    self.logger.store(EpRet=ep_ret, EpLen=ep_len)
-                    o, ep_ret, ep_len = self.env.reset(), 0, 0
+                    # End of trajectory handling
+                    if d or (ep_len == self.max_ep_len):
+                        episode_finished = True
+                        self.logger.store(EpRet=ep_ret, EpLen=ep_len)
+                        o, ep_ret, ep_len = self.env.reset(), 0, 0
+
+                    steps_since_model_training += 1
+                    actions_this_step[Actions.INTERACT_WITH_ENV] = 1
 
                 # Update agent
                 if step_total >= self.init_steps or self.pretrain_epochs > 0:
@@ -249,7 +260,6 @@ class Trainer():
                     agent_update_performed = True
                     actions_this_step[Actions.UPDATE_AGENT] = 1
 
-                steps_since_model_training += 1
                 action_log.append(actions_this_step)
                 step_total += 1
 
@@ -270,19 +280,24 @@ class Trainer():
             test_performances.append([epoch, test_return])
 
             log_end_of_epoch(self.logger, epoch, step_total, start_time,
-                             agent_update_performed, model_trained,
-                             rollout_length)
+                             agent_update_performed, model_trained_this_epoch,
+                             rollout_length, episode_finished)
 
         return torch.as_tensor(test_performances, dtype=torch.float32), \
             torch.as_tensor(action_log, dtype=torch.float32)
 
 
 def log_end_of_epoch(logger, epoch, step_total, start_time,
-                     agent_update_performed, model_trained, rollout_length):
+                     agent_update_performed, model_trained, rollout_length,
+                     episode_finished):
 
     logger.log_tabular('Epoch', epoch)
 
     logger.log_tabular('RolloutLength', rollout_length)
+
+    if not episode_finished:
+        logger.store(EpRet=0)
+        logger.store(EpLen=0)
 
     logger.log_tabular('EpRet', with_min_and_max=True)
 

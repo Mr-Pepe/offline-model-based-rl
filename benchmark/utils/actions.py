@@ -6,3 +6,4 @@ class Actions(IntEnum):
     UPDATE_AGENT = 1
     RANDOM_ACTION = 2
     GENERATE_ROLLOUTS = 3
+    INTERACT_WITH_ENV = 4
