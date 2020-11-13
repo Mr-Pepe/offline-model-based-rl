@@ -1,0 +1,30 @@
+python main.py \
+    --env halfcheetah-random-v0 \
+    --hid 200 \
+    --l 4 \
+    --gamma 0.99 \
+    --seed 0 \
+    --epochs 125 \
+    --pretrain_epochs 125 \
+    --steps_per_epoch 1000 \
+    --init_steps 0 \
+    --random_steps 0 \
+    --agent_updates_per_step 1 \
+    --agent_batch_size 256 \
+    --agent_lr 3e-4 \
+    --use_model True \
+    --model_type probabilistic \
+    --n_networks 7 \
+    --model_batch_size 256 \
+    --model_lr 1e-3 \
+    --model_val_split 0.2 \
+    --model_patience 20 \
+    --rollouts_per_step 1 \
+    --rollout_schedule 5 5 20 100 \
+    --train_model_every 250 \
+    --num_test_episodes 10 \
+    --exp_name half_cheetah_mbpo_offline_random \
+    --datestamp False \
+    --log_dir "" \
+    --device cuda \
+    --render False
