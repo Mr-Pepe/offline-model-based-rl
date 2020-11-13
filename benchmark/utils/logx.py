@@ -18,7 +18,7 @@ import os
 import warnings
 from benchmark.utils.mpi_tools import proc_id, mpi_statistics_scalar
 from benchmark.utils.serialization_utils import convert_json
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 color2num = dict(
     gray=30,
@@ -107,7 +107,7 @@ class Logger:
         if proc_id() == 0:
             print(colorize(msg, color, bold=True))
 
-    def log_tabular(self, key, val, x_tick=0):
+    def log_tabular(self, key, val):
         """
         Log a value of some diagnostic.
 
@@ -126,7 +126,6 @@ class Logger:
             ("You already set %s this iteration. Maybe you forgot \
                 to call dump_tabular()" % key)
         self.log_current_row[key] = val
-        self.tensorboard_writer.add_scalar(key, val, x_tick)
 
     def save_config(self, config):
         """
@@ -315,22 +314,51 @@ class EpochLogger(Logger):
             average_only (bool): If true, do not log the standard deviation
                 of the diagnostic over the epoch.
         """
+        plot_name = key
+
+        for prefix in ['EpLen', 'EpRet']:
+            if prefix in key:
+                plot_name = 'Performance/' + key
+
+        for prefix in ['LossPi', 'LossQ', 'LogPi', 'Vals']:
+            if prefix in key:
+                plot_name = 'Agent/' + key
+
+        for prefix in ['EnvModel', 'RolloutLength']:
+            if prefix in key:
+                plot_name = 'Model/' + key
+
+        for prefix in ['Interacts', 'Time']:
+            if prefix in key:
+                plot_name = 'RunMetrics/' + key
+
+        scalars = dict()
+
         if val is not None:
-            super().log_tabular(key, val=val, x_tick=x_tick)
+            super().log_tabular(key, val=val)
+            scalars.update({key: val})
         else:
             v = self.epoch_dict[key]
             vals = np.concatenate(v) if isinstance(
                 v[0], np.ndarray) and len(v[0].shape) > 0 else v
             stats = mpi_statistics_scalar(
                 vals, with_min_and_max=with_min_and_max)
-            super().log_tabular(
-                key if average_only else 'Average' + key, val=stats[0],
-                x_tick=x_tick)
+
+            super().log_tabular(key if average_only else 'Average' + key,
+                                val=stats[0])
+            scalars.update({'Average' + key: stats[0]})
+
             if not(average_only):
-                super().log_tabular('Std'+key, val=stats[1], x_tick=x_tick)
+                super().log_tabular('Std'+key, val=stats[1])
             if with_min_and_max:
-                super().log_tabular('Max'+key, val=stats[3], x_tick=x_tick)
-                super().log_tabular('Min'+key, val=stats[2], x_tick=x_tick)
+                super().log_tabular('Max'+key, val=stats[3])
+                scalars.update({'Max'+key: stats[3]})
+                super().log_tabular('Min'+key, val=stats[2])
+                scalars.update({'Min'+key: stats[2]})
+
+        if key != 'Epoch':
+            self.tensorboard_writer.add_scalars(plot_name, scalars, x_tick)
+
         self.epoch_dict[key] = []
 
     def get_stats(self, key):
