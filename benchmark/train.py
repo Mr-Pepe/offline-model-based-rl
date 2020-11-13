@@ -182,10 +182,13 @@ class Trainer():
                 actions_this_step = [0 for i in range(len(Actions))]
 
                 # Train environment model on real experience
-                if model_needs_training(step_total, self.use_model,
-                                        self.real_replay_buffer.size, self.init_steps,
+                if model_needs_training(step_total,
+                                        self.use_model,
+                                        self.real_replay_buffer.size,
+                                        self.init_steps,
                                         steps_since_model_training,
-                                        self.train_model_every, model_trained_at_all):
+                                        self.train_model_every,
+                                        model_trained_at_all):
 
                     model_val_error = self.env_model.train_to_convergence(
                         self.real_replay_buffer,
