@@ -1,3 +1,5 @@
+from benchmark.utils.termination_functions import get_termination_function
+import gym
 from benchmark.utils.model_needs_training import model_needs_training
 from benchmark.utils.actions import Actions
 from benchmark.utils.load_dataset import load_dataset_from_env
@@ -18,8 +20,7 @@ from benchmark.utils.replay_buffer import ReplayBuffer
 class Trainer():
 
     def __init__(self,
-                 env_fn,
-                 term_fn=None,
+                 env_name,
                  sac_kwargs=dict(),
                  model_kwargs=dict(),
                  seed=0,
@@ -43,10 +44,6 @@ class Trainer():
         """
 
         Args:
-            term_fn (str): A termination function as specified in
-                termination_functions.py. If None, the termination function will
-                be learned with an extra network.
-
             epochs (int): Number of epochs to run and train agent.
 
             steps_per_epoch (int): Number of steps of interaction (state-action
@@ -88,7 +85,7 @@ class Trainer():
         self.logger = EpochLogger(**logger_kwargs)
         self.logger.save_config(locals())
 
-        self.env, self.test_env = env_fn(), env_fn()
+        self.env, self.test_env = gym.make(env_name), gym.make(env_name)
         obs_dim = self.env.observation_space.shape
         act_dim = self.env.action_space.shape[0]
 
@@ -122,7 +119,15 @@ class Trainer():
                                                   size=replay_size,
                                                   device=device)
 
-        self.term_fn = term_fn
+        # Get termination for environment, if model should be used
+        if use_model:
+            self.term_fn = get_termination_function(env_name)
+            if not self.term_fn:
+                raise ValueError("Could not find termination function for \
+            environment {}".format(env_name))
+        else:
+            self.term_fn = None
+
         self.epochs = epochs
         self.steps_per_epoch = steps_per_epoch
         self.init_steps = init_steps

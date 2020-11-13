@@ -40,3 +40,31 @@ termination_functions = {
     'half_cheetah': half_cheetah_termination_fn,
     'walker2d': walker2d_termination_fn,
 }
+
+function_to_names_mapping = {
+    'hopper': ['Hopper-v2',
+               'hopper-random-v0',
+               'hopper-medium-v0',
+               'hopper-expert-v0',
+               'hopper-medium-replay-v0',
+               'hopper-medium-expert-v0'],
+    'half_cheetah': ['HalfCheetah-v2',
+                     'halfcheetah-random-v0',
+                     'halfcheetah-medium-v0',
+                     'halfcheetah-expert-v0',
+                     'halfcheetah-medium-replay-v0',
+                     'halfcheetah-medium-expert-v0'],
+    'walker2d': ['Walker2d-v2',
+                 'walker2d-random-v0',
+                 'walker2d-medium-v0',
+                 'walker2d-expert-v0',
+                 'walker2d-medium-replay-v0',
+                 'walker2d-medium-expert-v0',
+                 ],
+}
+
+
+def get_termination_function(env_name):
+    for fn_name in function_to_names_mapping:
+        if env_name in function_to_names_mapping[fn_name]:
+            return termination_functions[fn_name]

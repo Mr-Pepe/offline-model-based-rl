@@ -2,7 +2,6 @@ from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
     deterministic_loss, probabilistic_loss
 from torch.optim.adam import Adam
-from benchmark.utils.termination_functions import termination_functions
 from benchmark.models.mlp import mlp
 from benchmark.models.multi_head_mlp import MultiHeadMlp
 import torch.nn as nn
@@ -64,10 +63,6 @@ class EnvironmentModel(nn.Module):
 
     def forward(self, obs_act, i_network=0, term_fn=None):
 
-        if term_fn and term_fn not in termination_functions:
-            raise ValueError(
-                "Unknown termination function: {}".format(term_fn))
-
         network = self.networks[i_network]
 
         device = next(network.parameters()).device
@@ -88,7 +83,7 @@ class EnvironmentModel(nn.Module):
             obs = obs + obs_act[:, :self.obs_dim]
 
             if term_fn:
-                done = termination_functions[term_fn](obs)
+                done = term_fn(obs)
             else:
                 done = self.done_network(obs)
 
@@ -113,7 +108,7 @@ class EnvironmentModel(nn.Module):
             out = torch.normal(mean, std)
 
             if term_fn:
-                done = termination_functions[term_fn](out[:, :-1])
+                done = term_fn(out[:, :-1])
             else:
                 done = self.done_network(out[:, :-1])
 

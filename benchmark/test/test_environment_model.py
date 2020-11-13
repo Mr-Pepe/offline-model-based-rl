@@ -8,6 +8,7 @@ from benchmark.utils.load_dataset import load_dataset_from_env
 import pytest
 import matplotlib.pyplot as plt
 from benchmark.models.environment_model import EnvironmentModel
+from benchmark.utils.termination_functions import termination_functions
 import torch.nn as nn
 import torch
 from torch.optim.adam import Adam
@@ -363,16 +364,6 @@ def test_probabilistic_model_returns_binary_done_signal():
 
 
 @pytest.mark.fast
-def test_throws_error_if_termination_function_unknown():
-    model = EnvironmentModel(1, 1)
-
-    x = torch.as_tensor([3, 3], dtype=torch.float32)
-
-    with pytest.raises(ValueError):
-        model.get_prediction(x, term_fn='asd')
-
-
-@pytest.mark.fast
 def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
     obs_dim = 5
     act_dim = 6
@@ -382,7 +373,8 @@ def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output = model.get_prediction(input, term_fn='hopper')
+    output = model.get_prediction(input,
+                                  term_fn=termination_functions['hopper'])
 
     for value in output[:, -1]:
         assert (value == 0 or value == 1)
@@ -420,11 +412,13 @@ def test_deterministic_model_does_not_always_output_terminal():
     for model_rollout in range(10):
         start_observation = real_buffer.sample_batch(1)['obs']
 
-        rollout = generate_virtual_rollout(model,
-                                           agent,
-                                           start_observation,
-                                           50,
-                                           term_fn='hopper')
+        rollout = generate_virtual_rollout(
+            model,
+            agent,
+            start_observation,
+            50,
+            term_fn=termination_functions['hopper'])
+
         for step in rollout:
             virtual_buffer.store(
                 step['o'], step['act'], step['rew'],
@@ -469,11 +463,13 @@ def test_probabilistic_model_does_not_always_output_terminal():
     for model_rollout in range(10):
         start_observation = real_buffer.sample_batch(1)['obs']
 
-        rollout = generate_virtual_rollout(model,
-                                           agent,
-                                           start_observation,
-                                           50,
-                                           term_fn='hopper')
+        rollout = generate_virtual_rollout(
+            model,
+            agent,
+            start_observation,
+            50,
+            term_fn=termination_functions['hopper'])
+
         for step in rollout:
             virtual_buffer.store(
                 step['o'], step['act'], step['rew'],

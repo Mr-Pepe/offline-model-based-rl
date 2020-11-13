@@ -1,21 +1,21 @@
 from benchmark.utils.actions import Actions
-import gym
 from benchmark.train import Trainer
 import pytest
 import d4rl  # noqa
 import numpy as np
+from benchmark.utils.termination_functions import termination_functions
 
 
 @pytest.mark.medium
 def test_replay_buffer_is_initially_empty_for_online_training():
-    trainer = Trainer(lambda: gym.make('maze2d-open-v0'),
+    trainer = Trainer('maze2d-open-v0',
                       pretrain_epochs=0)
     assert trainer.real_replay_buffer.size == 0
 
 
 @pytest.mark.medium
 def test_replay_buffer_is_filled_for_offline_training():
-    trainer = Trainer(lambda: gym.make('maze2d-open-v0'),
+    trainer = Trainer('maze2d-open-v0',
                       pretrain_epochs=1)
 
     assert trainer.real_replay_buffer.size > 0
@@ -29,7 +29,7 @@ def test_actions_for_online_model_free_training():
     init_steps = 100
     random_steps = 50
 
-    trainer = Trainer(lambda: gym.make('maze2d-open-dense-v0'),
+    trainer = Trainer('maze2d-open-dense-v0',
                       epochs=epochs,
                       sac_kwargs=dict(hidden=[32, 32, 32],
                                       batch_size=32),
@@ -72,7 +72,7 @@ def test_actions_for_online_model_based_training():
     random_steps = 50
     train_model_every = 50
 
-    trainer = Trainer(lambda: gym.make('maze2d-open-dense-v0'),
+    trainer = Trainer('hopper-random-v0',
                       epochs=epochs,
                       sac_kwargs=dict(hidden=[32, 32, 32],
                                       batch_size=32),
@@ -123,7 +123,7 @@ def test_actions_for_offline_model_free_training_with_fine_tuning():
     init_steps = 100
     random_steps = 50
 
-    trainer = Trainer(lambda: gym.make('maze2d-open-dense-v0'),
+    trainer = Trainer('maze2d-open-dense-v0',
                       epochs=epochs,
                       pretrain_epochs=pretrain_epochs,
                       sac_kwargs=dict(hidden=[32, 32, 32],
@@ -169,7 +169,7 @@ def test_actions_for_offline_model_based_training_with_fine_tuning():
     random_steps = 50
     train_model_every = 50
 
-    trainer = Trainer(lambda: gym.make('maze2d-open-dense-v0'),
+    trainer = Trainer('hopper-random-v0',
                       epochs=epochs,
                       pretrain_epochs=pretrain_epochs,
                       sac_kwargs=dict(hidden=[32, 32, 32],
@@ -212,3 +212,24 @@ def test_actions_for_offline_model_based_training_with_fine_tuning():
     np.testing.assert_array_equal(action_log[:, Actions.INTERACT_WITH_ENV],
                                   [0]*steps_per_epoch*pretrain_epochs +
                                   [1]*steps_per_epoch*epochs)
+
+
+@pytest.mark.medium
+def test_throws_error_if_using_model_but_no_termination_fn_available():
+    with pytest.raises(ValueError):
+        Trainer('maze2d-open-dense-v0', use_model=True)
+
+
+@pytest.mark.medium
+def test_trainer_picks_correct_termination_functions():
+    trainer = Trainer('Hopper-v2', use_model=True)
+
+    assert trainer.term_fn == termination_functions['hopper']
+
+    trainer = Trainer('HalfCheetah-v2', use_model=True)
+
+    assert trainer.term_fn == termination_functions['half_cheetah']
+
+    trainer = Trainer('Walker2d-v2', use_model=True)
+
+    assert trainer.term_fn == termination_functions['walker2d']

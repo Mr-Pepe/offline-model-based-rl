@@ -1,6 +1,5 @@
 import argparse
 from benchmark.utils.str2bool import str2bool
-import gym
 import torch
 import d4rl  # noqa
 
@@ -9,8 +8,7 @@ from benchmark.utils.run_utils import setup_logger_kwargs
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', type=str, default='Hopper-v2')
-    parser.add_argument('--term_fn', type=str, default='')
+    parser.add_argument('--env', type=str, default='HalfCheetah-v2')
     parser.add_argument('--hid', type=int, default=64)
     parser.add_argument('--l', type=int, default=3)
     parser.add_argument('--gamma', type=float, default=0.99)
@@ -55,8 +53,7 @@ if __name__ == '__main__':
 
     term_fn = None if len(args.term_fn) == 0 else args.term_fn
 
-    trainer = Trainer(lambda: gym.make(args.env),
-                      term_fn=term_fn,
+    trainer = Trainer(args.env,
                       sac_kwargs=dict(hidden=[args.hid]*args.l,
                                       gamma=args.gamma,
                                       pi_lr=args.agent_lr,
