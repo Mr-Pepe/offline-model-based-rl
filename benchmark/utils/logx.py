@@ -9,7 +9,6 @@ Logs to a tab-separated-values file (path/to/output_directory/progress.txt)
 """
 import json
 import joblib
-import shutil
 import numpy as np
 import torch
 import os.path as osp
@@ -54,22 +53,23 @@ class Logger:
     """
     A general-purpose logger.
 
-    Makes it easy to save diagnostics, hyperparameter configurations, the 
+    Makes it easy to save diagnostics, hyperparameter configurations, the
     state of a training run, and the trained model.
     """
 
-    def __init__(self, output_dir=None, output_fname='progress.txt', exp_name=None):
+    def __init__(self, output_dir=None, output_fname='progress.txt',
+                 exp_name=None):
         """
         Initialize a Logger.
 
         Args:
-            output_dir (string): A directory for saving results to. If 
+            output_dir (string): A directory for saving results to. If
                 ``None``, defaults to a temp directory of the form
                 ``/tmp/experiments/somerandomnumber``.
 
-            output_fname (string): Name for the tab-separated-value file 
-                containing metrics logged throughout a training run. 
-                Defaults to ``progress.txt``. 
+            output_fname (string): Name for the tab-separated-value file
+                containing metrics logged throughout a training run.
+                Defaults to ``progress.txt``.
 
             exp_name (string): Experiment name. If you run multiple training
                 runs and give them all the same ``exp_name``, the plotter
@@ -82,7 +82,8 @@ class Logger:
                 time.time())
             if osp.exists(self.output_dir):
                 print(
-                    "Warning: Log dir %s already exists! Storing info there anyway." % self.output_dir)
+                    "Warning: Log dir %s already exists! \
+                    Storing info there anyway." % self.output_dir)
             else:
                 os.makedirs(self.output_dir)
             self.output_file = open(
@@ -118,8 +119,12 @@ class Logger:
         if self.first_row:
             self.log_headers.append(key)
         else:
-            assert key in self.log_headers, "Trying to introduce a new key %s that you didn't include in the first iteration" % key
-        assert key not in self.log_current_row, "You already set %s this iteration. Maybe you forgot to call dump_tabular()" % key
+            assert key in self.log_headers, \
+                ("Trying to introduce a new key % s that you didn't include \
+                 in the first iteration" % key)
+        assert key not in self.log_current_row, \
+            ("You already set %s this iteration. Maybe you forgot \
+                to call dump_tabular()" % key)
         self.log_current_row[key] = val
         self.tensorboard_writer.add_scalar(key, val, x_tick)
 
@@ -130,7 +135,7 @@ class Logger:
         Call this once at the top of your experiment, passing in all important
         config vars as a dict. This will serialize the config to JSON, while
         handling anything which can't be serialized in a graceful way (writing
-        as informative a string as possible). 
+        as informative a string as possible).
 
         Example use:
 
@@ -157,11 +162,11 @@ class Logger:
         To be clear: this is about saving *state*, not logging diagnostics.
         All diagnostic logging is separate from this function. This function
         will save whatever is in ``state_dict``---usually just a copy of the
-        environment---and the most recent parameters for the model you 
-        previously set up saving for with ``setup_tf_saver``. 
+        environment---and the most recent parameters for the model you
+        previously set up saving for with ``setup_tf_saver``.
 
         Call with any frequency you prefer. If you only want to maintain a
-        single state and overwrite it at each call with the most recent 
+        single state and overwrite it at each call with the most recent
         version, leave ``itr=None``. If you want to keep all of the states you
         save, provide unique (increasing) values for 'itr'.
 
@@ -175,7 +180,7 @@ class Logger:
             fname = 'vars.pkl' if itr is None else 'vars%d.pkl' % itr
             try:
                 joblib.dump(state_dict, osp.join(self.output_dir, fname))
-            except:
+            except Exception:
                 self.log('Warning: could not pickle state_dict.', color='red')
             if hasattr(self, 'pytorch_saver_elements'):
                 self._pytorch_simple_save(itr)
@@ -185,7 +190,7 @@ class Logger:
         Set up easy model saving for a single PyTorch model.
 
         Because PyTorch saving and loading is especially painless, this is
-        very minimal; we just need references to whatever we would like to 
+        very minimal; we just need references to whatever we would like to
         pickle. This is integrated into the logger because the logger
         knows where the user would like to save information about this
         training run.
@@ -254,7 +259,7 @@ class EpochLogger(Logger):
     A variant of Logger tailored for tracking average values over epochs.
 
     Typical use case: there is some quantity which is calculated many times
-    throughout an epoch, and at the end of the epoch, you would like to 
+    throughout an epoch, and at the end of the epoch, you would like to
     report the average / std / min / max value of that quantity.
 
     With an EpochLogger, each time the quantity is calculated, you would
@@ -282,7 +287,7 @@ class EpochLogger(Logger):
         """
         Save something into the epoch_logger's current state.
 
-        Provide an arbitrary number of keyword arguments with numerical 
+        Provide an arbitrary number of keyword arguments with numerical
         values.
         """
         for k, v in kwargs.items():
@@ -297,14 +302,14 @@ class EpochLogger(Logger):
 
         Args:
             key (string): The name of the diagnostic. If you are logging a
-                diagnostic whose state has previously been saved with 
+                diagnostic whose state has previously been saved with
                 ``store``, the key here has to match the key you used there.
 
             val: A value for the diagnostic. If you have previously saved
                 values for this key via ``store``, do *not* provide a ``val``
                 here.
 
-            with_min_and_max (bool): If true, log min and max values of the 
+            with_min_and_max (bool): If true, log min and max values of the
                 diagnostic over the epoch.
 
             average_only (bool): If true, do not log the standard deviation
