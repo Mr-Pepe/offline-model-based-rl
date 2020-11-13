@@ -1,6 +1,5 @@
 import argparse
 from benchmark.utils.str2bool import str2bool
-
 import gym
 import torch
 import d4rl  # noqa
@@ -35,12 +34,17 @@ if __name__ == '__main__':
     parser.add_argument('--model_patience', type=int, default=20)
     parser.add_argument('--agent_updates_per_step', type=int, default=1)
     parser.add_argument('--num_test_episodes', type=int, default=10)
-    parser.add_argument('--exp_name', type=str, default='mbpo')
+    parser.add_argument('--datestamp', type=str2bool, default=False)
+    parser.add_argument('--log_dir', type=str, default=None)
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--render', type=str2bool, default=True)
     args = parser.parse_args()
 
-    logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
+    logger_kwargs = setup_logger_kwargs(args.exp_name,
+                                        seed=args.seed,
+                                        data_dir=args.log_dir,
+                                        datestamp=args.datestamp)
+
     device = 'cuda' if args.device == 'cuda' and torch.cuda.is_available() \
         else 'cpu'
 
