@@ -291,29 +291,29 @@ def log_end_of_epoch(logger, epoch, step_total, start_time,
                      agent_update_performed, model_trained, rollout_length,
                      episode_finished):
 
-    logger.log_tabular('Epoch', epoch)
+    logger.log_tabular('Epoch', epoch, epoch)
 
-    logger.log_tabular('RolloutLength', rollout_length)
+    logger.log_tabular('RolloutLength', epoch, rollout_length)
 
     if not episode_finished:
         logger.store(EpRet=0)
         logger.store(EpLen=0)
 
-    logger.log_tabular('EpRet', with_min_and_max=True)
+    logger.log_tabular('EpRet', epoch, with_min_and_max=True)
 
-    logger.log_tabular('TestEpRet', with_min_and_max=True)
+    logger.log_tabular('TestEpRet', epoch, with_min_and_max=True)
 
-    logger.log_tabular('EpLen', average_only=True)
+    logger.log_tabular('EpLen', epoch, average_only=True)
 
-    logger.log_tabular('TestEpLen', average_only=True)
+    logger.log_tabular('TestEpLen', epoch, average_only=True)
 
-    logger.log_tabular('TotalEnvInteracts', step_total)
+    logger.log_tabular('TotalEnvInteracts', epoch, step_total)
 
     # Use placeholder value if no model update has been performed yet
     if not model_trained:
         logger.store(LossEnvModel=0)
 
-    logger.log_tabular('LossEnvModel', with_min_and_max=True)
+    logger.log_tabular('LossEnvModel', epoch, with_min_and_max=True)
 
     # Use placeholder values if no agent update has been performed yet
     if not agent_update_performed:
@@ -323,11 +323,11 @@ def log_end_of_epoch(logger, epoch, step_total, start_time,
                      LossPi=0,
                      LossQ=0)
 
-    logger.log_tabular('Q1Vals', with_min_and_max=True)
-    logger.log_tabular('Q2Vals', with_min_and_max=True)
-    logger.log_tabular('LogPi', with_min_and_max=True)
-    logger.log_tabular('LossPi', average_only=True)
-    logger.log_tabular('LossQ', average_only=True)
+    logger.log_tabular('Q1Vals', epoch, with_min_and_max=True)
+    logger.log_tabular('Q2Vals', epoch, with_min_and_max=True)
+    logger.log_tabular('LogPi', epoch, with_min_and_max=True)
+    logger.log_tabular('LossPi', epoch, average_only=True)
+    logger.log_tabular('LossQ', epoch, average_only=True)
 
-    logger.log_tabular('Time', time.time()-start_time)
+    logger.log_tabular('Time', epoch, time.time()-start_time)
     logger.dump_tabular()

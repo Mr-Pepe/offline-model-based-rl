@@ -34,7 +34,8 @@ if __name__ == '__main__':
     parser.add_argument('--model_patience', type=int, default=20)
     parser.add_argument('--agent_updates_per_step', type=int, default=1)
     parser.add_argument('--num_test_episodes', type=int, default=10)
-    parser.add_argument('--datestamp', type=str2bool, default=False)
+    parser.add_argument('--exp_name', type=str, default='testtest')
+    parser.add_argument('--datestamp', type=str2bool, default=True)
     parser.add_argument('--log_dir', type=str, default=None)
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--render', type=str2bool, default=True)
@@ -76,7 +77,7 @@ if __name__ == '__main__':
                       logger_kwargs=logger_kwargs,
                       device=device,
                       use_model=args.use_model,
-                      agent_updates_per_step=args.agent_updates,
+                      agent_updates_per_step=args.agent_updates_per_step,
                       rollouts_per_step=args.rollouts_per_step,
                       rollout_schedule=args.rollout_schedule,
                       train_model_every=args.train_model_every,

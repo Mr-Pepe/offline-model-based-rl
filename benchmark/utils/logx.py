@@ -19,6 +19,7 @@ import os
 import warnings
 from benchmark.utils.mpi_tools import proc_id, mpi_statistics_scalar
 from benchmark.utils.serialization_utils import convert_json
+from tensorboardX import SummaryWriter
 
 color2num = dict(
     gray=30,
@@ -96,13 +97,16 @@ class Logger:
         self.log_headers = []
         self.log_current_row = {}
         self.exp_name = exp_name
+        self.tensorboard_writer = SummaryWriter(os.path.join(self.output_dir,
+                                                             'tensorboard'),
+                                                flush_secs=30)
 
     def log(self, msg, color='green'):
         """Print a colorized message to stdout."""
         if proc_id() == 0:
             print(colorize(msg, color, bold=True))
 
-    def log_tabular(self, key, val):
+    def log_tabular(self, key, val, x_tick=0):
         """
         Log a value of some diagnostic.
 
@@ -117,6 +121,7 @@ class Logger:
             assert key in self.log_headers, "Trying to introduce a new key %s that you didn't include in the first iteration" % key
         assert key not in self.log_current_row, "You already set %s this iteration. Maybe you forgot to call dump_tabular()" % key
         self.log_current_row[key] = val
+        self.tensorboard_writer.add_scalar(key, val, x_tick)
 
     def save_config(self, config):
         """
@@ -253,14 +258,14 @@ class EpochLogger(Logger):
     report the average / std / min / max value of that quantity.
 
     With an EpochLogger, each time the quantity is calculated, you would
-    use 
+    use
 
     .. code-block:: python
 
         epoch_logger.store(NameOfQuantity=quantity_value)
 
-    to load it into the EpochLogger's state. Then at the end of the epoch, you 
-    would use 
+    to load it into the EpochLogger's state. Then at the end of the epoch, you
+    would use
 
     .. code-block:: python
 
@@ -285,7 +290,8 @@ class EpochLogger(Logger):
                 self.epoch_dict[k] = []
             self.epoch_dict[k].append(v)
 
-    def log_tabular(self, key, val=None, with_min_and_max=False, average_only=False):
+    def log_tabular(self, key, x_tick=0, val=None, with_min_and_max=False,
+                    average_only=False):
         """
         Log a value or possibly the mean/std/min/max values of a diagnostic.
 
@@ -305,7 +311,7 @@ class EpochLogger(Logger):
                 of the diagnostic over the epoch.
         """
         if val is not None:
-            super().log_tabular(key, val)
+            super().log_tabular(key, val=val, x_tick=x_tick)
         else:
             v = self.epoch_dict[key]
             vals = np.concatenate(v) if isinstance(
@@ -313,12 +319,13 @@ class EpochLogger(Logger):
             stats = mpi_statistics_scalar(
                 vals, with_min_and_max=with_min_and_max)
             super().log_tabular(
-                key if average_only else 'Average' + key, stats[0])
+                key if average_only else 'Average' + key, val=stats[0],
+                x_tick=x_tick)
             if not(average_only):
-                super().log_tabular('Std'+key, stats[1])
+                super().log_tabular('Std'+key, val=stats[1], x_tick=x_tick)
             if with_min_and_max:
-                super().log_tabular('Max'+key, stats[3])
-                super().log_tabular('Min'+key, stats[2])
+                super().log_tabular('Max'+key, val=stats[3], x_tick=x_tick)
+                super().log_tabular('Min'+key, val=stats[2], x_tick=x_tick)
         self.epoch_dict[key] = []
 
     def get_stats(self, key):
