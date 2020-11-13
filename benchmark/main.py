@@ -38,14 +38,16 @@ if __name__ == '__main__':
     parser.add_argument('--num_test_episodes', type=int, default=10)
     parser.add_argument('--exp_name', type=str, default='sac_offline')
     parser.add_argument('--datestamp', type=str2bool, default=False)
-    parser.add_argument('--log_dir', type=str, default=None)
+    parser.add_argument('--log_dir', type=str, default='')
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--render', type=str2bool, default=True)
     args = parser.parse_args()
 
+    log_dir = None if args.log_dir == '' else args.log_dir
+
     logger_kwargs = setup_logger_kwargs(args.exp_name,
                                         seed=args.seed,
-                                        data_dir=args.log_dir,
+                                        data_dir=log_dir,
                                         datestamp=args.datestamp)
 
     device = 'cuda' if args.device == 'cuda' and torch.cuda.is_available() \
