@@ -83,7 +83,7 @@ class EnvironmentModel(nn.Module):
             obs = obs + obs_act[:, :self.obs_dim]
 
             if term_fn:
-                done = term_fn(obs)
+                done = term_fn(obs).to(device)
             else:
                 done = self.done_network(obs)
 
@@ -108,7 +108,7 @@ class EnvironmentModel(nn.Module):
             out = torch.normal(mean, std)
 
             if term_fn:
-                done = term_fn(out[:, :-1])
+                done = term_fn(out[:, :-1]).to(device)
             else:
                 done = self.done_network(out[:, :-1])
 

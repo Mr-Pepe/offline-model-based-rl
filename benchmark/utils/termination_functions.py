@@ -68,3 +68,5 @@ def get_termination_function(env_name):
     for fn_name in function_to_names_mapping:
         if env_name in function_to_names_mapping[fn_name]:
             return termination_functions[fn_name]
+
+    return None
