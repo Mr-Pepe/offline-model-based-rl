@@ -19,6 +19,7 @@ import warnings
 from benchmark.utils.mpi_tools import proc_id, mpi_statistics_scalar
 from benchmark.utils.serialization_utils import convert_json
 from torch.utils.tensorboard import SummaryWriter
+import shutil
 
 color2num = dict(
     gray=30,
@@ -98,8 +99,10 @@ class Logger:
         self.log_headers = []
         self.log_current_row = {}
         self.exp_name = exp_name
-        self.tensorboard_writer = SummaryWriter(os.path.join(self.output_dir,
-                                                             'tensorboard'),
+
+        tensorboard_path = os.path.join(self.output_dir, 'tensorboard')
+        shutil.rmtree(tensorboard_path, ignore_errors=True)
+        self.tensorboard_writer = SummaryWriter(tensorboard_path,
                                                 flush_secs=30)
 
     def log(self, msg, color='green'):
