@@ -9,16 +9,18 @@ from benchmark.utils.run_utils import setup_logger_kwargs
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', type=str, default='halfcheetah-medium-replay-v0')
-    parser.add_argument('--hid', type=int, default=200)
-    parser.add_argument('--l', type=int, default=4)
-    parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=125)
     parser.add_argument('--pretrain_epochs', type=int, default=125)
     parser.add_argument('--steps_per_epoch', type=int, default=1000)
     parser.add_argument('--init_steps', type=int, default=10000)
     parser.add_argument('--random_steps', type=int, default=10000)
+    parser.add_argument('--buffer_size', type=int, default=int(1e6))
 
+    parser.add_argument('--hid', type=int, default=200)
+    parser.add_argument('--l', type=int, default=4)
+
+    parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--agent_updates_per_step', type=int, default=1)
     parser.add_argument('--agent_batch_size', type=int, default=256)
     parser.add_argument('--agent_lr', type=float, default=3e-4)
@@ -78,6 +80,7 @@ if __name__ == '__main__':
                       random_steps=args.random_steps,
                       logger_kwargs=logger_kwargs,
                       device=device,
+                      buffer_size=args.buffer_size,
                       use_model=args.use_model,
                       agent_updates_per_step=args.agent_updates_per_step,
                       rollouts_per_step=args.rollouts_per_step,

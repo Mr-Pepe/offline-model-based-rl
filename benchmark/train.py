@@ -35,7 +35,7 @@ class Trainer():
                  rollouts_per_step=10,
                  rollout_schedule=[1, 1, 20, 100],
                  train_model_every=250,
-                 replay_size=int(1e6),
+                 buffer_size=int(1e6),
                  pretrain_epochs=0,
                  logger_kwargs=dict(),
                  save_freq=1,
@@ -109,16 +109,16 @@ class Trainer():
         if pretrain_epochs > 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
                 self.env,
-                buffer_size=replay_size)
+                buffer_size=buffer_size)
         else:
             self.real_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
                                                    act_dim=act_dim,
-                                                   size=replay_size,
+                                                   size=buffer_size,
                                                    device=device)
 
         self.virtual_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
                                                   act_dim=act_dim,
-                                                  size=replay_size,
+                                                  size=buffer_size,
                                                   device=device)
 
         # Get termination for environment, if model should be used
