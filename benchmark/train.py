@@ -194,6 +194,7 @@ class Trainer():
 
                     model_val_error = self.env_model.train_to_convergence(
                         self.real_replay_buffer,
+                        patience_value=0 if epoch < 1 else 1,
                         **self.model_kwargs)
 
                     model_trained_at_all = True

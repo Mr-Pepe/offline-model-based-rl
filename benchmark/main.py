@@ -29,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_batch_size', type=int, default=1024)
     parser.add_argument('--model_lr', type=float, default=1e-3)
     parser.add_argument('--model_val_split', type=float, default=0.2)
-    parser.add_argument('--model_patience', type=int, default=20)
+    parser.add_argument('--model_patience', nargs='+', type=int, default=[20])
     parser.add_argument('--rollouts_per_step', type=int, default=100)
     parser.add_argument('--rollout_schedule', nargs='+',
                         type=int, default=[1, 1, 20, 100])
