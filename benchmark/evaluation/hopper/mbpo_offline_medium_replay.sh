@@ -1,0 +1,30 @@
+python main.py \
+    --env hopper-medium-replay-v0 \
+    --hid 200 \
+    --l 4 \
+    --gamma 0.99 \
+    --seed 0 \
+    --epochs 125 \
+    --pretrain_epochs 10 \
+    --steps_per_epoch 1000 \
+    --init_steps 0 \
+    --random_steps 0 \
+    --agent_updates_per_step 20 \
+    --agent_batch_size 256 \
+    --agent_lr 3e-4 \
+    --use_model True \
+    --model_type probabilistic \
+    --n_networks 7 \
+    --rollouts_per_step 400 \
+    --rollout_schedule 15 15 20 100 \
+    --train_model_every 250 \
+    --model_batch_size 256 \
+    --model_lr 1e-3 \
+    --model_val_split 0.2 \
+    --model_patience 50 20 \
+    --num_test_episodes 10 \
+    --exp_name hopper_mbpo_offline_medium_replay \
+    --datestamp False \
+    --log_dir "" \
+    --device cuda \
+    --render False
