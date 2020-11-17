@@ -9,6 +9,7 @@ python main.py \
     --steps_per_epoch 1000 \
     --init_steps 0 \
     --random_steps 0 \
+    --buffer_size 1200000 \
     --agent_updates_per_step 1 \
     --agent_batch_size 256 \
     --agent_lr 3e-4 \
