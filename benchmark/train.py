@@ -83,7 +83,9 @@ class Trainer():
         torch.manual_seed(seed)
 
         self.logger = EpochLogger(**logger_kwargs)
-        self.logger.save_config(locals())
+        local_vars = locals()
+        self.logger.save_config(
+            {key: local_vars[key] for key in local_vars if key != 'self'})
 
         self.env, self.test_env = gym.make(env_name), gym.make(env_name)
         obs_dim = self.env.observation_space.shape
