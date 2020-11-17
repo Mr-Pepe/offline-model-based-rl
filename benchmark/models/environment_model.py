@@ -139,7 +139,14 @@ class EnvironmentModel(nn.Module):
         return x
 
     def train_to_convergence(self, data, lr=1e-3, batch_size=1024,
-                             val_split=0.2, patience=20, debug=False, **_):
+                             val_split=0.2, patience=20, patience_value=0,
+                             debug=False, **_):
+
+        if type(patience) is list:
+            if patience_value > 0 and len(patience) > patience_value:
+                patience = patience[patience_value]
+            else:
+                patience = patience[0]
 
         n_train_batches = int((data.size * (1-val_split)) // batch_size)
         n_val_batches = int((data.size * val_split) // batch_size)

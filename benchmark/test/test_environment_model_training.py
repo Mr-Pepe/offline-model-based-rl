@@ -114,3 +114,32 @@ def test_train_probabilistic_ensemble():
         assert val_loss < 0.6
 
     assert len(set(val_losses)) == len(val_losses)
+
+
+@pytest.mark.slow
+def test_patience_can_be_list():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    torch.manual_seed(0)
+
+    env = gym.make('halfcheetah-random-v0')
+    buffer, obs_dim, act_dim = load_dataset_from_env(env,
+                                                     buffer_device=device,
+                                                     n_samples=100000)
+
+    models = [EnvironmentModel(obs_dim, act_dim),
+              EnvironmentModel(obs_dim, act_dim)]
+
+    val_losses = []
+
+    for i, model in enumerate(models):
+        model.to(device)
+
+        val_loss = model.train_to_convergence(buffer,
+                                              val_split=0.2,
+                                              patience=[1, 3],
+                                              patience_value=i,
+                                              debug=True)
+
+        val_losses.append(val_loss[0])
+
+    assert val_losses[1] < val_losses[0]
