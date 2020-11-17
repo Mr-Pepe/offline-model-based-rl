@@ -109,7 +109,8 @@ class Trainer():
         if pretrain_epochs > 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
                 self.env,
-                buffer_size=buffer_size)
+                buffer_size=buffer_size,
+                buffer_device=device)
         else:
             self.real_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
                                                    act_dim=act_dim,

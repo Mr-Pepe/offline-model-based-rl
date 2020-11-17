@@ -58,13 +58,11 @@ class ReplayBuffer:
 
     def sample_batch(self, batch_size=32):
         idxs = torch.randint(0, self.size, (batch_size,))
-        batch = dict(obs=self.obs_buf[idxs],
-                     obs2=self.obs2_buf[idxs],
-                     act=self.act_buf[idxs],
-                     rew=self.rew_buf[idxs],
-                     done=self.done_buf[idxs])
-        return {k: torch.as_tensor(v, dtype=torch.float32)
-                for k, v in batch.items()}
+        return dict(obs=self.obs_buf[idxs],
+                    obs2=self.obs2_buf[idxs],
+                    act=self.act_buf[idxs],
+                    rew=self.rew_buf[idxs],
+                    done=self.done_buf[idxs])
 
     def sample_train_batch(self, batch_size=32, val_split=0.2):
         if self.split_at_size != self.size or \
@@ -72,13 +70,11 @@ class ReplayBuffer:
             self.split(val_split)
 
         idxs = np.random.choice(self.train_idxs, batch_size)
-        batch = dict(obs=self.obs_buf[idxs],
-                     obs2=self.obs2_buf[idxs],
-                     act=self.act_buf[idxs],
-                     rew=self.rew_buf[idxs],
-                     done=self.done_buf[idxs])
-        return {k: torch.as_tensor(v, dtype=torch.float32)
-                for k, v in batch.items()}
+        return dict(obs=self.obs_buf[idxs],
+                    obs2=self.obs2_buf[idxs],
+                    act=self.act_buf[idxs],
+                    rew=self.rew_buf[idxs],
+                    done=self.done_buf[idxs])
 
     def sample_val_batch(self, batch_size=32, val_split=0.2):
         if self.split_at_size != self.size or \
@@ -86,13 +82,11 @@ class ReplayBuffer:
             self.split(val_split)
 
         idxs = np.random.choice(self.val_idxs, batch_size)
-        batch = dict(obs=self.obs_buf[idxs],
-                     obs2=self.obs2_buf[idxs],
-                     act=self.act_buf[idxs],
-                     rew=self.rew_buf[idxs],
-                     done=self.done_buf[idxs])
-        return {k: torch.as_tensor(v, dtype=torch.float32)
-                for k, v in batch.items()}
+        return dict(obs=self.obs_buf[idxs],
+                    obs2=self.obs2_buf[idxs],
+                    act=self.act_buf[idxs],
+                    rew=self.rew_buf[idxs],
+                    done=self.done_buf[idxs])
 
     def split(self, val_split=0.2):
         self.split_at_size = self.size
@@ -122,16 +116,13 @@ class ReplayBuffer:
         done_idxs = np.random.choice(self.done_idx, batch_size//2)
         not_done_idxs = np.random.choice(self.not_done_idx, batch_size//2)
 
-        batch = dict(obs=torch.cat((self.obs_buf[done_idxs],
-                                    self.obs_buf[not_done_idxs])),
-                     obs2=torch.cat((self.obs2_buf[done_idxs],
-                                     self.obs2_buf[not_done_idxs])),
-                     act=torch.cat((self.act_buf[done_idxs],
-                                    self.act_buf[not_done_idxs])),
-                     rew=torch.cat((self.rew_buf[done_idxs],
-                                    self.rew_buf[not_done_idxs])),
-                     done=torch.cat((self.done_buf[done_idxs],
-                                     self.done_buf[not_done_idxs])))
-
-        return {k: torch.as_tensor(v, dtype=torch.float32)
-                for k, v in batch.items()}
+        return dict(obs=torch.cat((self.obs_buf[done_idxs],
+                                   self.obs_buf[not_done_idxs])),
+                    obs2=torch.cat((self.obs2_buf[done_idxs],
+                                    self.obs2_buf[not_done_idxs])),
+                    act=torch.cat((self.act_buf[done_idxs],
+                                   self.act_buf[not_done_idxs])),
+                    rew=torch.cat((self.rew_buf[done_idxs],
+                                   self.rew_buf[not_done_idxs])),
+                    done=torch.cat((self.done_buf[done_idxs],
+                                    self.done_buf[not_done_idxs])))
