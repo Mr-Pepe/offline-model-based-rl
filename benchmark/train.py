@@ -5,7 +5,7 @@ from benchmark.utils.actions import Actions
 from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.rollout_length_from_schedule import \
     get_rollout_length_from_schedule
-from benchmark.utils.virtual_rollouts import generate_virtual_rollout
+from benchmark.utils.virtual_rollouts import generate_virtual_rollouts
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.evaluate_policy import test_agent
 import time
@@ -243,21 +243,21 @@ class Trainer():
                 # Update agent
                 if step_total >= self.init_steps or self.pretrain_epochs > 0:
                     if self.use_model:
-                        for _ in range(self.rollouts_per_step):
-                            start_observation = self \
-                                .real_replay_buffer \
-                                .sample_batch(1)['obs']
-
-                            rollout = generate_virtual_rollout(
-                                self.env_model,
-                                self.agent,
-                                start_observation,
-                                rollout_length,
-                                term_fn=self.term_fn)
-                            for step in rollout:
-                                self.virtual_replay_buffer.store(
-                                    step['obs'], step['act'], step['rew'],
-                                    step['next_obs'], step['done'])
+                        rollouts = generate_virtual_rollouts(
+                            self.env_model,
+                            self.agent,
+                            self.real_replay_buffer,
+                            rollout_length,
+                            n_rollouts=self.rollouts_per_step,
+                            term_fn=self.term_fn
+                        )
+                        for i in range(len(rollouts['obs'])):
+                            self.virtual_replay_buffer.store(
+                                rollouts['obs'][i],
+                                rollouts['act'][i],
+                                rollouts['rew'][i],
+                                rollouts['next_obs'][i],
+                                rollouts['done'][i],)
 
                         self.agent.multi_update(self.agent_updates_per_step,
                                                 self.virtual_replay_buffer,

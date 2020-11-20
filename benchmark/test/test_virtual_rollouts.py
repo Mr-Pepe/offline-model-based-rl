@@ -75,7 +75,7 @@ def test_generate_rollout_stops_on_terminal():
     assert len(virtual_rollout['obs']) < 10
 
 
-@pytest.mark.fast
+@pytest.mark.medium
 def test_generate_multiple_rollouts():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     env = gym.make('maze2d-open-dense-v0')
@@ -139,5 +139,7 @@ def test_generate_multiple_rollouts():
 
     assert parallel_buffer.size == sequential_buffer.size
 
-    assert False, "Parallel: {:.3f}s Sequential: {:.3f}".format(time_parallel,
-                                                                time_sequential)
+    print("Parallel: {:.3f}s Sequential: {:.3f}".format(time_parallel,
+                                                        time_sequential))
+
+    assert time_parallel < time_sequential
