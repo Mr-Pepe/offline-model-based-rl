@@ -217,7 +217,7 @@ class Trainer():
                         a = self.env.action_space.sample()
                         actions_this_step[Actions.RANDOM_ACTION] = 1
                     else:
-                        a = self.agent.get_action(o)
+                        a = self.agent.act(o).cpu().numpy()
 
                     o2, r, d, _ = self.env.step(a)
                     ep_ret += r
@@ -256,8 +256,8 @@ class Trainer():
                                 term_fn=self.term_fn)
                             for step in rollout:
                                 self.virtual_replay_buffer.store(
-                                    step['o'], step['act'], step['rew'],
-                                    step['o2'], step['d'])
+                                    step['obs'], step['act'], step['rew'],
+                                    step['next_obs'], step['done'])
 
                         self.agent.multi_update(self.agent_updates_per_step,
                                                 self.virtual_replay_buffer,

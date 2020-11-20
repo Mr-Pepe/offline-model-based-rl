@@ -165,13 +165,10 @@ class SAC(nn.Module):
             logger.store(LossQ=loss_q.item(), **q_info)
             logger.store(LossPi=loss_pi.item(), **pi_info)
 
-    def act(self, obs, deterministic=False):
+    def act(self, o, deterministic=False):
+        obs = torch.as_tensor(o,
+                              dtype=torch.float32,
+                              device=self.device)
         with torch.no_grad():
             a, _ = self.pi(obs, deterministic, False)
-            return a.cpu().numpy()
-
-    def get_action(self, o, deterministic=False):
-        return self.act(torch.as_tensor(o,
-                                        dtype=torch.float32,
-                                        device=self.device),
-                        deterministic)
+            return a

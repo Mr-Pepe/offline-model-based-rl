@@ -108,7 +108,7 @@ def test_agent(test_env, agent, max_ep_len, num_test_episodes, logger,
         o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
         while not(d or (ep_len == max_ep_len)):
             # Take deterministic actions at test time
-            o, r, d, _ = test_env.step(agent.get_action(o, True))
+            o, r, d, _ = test_env.step(agent.act(o, True).cpu().numpy())
             if render:
                 test_env.render()
 

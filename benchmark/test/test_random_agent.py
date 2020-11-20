@@ -10,7 +10,7 @@ def test_returns_random_actions():
     agent = RandomAgent(env)
 
     for i in range(10):
-        action1 = agent.get_action()
-        action2 = agent.get_action()
+        action1 = agent.act()
+        action2 = agent.act()
 
         assert_raises(AssertionError, assert_array_equal, action1, action2)

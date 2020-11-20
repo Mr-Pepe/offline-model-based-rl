@@ -1,7 +1,7 @@
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.replay_buffer import ReplayBuffer
 from benchmark.utils.random_agent import RandomAgent
-from benchmark.utils.virtual_rollouts import generate_virtual_rollout
+from benchmark.utils.virtual_rollouts import generate_virtual_rollouts
 from benchmark.utils.loss_functions import deterministic_loss, \
     probabilistic_loss
 from benchmark.utils.load_dataset import load_dataset_from_env
@@ -305,8 +305,8 @@ def test_model_returns_prediction_of_random_network_if_not_specified():
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output1 = model.get_prediction(input)
-    output2 = model.get_prediction(input)
+    output1 = model.get_prediction(input).detach().numpy()
+    output2 = model.get_prediction(input).detach().numpy()
 
     np.testing.assert_raises(
         AssertionError, np.testing.assert_array_equal,
@@ -323,8 +323,8 @@ def test_model_returns_same_output_if_network_specified():
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output1 = model.get_prediction(input, i_network=5)
-    output2 = model.get_prediction(input, i_network=5)
+    output1 = model.get_prediction(input, i_network=5).detach().numpy()
+    output2 = model.get_prediction(input, i_network=5).detach().numpy()
 
     np.testing.assert_array_equal(output1, output2)
 
@@ -355,7 +355,7 @@ def test_probabilistic_model_returns_binary_done_signal():
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output = model.get_prediction(input)
+    output = model.get_prediction(input).detach().numpy()
 
     assert output[:, -1].any()
 
@@ -406,23 +406,23 @@ def test_deterministic_model_does_not_always_output_terminal():
 
     # Generate virtual rollouts and make sure that not everything is a terminal
     # state
-    agent = RandomAgent(env)
+    agent = RandomAgent(env, device=device)
     virtual_buffer = ReplayBuffer(obs_dim, act_dim, 10000, device=device)
 
     for model_rollout in range(10):
-        start_observation = real_buffer.sample_batch(1)['obs']
-
-        rollout = generate_virtual_rollout(
+        rollout = generate_virtual_rollouts(
             model,
             agent,
-            start_observation,
+            real_buffer,
             50,
             term_fn=termination_functions['hopper'])
 
-        for step in rollout:
-            virtual_buffer.store(
-                step['o'], step['act'], step['rew'],
-                step['o2'], step['d'])
+        for i in range(len(rollout['obs'])):
+            virtual_buffer.store(rollout['obs'][i],
+                                 rollout['act'][i],
+                                 rollout['rew'][i],
+                                 rollout['next_obs'][i],
+                                 rollout['done'][i],)
 
     terminal_ratio = virtual_buffer.get_terminal_ratio()
 
@@ -457,23 +457,24 @@ def test_probabilistic_model_does_not_always_output_terminal():
 
     # Generate virtual rollouts and make sure that not everything is a terminal
     # state
-    agent = RandomAgent(env)
+    agent = RandomAgent(env, device=device)
     virtual_buffer = ReplayBuffer(obs_dim, act_dim, 10000, device=device)
 
     for model_rollout in range(10):
-        start_observation = real_buffer.sample_batch(1)['obs']
 
-        rollout = generate_virtual_rollout(
+        rollout = generate_virtual_rollouts(
             model,
             agent,
-            start_observation,
+            real_buffer,
             50,
             term_fn=termination_functions['hopper'])
 
-        for step in rollout:
-            virtual_buffer.store(
-                step['o'], step['act'], step['rew'],
-                step['o2'], step['d'])
+        for i in range(len(rollout['obs'])):
+            virtual_buffer.store(rollout['obs'][i],
+                                 rollout['act'][i],
+                                 rollout['rew'][i],
+                                 rollout['next_obs'][i],
+                                 rollout['done'][i],)
 
     terminal_ratio = virtual_buffer.get_terminal_ratio()
 

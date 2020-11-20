@@ -124,11 +124,12 @@ class EnvironmentModel(nn.Module):
         i_network = torch.randint(self.n_networks,
                                   (1,)) if i_network == -1 else i_network
 
-        prediction, _, _, _, _ = self.forward(x, i_network, term_fn=term_fn)
+        with torch.no_grad():
+            prediction, _, _, _, _ = self.forward(x, i_network, term_fn=term_fn)
 
         prediction[:, -1] = prediction[:, -1] > 0.5
 
-        return prediction.cpu().detach().numpy()
+        return prediction
 
     def check_device_and_shape(self, x, device):
         x = x.to(device)
