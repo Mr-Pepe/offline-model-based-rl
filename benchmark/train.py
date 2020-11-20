@@ -287,7 +287,8 @@ class Trainer():
                                      self.max_ep_len,
                                      self.num_test_episodes,
                                      self.logger,
-                                     self.render)
+                                     self.render and
+                                     step_total > self.init_steps)
 
             test_performances.append([epoch, test_return])
 
