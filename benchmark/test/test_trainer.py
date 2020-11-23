@@ -233,3 +233,51 @@ def test_trainer_picks_correct_termination_functions():
     trainer = Trainer('Walker2d-v2', use_model=True)
 
     assert trainer.term_fn == termination_functions['walker2d']
+
+
+@pytest.mark.medium
+def test_results_are_reproducible():
+    epochs = 5
+    steps_per_epoch = 100
+    init_steps = 300
+    random_steps = 50
+    train_model_every = 50
+
+    trainer1 = Trainer('hopper-random-v0',
+                       epochs=epochs,
+                       sac_kwargs=dict(hidden=[32, 32, 32],
+                                       batch_size=32),
+                       model_kwargs=dict(hidden=[32, 32],
+                                         batch_size=32,
+                                         patience=1),
+                       use_model=True,
+                       train_model_every=train_model_every,
+                       steps_per_epoch=steps_per_epoch,
+                       max_ep_len=30,
+                       init_steps=init_steps,
+                       random_steps=random_steps,
+                       seed=1,
+                       )
+
+    test_performances1, action_log1 = trainer1.train()
+
+    trainer2 = Trainer('hopper-random-v0',
+                       epochs=epochs,
+                       sac_kwargs=dict(hidden=[32, 32, 32],
+                                       batch_size=32),
+                       model_kwargs=dict(hidden=[32, 32],
+                                         batch_size=32,
+                                         patience=1),
+                       use_model=True,
+                       train_model_every=train_model_every,
+                       steps_per_epoch=steps_per_epoch,
+                       max_ep_len=30,
+                       init_steps=init_steps,
+                       random_steps=random_steps,
+                       seed=1,
+                       )
+
+    test_performances2, action_log2 = trainer2.train()
+
+    np.testing.assert_array_equal(test_performances1, test_performances2)
+    np.testing.assert_array_equal(action_log1, action_log2)

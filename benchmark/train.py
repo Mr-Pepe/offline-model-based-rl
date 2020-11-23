@@ -11,6 +11,7 @@ from benchmark.utils.evaluate_policy import test_agent
 import time
 
 import torch
+import numpy as np
 
 from benchmark.actors.sac import SAC
 from benchmark.utils.logx import EpochLogger
@@ -81,6 +82,7 @@ class Trainer():
         """
 
         torch.manual_seed(seed)
+        np.random.seed(seed)
 
         self.logger = EpochLogger(**logger_kwargs)
         local_vars = locals()
@@ -90,6 +92,11 @@ class Trainer():
         self.env, self.test_env = gym.make(env_name), gym.make(env_name)
         obs_dim = self.env.observation_space.shape
         act_dim = self.env.action_space.shape[0]
+
+        self.env.seed(seed)
+        self.env.action_space.seed(seed)
+        self.test_env.seed(seed)
+        self.test_env.action_space.seed(seed)
 
         # Create SAC and environment model
         sac_kwargs.update({'device': device})
