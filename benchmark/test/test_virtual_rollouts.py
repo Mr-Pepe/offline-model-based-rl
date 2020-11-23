@@ -76,7 +76,7 @@ def test_generate_rollout_stops_on_terminal():
 
 
 @pytest.mark.medium
-def test_generate_multiple_rollouts():
+def test_generating_and_saving_rollouts_in_parallel_is_faster():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     env = gym.make('maze2d-open-dense-v0')
     observation_space = env.observation_space
@@ -102,8 +102,8 @@ def test_generate_multiple_rollouts():
     agent = SAC(observation_space, action_space, device=device)
 
     n_runs = 5
-    n_rollouts = 400
-    rollout_length = 1
+    n_rollouts = 100
+    rollout_length = 3
 
     start_time = time.time()
     for i in range(n_runs):
@@ -112,12 +112,11 @@ def test_generate_multiple_rollouts():
             n_rollouts=n_rollouts,
             stop_on_terminal=False)
 
-        for i in range(len(rollout['obs'])):
-            parallel_buffer.store(rollout['obs'][i],
-                                  rollout['act'][i],
-                                  rollout['rew'][i],
-                                  rollout['next_obs'][i],
-                                  rollout['done'][i],)
+        parallel_buffer.store_batch(rollout['obs'],
+                                    rollout['act'],
+                                    rollout['rew'],
+                                    rollout['next_obs'],
+                                    rollout['done'])
 
     time_parallel = time.time() - start_time
 
@@ -139,7 +138,7 @@ def test_generate_multiple_rollouts():
 
     assert parallel_buffer.size == sequential_buffer.size
 
-    print("Parallel: {:.3f}s Sequential: {:.3f}".format(time_parallel,
-                                                        time_sequential))
+    print("Parallel: {:.3f}s Sequential: {:.3f}s".format(time_parallel,
+                                                         time_sequential))
 
     assert time_parallel < time_sequential

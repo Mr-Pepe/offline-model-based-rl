@@ -28,33 +28,49 @@ class ReplayBuffer:
         self.device = device
 
     def store(self, obs, act, rew, next_obs, done):
-        self.obs_buf[self.ptr] = torch.as_tensor(obs, dtype=torch.float32)
-        self.obs2_buf[self.ptr] = torch.as_tensor(next_obs,
-                                                  dtype=torch.float32)
-        self.act_buf[self.ptr] = torch.as_tensor(act, dtype=torch.float32)
-        self.rew_buf[self.ptr] = torch.as_tensor(rew, dtype=torch.float32)
-        self.done_buf[self.ptr] = torch.as_tensor(done, dtype=torch.float32)
+        self.obs_buf[self.ptr] = obs
+        self.obs2_buf[self.ptr] = next_obs
+        self.act_buf[self.ptr] = act
+        self.rew_buf[self.ptr] = rew
+        self.done_buf[self.ptr] = done
         self.ptr = (self.ptr+1) % self.max_size
         self.size = min(self.size+1, self.max_size)
 
     def store_batch(self, obs, act, rew, next_obs, done):
-        if self.size > 0:
-            raise RuntimeError("Batch can only be stored in empty buffer.")
+        remaining_batch_size = len(obs)
+        remaining_buffer_size = self.max_size - self.ptr
 
-        batch_size = len(obs)
+        while remaining_buffer_size < remaining_batch_size:
+            self.obs_buf[self.ptr:] = \
+                obs[-remaining_batch_size:-
+                    remaining_batch_size+remaining_buffer_size]
+            self.obs2_buf[self.ptr:] = \
+                next_obs[-remaining_batch_size:-
+                         remaining_batch_size+remaining_buffer_size]
+            self.act_buf[self.ptr:] = \
+                act[-remaining_batch_size:-
+                    remaining_batch_size+remaining_buffer_size]
+            self.rew_buf[self.ptr:] = \
+                rew[-remaining_batch_size:-
+                    remaining_batch_size+remaining_buffer_size]
+            self.done_buf[self.ptr:] = \
+                done[-remaining_batch_size:-
+                     remaining_batch_size+remaining_buffer_size]
 
-        if self.max_size < batch_size:
-            raise ValueError("Buffer not big enough to add batch.")
+            self.ptr = 0
+            self.size = self.max_size
 
-        self.obs_buf[:batch_size] = torch.as_tensor(obs, dtype=torch.float32)
-        self.obs2_buf[:batch_size] = torch.as_tensor(next_obs,
-                                                     dtype=torch.float32)
-        self.act_buf[:batch_size] = torch.as_tensor(act, dtype=torch.float32)
-        self.rew_buf[:batch_size] = torch.as_tensor(rew, dtype=torch.float32)
-        self.done_buf[:batch_size] = torch.as_tensor(done, dtype=torch.float32)
+            remaining_batch_size -= remaining_buffer_size
+            remaining_buffer_size = self.max_size
 
-        self.ptr = batch_size
-        self.size = batch_size
+        self.obs_buf[:remaining_batch_size] = obs[-remaining_batch_size:]
+        self.obs2_buf[:remaining_batch_size] = next_obs[-remaining_batch_size:]
+        self.act_buf[:remaining_batch_size] = act[-remaining_batch_size:]
+        self.rew_buf[:remaining_batch_size] = rew[-remaining_batch_size:]
+        self.done_buf[:remaining_batch_size] = done[-remaining_batch_size:]
+
+        self.ptr = remaining_batch_size
+        self.size = min(self.size+remaining_batch_size, self.max_size)
 
     def sample_batch(self, batch_size=32):
         idxs = torch.randint(0, self.size, (batch_size,))

@@ -19,8 +19,11 @@ def test_buffer_returns_percentage_of_terminal_states():
     buffer = ReplayBuffer(len(observations[0]), len(
         actions[0]), len(observations))
 
-    buffer.store_batch(observations, actions, rewards,
-                       next_observations, dones)
+    buffer.store_batch(torch.as_tensor(observations),
+                       torch.as_tensor(actions),
+                       torch.as_tensor(rewards),
+                       torch.as_tensor(next_observations),
+                       torch.as_tensor(dones))
 
     np.testing.assert_almost_equal(
         buffer.get_terminal_ratio(), dones.sum()/dones.size)
@@ -44,57 +47,40 @@ def test_add_batch_to_buffer():
 
     assert buffer.size == 0
 
-    buffer.store_batch(observations, actions, rewards,
-                       next_observations, dones)
+    buffer.store_batch(torch.as_tensor(observations),
+                       torch.as_tensor(actions),
+                       torch.as_tensor(rewards),
+                       torch.as_tensor(next_observations),
+                       torch.as_tensor(dones))
 
     assert buffer.size == 977851
     assert buffer.ptr == 977851
 
 
 @pytest.mark.medium
-def test_store_batch_throws_error_if_buffer_not_empty():
-    env = gym.make('maze2d-open-v0')
-    dataset = d4rl.qlearning_dataset(env)
-    observations = dataset['observations']
-    next_observations = dataset['next_observations']
-    actions = dataset['actions']
-    rewards = dataset['rewards']
-    dones = dataset['terminals']
+def test_add_experience_to_buffer_online():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    env = gym.make('HalfCheetah-v2')
+    buffer = ReplayBuffer(env.observation_space.shape,
+                          env.action_space.shape[0],
+                          150,
+                          device=device)
 
-    buffer = ReplayBuffer(len(observations[0]),
-                          len(actions[0]),
-                          1000000)
+    o = env.reset()
+    for _ in range(100):
+        a = env.action_space.sample()
 
-    buffer.store(observations[0],
-                 actions[0],
-                 rewards[0],
-                 next_observations[0],
-                 dones[0],)
+        o2, r, d, _ = env.step(a)
 
-    assert buffer.size == 1
+        buffer.store(torch.as_tensor(o),
+                     torch.as_tensor(a),
+                     torch.as_tensor(r),
+                     torch.as_tensor(o2),
+                     torch.as_tensor(d))
 
-    with pytest.raises(RuntimeError):
-        buffer.store_batch(observations, actions, rewards,
-                           next_observations, dones)
+        o = o2
 
-
-@pytest.mark.medium
-def test_store_batch_throws_error_if_buffer_too_small():
-    env = gym.make('maze2d-open-v0')
-    dataset = d4rl.qlearning_dataset(env)
-    observations = dataset['observations']
-    next_observations = dataset['next_observations']
-    actions = dataset['actions']
-    rewards = dataset['rewards']
-    dones = dataset['terminals']
-
-    buffer = ReplayBuffer(len(observations[0]),
-                          len(actions[0]),
-                          10)
-
-    with pytest.raises(ValueError):
-        buffer.store_batch(observations, actions, rewards,
-                           next_observations, dones)
+    assert buffer.size == 100
 
 
 @pytest.mark.fast
@@ -104,12 +90,20 @@ def test_buffer_returns_whether_it_contains_a_done_state():
     assert not buffer.has_terminal_state()
 
     for step in range(100):
-        buffer.store(0, 0, 0, 0, False)
+        buffer.store(torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     False)
 
     assert not buffer.has_terminal_state()
 
     for step in range(100):
-        buffer.store(0, 0, 0, 0, True)
+        buffer.store(torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     True)
 
     assert buffer.has_terminal_state()
 
@@ -120,10 +114,76 @@ def test_buffer_returns_batch_with_balanced_terminal_signal():
 
     # Next check that batch is balanced if buffer is unbalanced
     for step in range(1001):
-        buffer.store(0, 0, 0, 0, step % 4 == 0)
+        buffer.store(torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     step % 4 == 0)
 
     assert buffer.get_terminal_ratio() < 0.5
 
     batch = buffer.sample_balanced_terminal_batch()
 
     assert sum(batch['done']) == 0.5 * len(batch['done'])
+
+
+@pytest.mark.medium
+def test_store_batch_to_empty_buffer_that_is_too_small():
+    n_samples = 237
+    buffer_size = 100
+
+    env = gym.make('maze2d-open-v0')
+    dataset = d4rl.qlearning_dataset(env)
+    observations = torch.as_tensor(dataset['observations'][:n_samples])
+    next_observations = torch.as_tensor(
+        dataset['next_observations'][:n_samples])
+    actions = torch.as_tensor(dataset['actions'][:n_samples])
+    rewards = torch.as_tensor(dataset['rewards'][:n_samples])
+    dones = torch.as_tensor(dataset['terminals'][:n_samples])
+
+    buffer = ReplayBuffer(len(observations[0]),
+                          len(actions[0]),
+                          buffer_size)
+
+    buffer.store_batch(observations, actions, rewards,
+                       next_observations, dones)
+
+    assert buffer.ptr == n_samples % buffer_size
+    np.testing.assert_array_equal(
+        buffer.obs_buf[buffer.ptr-1], observations[-1])
+
+
+@pytest.mark.medium
+def test_store_batch_to_prefilled_buffer_that_is_too_small():
+    n_samples = 237
+    buffer_size = 100
+    prefill = 15
+
+    env = gym.make('maze2d-open-v0')
+    dataset = d4rl.qlearning_dataset(env)
+    observations = torch.as_tensor(dataset['observations'][:n_samples])
+    next_observations = torch.as_tensor(
+        dataset['next_observations'][:n_samples])
+    actions = torch.as_tensor(dataset['actions'][:n_samples])
+    rewards = torch.as_tensor(dataset['rewards'][:n_samples])
+    dones = torch.as_tensor(dataset['terminals'][:n_samples])
+
+    buffer = ReplayBuffer(len(observations[0]),
+                          len(actions[0]),
+                          buffer_size)
+
+    buffer.store_batch(observations[:prefill],
+                       actions[:prefill],
+                       rewards[:prefill],
+                       next_observations[:prefill],
+                       dones[:prefill])
+
+    buffer.store_batch(observations[prefill:],
+                       actions[prefill:],
+                       rewards[prefill:],
+                       next_observations[prefill:],
+                       dones[prefill:])
+
+    assert buffer.ptr == n_samples % buffer_size
+    np.testing.assert_array_equal(
+        buffer.obs_buf[buffer.ptr-1], observations[-1])

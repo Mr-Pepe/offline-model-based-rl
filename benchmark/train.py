@@ -228,7 +228,11 @@ class Trainer():
                     # that isn't based on the agent's state)
                     d = False if ep_len == self.max_ep_len else d
 
-                    self.real_replay_buffer.store(o, a, r, o2, d)
+                    self.real_replay_buffer.store(torch.as_tensor(o),
+                                                  torch.as_tensor(a),
+                                                  torch.as_tensor(r),
+                                                  torch.as_tensor(o2),
+                                                  torch.as_tensor(d))
                     o = o2
 
                     # End of trajectory handling
@@ -251,13 +255,12 @@ class Trainer():
                             n_rollouts=self.rollouts_per_step,
                             term_fn=self.term_fn
                         )
-                        for i in range(len(rollouts['obs'])):
-                            self.virtual_replay_buffer.store(
-                                rollouts['obs'][i],
-                                rollouts['act'][i],
-                                rollouts['rew'][i],
-                                rollouts['next_obs'][i],
-                                rollouts['done'][i],)
+                        self.virtual_replay_buffer.store_batch(
+                            rollouts['obs'],
+                            rollouts['act'],
+                            rollouts['rew'],
+                            rollouts['next_obs'],
+                            rollouts['done'])
 
                         self.agent.multi_update(self.agent_updates_per_step,
                                                 self.virtual_replay_buffer,
