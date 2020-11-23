@@ -7,7 +7,7 @@ python main.py \
     --pretrain_epochs 0 \
     --steps_per_epoch 1000 \
     --init_steps 2000 \
-    --random_steps 1000 \
+    --random_steps 10000 \
     --buffer_size 1000000 \
     --hid 200 \
     --l 4 \
