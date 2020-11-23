@@ -1,7 +1,9 @@
+for seed in 0 1 2
+do
 python main.py \
     --env HalfCheetah-v2 \
-    --seed 0 \
-    --epochs 400 \
+    --seed $seed \
+    --epochs 200 \
     --pretrain_epochs 0 \
     --steps_per_epoch 1000 \
     --init_steps 256 \
@@ -20,3 +22,5 @@ python main.py \
     --log_dir "" \
     --device cpu \
     --render False
+done
+exit 0
