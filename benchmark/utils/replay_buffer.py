@@ -63,11 +63,16 @@ class ReplayBuffer:
             remaining_batch_size -= remaining_buffer_size
             remaining_buffer_size = self.max_size
 
-        self.obs_buf[:remaining_batch_size] = obs[-remaining_batch_size:]
-        self.obs2_buf[:remaining_batch_size] = next_obs[-remaining_batch_size:]
-        self.act_buf[:remaining_batch_size] = act[-remaining_batch_size:]
-        self.rew_buf[:remaining_batch_size] = rew[-remaining_batch_size:]
-        self.done_buf[:remaining_batch_size] = done[-remaining_batch_size:]
+        self.obs_buf[self.ptr:self.ptr +
+                     remaining_batch_size] = obs[-remaining_batch_size:]
+        self.obs2_buf[self.ptr:self.ptr +
+                      remaining_batch_size] = next_obs[-remaining_batch_size:]
+        self.act_buf[self.ptr:self.ptr +
+                     remaining_batch_size] = act[-remaining_batch_size:]
+        self.rew_buf[self.ptr:self.ptr +
+                     remaining_batch_size] = rew[-remaining_batch_size:]
+        self.done_buf[self.ptr:self.ptr +
+                      remaining_batch_size] = done[-remaining_batch_size:]
 
         self.ptr += remaining_batch_size
         self.size = min(self.size+remaining_batch_size, self.max_size)

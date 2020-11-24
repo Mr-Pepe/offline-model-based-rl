@@ -56,6 +56,9 @@ def test_add_batches_to_buffer():
                        torch.as_tensor(dones)[:size_first_batch])
 
     assert buffer.size == size_first_batch
+    np.testing.assert_array_equal(buffer.obs_buf[0].cpu(), observations[0])
+    np.testing.assert_array_equal(buffer.obs_buf[size_first_batch-1].cpu(),
+                                  observations[size_first_batch-1])
 
     buffer.store_batch(torch.as_tensor(observations)[size_first_batch:],
                        torch.as_tensor(actions)[size_first_batch:],
@@ -65,6 +68,12 @@ def test_add_batches_to_buffer():
 
     assert buffer.size == 977851
     assert buffer.ptr == 977851
+
+    np.testing.assert_array_equal(buffer.obs_buf[0].cpu(), observations[0])
+    np.testing.assert_array_equal(buffer.obs_buf[size_first_batch-1].cpu(),
+                                  observations[size_first_batch-1])
+    np.testing.assert_array_equal(buffer.obs_buf[977850].cpu(),
+                                  observations[-1])
 
 
 @pytest.mark.medium
