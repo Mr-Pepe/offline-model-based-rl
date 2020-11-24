@@ -147,36 +147,10 @@ def test_buffer_returns_batch_with_balanced_terminal_signal():
 
 
 @pytest.mark.medium
-def test_store_batch_to_empty_buffer_that_is_too_small():
-    n_samples = 237
-    buffer_size = 100
-
-    env = gym.make('maze2d-open-v0')
-    dataset = d4rl.qlearning_dataset(env)
-    observations = torch.as_tensor(dataset['observations'][:n_samples])
-    next_observations = torch.as_tensor(
-        dataset['next_observations'][:n_samples])
-    actions = torch.as_tensor(dataset['actions'][:n_samples])
-    rewards = torch.as_tensor(dataset['rewards'][:n_samples])
-    dones = torch.as_tensor(dataset['terminals'][:n_samples])
-
-    buffer = ReplayBuffer(len(observations[0]),
-                          len(actions[0]),
-                          buffer_size)
-
-    buffer.store_batch(observations, actions, rewards,
-                       next_observations, dones)
-
-    assert buffer.ptr == n_samples % buffer_size
-    np.testing.assert_array_equal(
-        buffer.obs_buf[buffer.ptr-1], observations[-1])
-
-
-@pytest.mark.medium
 def test_store_batch_to_prefilled_buffer_that_is_too_small():
-    n_samples = 237
+    n_samples = 137
     buffer_size = 100
-    prefill = 15
+    prefill = 80
 
     env = gym.make('maze2d-open-v0')
     dataset = d4rl.qlearning_dataset(env)
@@ -206,3 +180,25 @@ def test_store_batch_to_prefilled_buffer_that_is_too_small():
     assert buffer.ptr == n_samples % buffer_size
     np.testing.assert_array_equal(
         buffer.obs_buf[buffer.ptr-1], observations[-1])
+
+
+@pytest.mark.medium
+def test_store_batch_throws_error_if_buffer_too_small():
+    env = gym.make('maze2d-open-v0')
+    dataset = d4rl.qlearning_dataset(env)
+    observations = dataset['observations']
+    next_observations = dataset['next_observations']
+    actions = dataset['actions']
+    rewards = dataset['rewards']
+    dones = dataset['terminals']
+
+    buffer = ReplayBuffer(len(observations[0]),
+                          len(actions[0]),
+                          10)
+
+    with pytest.raises(ValueError):
+        buffer.store_batch(torch.as_tensor(observations),
+                           torch.as_tensor(actions),
+                           torch.as_tensor(rewards),
+                           torch.as_tensor(next_observations),
+                           torch.as_tensor(dones))

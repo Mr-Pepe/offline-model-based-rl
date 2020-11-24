@@ -40,6 +40,10 @@ class ReplayBuffer:
         remaining_batch_size = len(obs)
         remaining_buffer_size = self.max_size - self.ptr
 
+        if remaining_batch_size > self.max_size:
+            raise ValueError("Batch of size {} does not fit in replay buffer \
+                of size {}.".format(remaining_batch_size, self.max_size))
+
         while remaining_buffer_size < remaining_batch_size:
             self.obs_buf[self.ptr:] = \
                 obs[-remaining_batch_size:-
