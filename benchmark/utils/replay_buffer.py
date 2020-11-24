@@ -69,7 +69,7 @@ class ReplayBuffer:
         self.rew_buf[:remaining_batch_size] = rew[-remaining_batch_size:]
         self.done_buf[:remaining_batch_size] = done[-remaining_batch_size:]
 
-        self.ptr = remaining_batch_size
+        self.ptr += remaining_batch_size
         self.size = min(self.size+remaining_batch_size, self.max_size)
 
     def sample_batch(self, batch_size=32):

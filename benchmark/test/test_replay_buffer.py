@@ -30,7 +30,9 @@ def test_buffer_returns_percentage_of_terminal_states():
 
 
 @pytest.mark.medium
-def test_add_batch_to_buffer():
+def test_add_batches_to_buffer():
+    size_first_batch = 1234
+
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     env = gym.make('maze2d-open-v0')
     dataset = d4rl.qlearning_dataset(env)
@@ -47,11 +49,19 @@ def test_add_batch_to_buffer():
 
     assert buffer.size == 0
 
-    buffer.store_batch(torch.as_tensor(observations),
-                       torch.as_tensor(actions),
-                       torch.as_tensor(rewards),
-                       torch.as_tensor(next_observations),
-                       torch.as_tensor(dones))
+    buffer.store_batch(torch.as_tensor(observations)[:size_first_batch],
+                       torch.as_tensor(actions)[:size_first_batch],
+                       torch.as_tensor(rewards)[:size_first_batch],
+                       torch.as_tensor(next_observations)[:size_first_batch],
+                       torch.as_tensor(dones)[:size_first_batch])
+
+    assert buffer.size == size_first_batch
+
+    buffer.store_batch(torch.as_tensor(observations)[size_first_batch:],
+                       torch.as_tensor(actions)[size_first_batch:],
+                       torch.as_tensor(rewards)[size_first_batch:],
+                       torch.as_tensor(next_observations)[size_first_batch:],
+                       torch.as_tensor(dones)[size_first_batch:])
 
     assert buffer.size == 977851
     assert buffer.ptr == 977851
