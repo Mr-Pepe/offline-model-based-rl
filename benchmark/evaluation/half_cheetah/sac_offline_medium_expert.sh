@@ -1,7 +1,7 @@
 for seed in 0 1 2
 do
 python main.py \
-    --env halfcheetah-random-v0 \
+    --env halfcheetah-medium-expert-v0 \
     --seed $seed \
     --epochs 100 \
     --pretrain_epochs 200 \
@@ -17,7 +17,7 @@ python main.py \
     --agent_lr 3e-4 \
     --use_model False \
     --num_test_episodes 10 \
-    --exp_name half_cheetah_sac_offline_random \
+    --exp_name half_cheetah_sac_offline_medium_expert \
     --datestamp False \
     --log_dir "" \
     --device cuda \

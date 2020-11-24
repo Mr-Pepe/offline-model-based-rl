@@ -12,7 +12,7 @@ python main.py \
     --hid 200 \
     --l 4 \
     --gamma 0.99 \
-    --agent_updates_per_step 40 \
+    --agent_updates_per_step 10 \
     --agent_batch_size 256 \
     --agent_lr 3e-4 \
     --use_model True \

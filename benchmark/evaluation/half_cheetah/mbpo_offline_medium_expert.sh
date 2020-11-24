@@ -1,14 +1,14 @@
 for seed in 0 1 2
 do
 python main.py \
-    --env halfcheetah-random-v0 \
+    --env halfcheetah-medium-expert-v0 \
     --seed $seed \
     --epochs 100 \
     --pretrain_epochs 100 \
     --steps_per_epoch 1000 \
     --init_steps 0 \
     --random_steps 0 \
-    --buffer_size 1000000 \
+    --buffer_size 2000000 \
     --hid 200 \
     --l 4 \
     --gamma 0.99 \
@@ -26,7 +26,7 @@ python main.py \
     --rollout_schedule 5 5 20 100 \
     --train_model_every 1000 \
     --num_test_episodes 10 \
-    --exp_name half_cheetah_mbpo_offline_random \
+    --exp_name half_cheetah_mbpo_offline_medium_expert \
     --datestamp False \
     --log_dir "" \
     --device cuda \
