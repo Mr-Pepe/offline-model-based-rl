@@ -66,9 +66,6 @@ class SAC(nn.Module):
         self.q_optimizer = Adam(self.q_params, lr=q_lr)
 
         self.to(device)
-        # self.pi.to(device)
-        # self.q1.to(device)
-        # self.q2.to(device)
 
         self.target = deepcopy(self)
 
@@ -123,6 +120,8 @@ class SAC(nn.Module):
         return loss_pi, pi_info
 
     def update(self, data):
+        self.device = next(self.parameters()).device
+
         for key in data:
             data[key] = data[key].to(self.device)
 
@@ -166,6 +165,8 @@ class SAC(nn.Module):
             logger.store(LossPi=loss_pi.item(), **pi_info)
 
     def act(self, o, deterministic=False):
+        self.device = next(self.parameters()).device
+
         obs = torch.as_tensor(o,
                               dtype=torch.float32,
                               device=self.device)
