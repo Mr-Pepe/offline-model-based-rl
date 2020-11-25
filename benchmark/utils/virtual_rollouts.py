@@ -3,7 +3,7 @@ import torch
 
 def generate_virtual_rollouts(model, agent, buffer, steps,
                               n_rollouts=1, term_fn=None,
-                              stop_on_terminal=True):
+                              stop_on_terminal=True, pessimism=0):
 
     model_is_training = model.training
     agent_is_training = agent.training
@@ -27,7 +27,8 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
         actions = agent.act(observations)
         pred = model.get_prediction(torch.as_tensor(
             torch.cat((observations, actions), dim=1),
-            dtype=torch.float32), term_fn=term_fn)
+            dtype=torch.float32), term_fn=term_fn,
+            pessimism=pessimism)
 
         if out_observations is None:
             out_observations = observations.detach().clone()

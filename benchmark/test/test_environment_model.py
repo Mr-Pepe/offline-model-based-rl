@@ -494,7 +494,7 @@ def test_pessimistic_prediction_throws_error_if_model_not_probabilistic():
     input = torch.rand(tensor_size)
 
     with pytest.raises(ValueError):
-        model.get_prediction(input, pessimistic=True)
+        model.get_prediction(input, pessimism=1)
 
 
 @pytest.mark.fast
@@ -515,17 +515,17 @@ def test_get_prediction_from_pessimistic_model():
     torch.random.manual_seed(0)
 
     optimistic_output1 = model.get_prediction(input,
-                                              pessimistic=False)
+                                              pessimism=0)
 
     torch.random.manual_seed(0)
 
     optimistic_output2 = model.get_prediction(input,
-                                              pessimistic=False)
+                                              pessimism=0)
 
     torch.random.manual_seed(0)
 
     pessimistic_output = model.get_prediction(input,
-                                              pessimistic=True)
+                                              pessimism=1)
 
     np.testing.assert_array_equal(optimistic_output1,
                                   optimistic_output2)

@@ -36,6 +36,8 @@ if __name__ == '__main__':
     parser.add_argument('--rollout_schedule', nargs='+',
                         type=int, default=[1, 1, 20, 100])
     parser.add_argument('--train_model_every', type=int, default=250)
+    parser.add_argument('--model_max_n_train_batches', type=int, default=2000)
+    parser.add_argument('--model_pessimism', type=int, default=0)
 
     parser.add_argument('--num_test_episodes', type=int, default=10)
     parser.add_argument('--exp_name', type=str, default='sac_offline')
@@ -82,6 +84,8 @@ if __name__ == '__main__':
                       device=device,
                       buffer_size=args.buffer_size,
                       use_model=args.use_model,
+                      model_pessimism=args.model_pessimism,
+                      model_max_n_train_batches=args.model_max_n_train_batches,
                       agent_updates_per_step=args.agent_updates_per_step,
                       rollouts_per_step=args.rollouts_per_step,
                       rollout_schedule=args.rollout_schedule,

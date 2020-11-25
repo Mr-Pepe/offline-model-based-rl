@@ -33,6 +33,8 @@ class Trainer():
                  num_test_episodes=10,
                  max_ep_len=1000,
                  use_model=False,
+                 model_pessimism=0,
+                 model_max_n_train_batches=-1,
                  rollouts_per_step=10,
                  rollout_schedule=[1, 1, 20, 100],
                  train_model_every=250,
@@ -153,6 +155,8 @@ class Trainer():
         self.rollouts_per_step = rollouts_per_step
         self.rollout_schedule = rollout_schedule
         self.train_model_every = train_model_every
+        self.model_pessimism = model_pessimism
+        self.model_max_n_train_batches = model_max_n_train_batches
 
         self.num_test_episodes = num_test_episodes
         self.save_freq = save_freq
@@ -203,6 +207,7 @@ class Trainer():
                     model_val_error = self.env_model.train_to_convergence(
                         self.real_replay_buffer,
                         patience_value=0 if epoch < 1 else 1,
+                        max_n_train_batches=-1 if epoch < 1 else self.model_max_n_train_batches,
                         **self.model_kwargs)
 
                     model_trained_at_all = True
@@ -211,7 +216,6 @@ class Trainer():
                     self.logger.store(LossEnvModel=model_val_error)
                     actions_this_step[Actions.TRAIN_MODEL] = 1
                     print('')
-                    print('Environment model error: {}'.format(model_val_error))
 
                 print("Epoch {}, step {}/{}".format(epoch,
                                                     step_epoch+1,
@@ -260,7 +264,8 @@ class Trainer():
                             self.real_replay_buffer,
                             rollout_length,
                             n_rollouts=self.rollouts_per_step,
-                            term_fn=self.term_fn
+                            term_fn=self.term_fn,
+                            pessimism=0 if epoch > 0 else self.model_pessimism
                         )
                         self.virtual_replay_buffer.store_batch(
                             rollouts['obs'],

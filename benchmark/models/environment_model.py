@@ -120,10 +120,10 @@ class EnvironmentModel(nn.Module):
             max_logvar, \
             min_logvar
 
-    def get_prediction(self, x, i_network=-1, term_fn=None, pessimistic=False,
-                       pessimism=1):
+    def get_prediction(self, x, i_network=-1, term_fn=None,
+                       pessimism=0):
 
-        if not pessimistic:
+        if pessimism == 0:
             i_network = torch.randint(self.n_networks,
                                       (1,)) if i_network == -1 else i_network
 
@@ -170,7 +170,7 @@ class EnvironmentModel(nn.Module):
 
     def train_to_convergence(self, data, lr=1e-3, batch_size=1024,
                              val_split=0.2, patience=20, patience_value=0,
-                             debug=False, **_):
+                             debug=False, max_n_train_batches=-1, **_):
 
         if type(patience) is list:
             if patience_value > 0 and len(patience) > patience_value:
@@ -190,12 +190,16 @@ class EnvironmentModel(nn.Module):
                         batch_size))
 
         avg_val_losses = [1e10 for i in range(self.n_networks)]
+        n_batches_trained = [0 for i in range(self.n_networks)]
 
         print('')
+        print("Buffer size: {} Train batches per epoch: {} Stopping after {} batches".format(
+            data.size,
+            n_train_batches,
+            max_n_train_batches
+        ))
 
         for i_network, network in enumerate(self.networks):
-            print("Training network {}/{}".format(i_network+1, self.n_networks))
-
             device = next(network.parameters()).device
             optim = Adam(network.parameters(), lr=lr)
 
@@ -203,6 +207,10 @@ class EnvironmentModel(nn.Module):
             n_bad_val_losses = 0
             avg_val_loss = 0
             avg_train_loss = 0
+
+            batches_trained = 0
+
+            stop_training = False
 
             while n_bad_val_losses < patience:
 
@@ -224,7 +232,15 @@ class EnvironmentModel(nn.Module):
                     loss.backward(retain_graph=True)
                     optim.step()
 
+                    if max_n_train_batches != -1 and \
+                            max_n_train_batches <= batches_trained:
+                        stop_training = True
+                        break
+
+                    batches_trained += 1
+
                 if debug:
+                    print('')
                     print("Network: {}/{} Train loss: {}".format(
                         i_network+1,
                         self.n_networks,
@@ -257,13 +273,24 @@ class EnvironmentModel(nn.Module):
                 else:
                     n_bad_val_losses += 1
 
-                if debug:
-                    print("Network: {}/{} Patience: {} Val loss: {}".format(
-                        i_network+1,
-                        self.n_networks,
-                        n_bad_val_losses,
-                        avg_val_loss))
+                print("Network: {}/{} trained on {} batches  Patience: {}/{} Val loss: {}".format(
+                    i_network+1,
+                    self.n_networks,
+                    batches_trained,
+                    n_bad_val_losses,
+                    patience,
+                    avg_val_loss), end='\r')
+
+                if stop_training:
+                    break
 
             avg_val_losses[i_network] = avg_val_loss
+            n_batches_trained[i_network] = batches_trained
 
-        return avg_val_losses
+            print("Network: {}/{} trained on {} batches. Val loss: {}".format(
+                i_network+1,
+                self.n_networks,
+                batches_trained,
+                avg_val_loss))
+
+        return avg_val_losses, n_batches_trained
