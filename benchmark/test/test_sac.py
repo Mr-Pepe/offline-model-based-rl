@@ -1,7 +1,13 @@
+from benchmark.utils.logx import EpochLogger
+import time
+import gym
+from benchmark.actors.sac import SAC
+from benchmark.utils.load_dataset import load_dataset_from_env
 import pytest
 import torch
 from benchmark.train import Trainer
 from benchmark.utils.run_utils import setup_logger_kwargs
+import d4rl  # noqa
 
 logger_kwargs = setup_logger_kwargs('test_sac')
 env = 'HalfCheetah-v2'
@@ -42,3 +48,36 @@ def test_sac_converges():
     final_return, _ = trainer.train()
 
     assert final_return[-1, -1] > 400
+
+
+def sac_trains_faster_on_gpu_on_filled_buffer():
+
+    for device in ['cpu', 'cuda']:
+        torch.manual_seed(0)
+
+        env = gym.make('halfcheetah-random-v0')
+        buffer, obs_dim, act_dim = load_dataset_from_env(env,
+                                                         buffer_device=device,
+                                                         n_samples=100000)
+
+        agent = SAC(
+            env.observation_space,
+            env.action_space,
+            batch_size=256,
+            device=device
+        )
+
+        logger = EpochLogger(**logger_kwargs)
+
+        n_updates = 50
+        i_update = 0
+
+        start_time = time.time()
+
+        for _ in range(n_updates):
+            print("Update {}/{}".format(i_update, n_updates), end='\r')
+            agent.multi_update(20, buffer, logger)
+            i_update += 1
+
+        print('')
+        print("Time: {}".format(time.time()-start_time))
