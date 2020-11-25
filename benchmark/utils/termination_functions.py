@@ -35,10 +35,20 @@ def walker2d_termination_fn(next_obs):
     return done
 
 
+def antmaze_termination_fn(next_obs):
+
+    # This is technically not correct, as the environment terminates a
+    # rollout when reaching the goal
+    done = torch.as_tensor([False]).repeat(len(next_obs))
+    done = done[:, None]
+    return done
+
+
 termination_functions = {
     'hopper': hopper_termination_fn,
     'half_cheetah': half_cheetah_termination_fn,
     'walker2d': walker2d_termination_fn,
+    'antmaze': antmaze_termination_fn,
 }
 
 function_to_names_mapping = {
@@ -61,6 +71,13 @@ function_to_names_mapping = {
                  'walker2d-medium-replay-v0',
                  'walker2d-medium-expert-v0',
                  ],
+    'antmaze': ['antmaze-umaze-v0',
+                'antmaze-umaze-diverse-v0',
+                'antmaze-medium-diverse-v0',
+                'antmaze-medium-play-v0',
+                'antmaze-large-diverse-v0',
+                'antmaze-large-play-v0',
+                ],
 }
 
 

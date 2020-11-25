@@ -1,4 +1,4 @@
-from benchmark.utils.termination_functions import half_cheetah_termination_fn, \
+from benchmark.utils.termination_functions import antmaze_termination_fn, half_cheetah_termination_fn, \
     hopper_termination_fn, walker2d_termination_fn
 import gym
 import torch
@@ -58,3 +58,12 @@ def test_walker2d_termination_function():
 
     np.testing.assert_array_equal(dones,
                                   walker2d_termination_fn(next_observations))
+
+
+@pytest.mark.fast
+def test_antmaze_termination_function():
+
+    next_observations, dones = run_env(gym.make('antmaze-umaze-diverse-v0'),
+                                       100)
+
+    assert antmaze_termination_fn(next_observations).sum() == 0
