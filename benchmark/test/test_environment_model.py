@@ -481,3 +481,59 @@ def test_probabilistic_model_does_not_always_output_terminal():
     print(terminal_ratio)
     assert terminal_ratio < 1
     assert terminal_ratio > 0
+
+
+@pytest.mark.fast
+def test_pessimistic_prediction_throws_error_if_model_not_probabilistic():
+    obs_dim = 5
+    act_dim = 6
+
+    model = EnvironmentModel(obs_dim, act_dim, [2, 2])
+
+    tensor_size = (3, obs_dim+act_dim)
+    input = torch.rand(tensor_size)
+
+    with pytest.raises(ValueError):
+        model.get_prediction(input, pessimistic=True)
+
+
+@pytest.mark.fast
+def test_get_prediction_from_pessimistic_model():
+    obs_dim = 5
+    act_dim = 6
+    n_samples = 100
+
+    model = EnvironmentModel(obs_dim,
+                             act_dim,
+                             hidden=[2, 2],
+                             type='probabilistic',
+                             n_networks=2)
+
+    tensor_size = (n_samples, obs_dim+act_dim)
+    input = torch.rand(tensor_size)
+
+    torch.random.manual_seed(0)
+
+    optimistic_output1 = model.get_prediction(input,
+                                              pessimistic=False)
+
+    torch.random.manual_seed(0)
+
+    optimistic_output2 = model.get_prediction(input,
+                                              pessimistic=False)
+
+    torch.random.manual_seed(0)
+
+    pessimistic_output = model.get_prediction(input,
+                                              pessimistic=True)
+
+    np.testing.assert_array_equal(optimistic_output1,
+                                  optimistic_output2)
+
+    np.testing.assert_array_equal(pessimistic_output.shape,
+                                  optimistic_output1.shape)
+
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal,
+        optimistic_output1,
+        pessimistic_output)

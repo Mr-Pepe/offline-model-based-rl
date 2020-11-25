@@ -120,15 +120,44 @@ class EnvironmentModel(nn.Module):
             max_logvar, \
             min_logvar
 
-    def get_prediction(self, x, i_network=-1, term_fn=None):
-        i_network = torch.randint(self.n_networks,
-                                  (1,)) if i_network == -1 else i_network
+    def get_prediction(self, x, i_network=-1, term_fn=None, pessimistic=False,
+                       pessimism=1):
 
-        with torch.no_grad():
-            prediction, _, _, _, _ = self.forward(x, i_network, term_fn=term_fn)
+        if not pessimistic:
+            i_network = torch.randint(self.n_networks,
+                                      (1,)) if i_network == -1 else i_network
+
+            with torch.no_grad():
+                prediction, _, _, _, _ = self.forward(x,
+                                                      i_network,
+                                                      term_fn=term_fn)
+
+        else:
+            if self.type != 'probabilistic':
+                raise ValueError("Can not predict pessimistically because \
+                    model is not probabilistic")
+
+            predictions = torch.zeros((self.n_networks,
+                                       x.shape[0],
+                                       self.obs_dim+2))
+
+            logvars = torch.zeros(
+                (self.n_networks, x.shape[0], self.obs_dim+1))
+
+            for i_network in range(self.n_networks):
+                with torch.no_grad():
+                    predictions[i_network], _, logvars[i_network], _, _ = \
+                        self.forward(x,
+                                     i_network,
+                                     term_fn=term_fn)
+
+            prediction = predictions.mean(dim=0)
+
+            # Penalize the reward
+            prediction[:, -2] -= pessimism * \
+                torch.exp(logvars[:, :, -1]).max(dim=0).values
 
         prediction[:, -1] = prediction[:, -1] > 0.5
-
         return prediction
 
     def check_device_and_shape(self, x, device):
