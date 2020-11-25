@@ -24,7 +24,9 @@ python main.py \
     --model_patience 50 20 \
     --rollouts_per_step 80 \
     --rollout_schedule 5 5 20 100 \
-    --train_model_every 1000 \
+    --train_model_every 250 \
+    --model_max_n_train_batches 2000 \
+    --model_pessimism 0 \
     --num_test_episodes 10 \
     --exp_name half_cheetah_mbpo_offline_medium_expert \
     --datestamp False \
