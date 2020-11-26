@@ -20,6 +20,7 @@ from benchmark.utils.mpi_tools import proc_id, mpi_statistics_scalar
 from benchmark.utils.serialization_utils import convert_json
 from torch.utils.tensorboard import SummaryWriter
 import shutil
+import matplotlib.pyplot as plt
 
 color2num = dict(
     gray=30,
@@ -372,3 +373,29 @@ class EpochLogger(Logger):
         vals = np.concatenate(v) if isinstance(
             v[0], np.ndarray) and len(v[0].shape) > 0 else v
         return mpi_statistics_scalar(vals)
+
+    def save_replay_buffer_to_tensorboard(self, epoch, mode=''):
+        if 'replay_buffer' in self.pytorch_saver_elements:
+            buffer = self.pytorch_saver_elements['replay_buffer']
+            if self.tensorboard_writer:
+                xlim = None
+                ylim = None
+
+                if mode == 'umaze':
+                    xlim = [-2, 10]
+                    ylim = [-2, 10]
+
+                f = plt.figure()
+
+                plt.scatter(
+                    buffer.obs_buf[:, 0].cpu(),
+                    buffer.obs_buf[:, 1].cpu(),
+                    marker='.',
+                    s=2
+                )
+
+                if xlim and ylim:
+                    plt.xlim(xlim)
+                    plt.ylim(ylim)
+
+                self.tensorboard_writer.add_figure('ReplayBuffer', f, epoch)

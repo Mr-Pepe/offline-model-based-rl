@@ -364,3 +364,5 @@ def log_end_of_epoch(logger, epoch, step_total, start_time,
 
     logger.log_tabular('Time', epoch, time.time()-start_time)
     logger.dump_tabular()
+
+    logger.save_replay_buffer_to_tensorboard(epoch, mode='umaze')
