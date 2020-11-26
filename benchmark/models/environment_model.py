@@ -137,9 +137,12 @@ class EnvironmentModel(nn.Module):
                 raise ValueError("Can not predict pessimistically because \
                     model is not probabilistic")
 
+            device = next(self.networks[0].parameters()).device
+
             predictions = torch.zeros((self.n_networks,
                                        x.shape[0],
-                                       self.obs_dim+2))
+                                       self.obs_dim+2),
+                                      device=device)
 
             logvars = torch.zeros(
                 (self.n_networks, x.shape[0], self.obs_dim+1))
@@ -155,7 +158,7 @@ class EnvironmentModel(nn.Module):
 
             # Penalize the reward
             prediction[:, -2] -= pessimism * \
-                torch.exp(logvars[:, :, -1]).max(dim=0).values
+                torch.exp(logvars[:, :, -1]).to(device).max(dim=0).values
 
         prediction[:, -1] = prediction[:, -1] > 0.5
         return prediction
