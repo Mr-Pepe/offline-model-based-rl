@@ -7,6 +7,7 @@ Some simple logging functionality, inspired by rllab's logging.
 Logs to a tab-separated-values file (path/to/output_directory/progress.txt)
 
 """
+from benchmark.utils.mazes import plot_umaze_walls
 import json
 import joblib
 import numpy as np
@@ -378,15 +379,9 @@ class EpochLogger(Logger):
         if 'replay_buffer' in self.pytorch_saver_elements:
             buffer = self.pytorch_saver_elements['replay_buffer']
             if self.tensorboard_writer:
-                xlim = None
-                ylim = None
-
-                if mode == 'umaze':
-                    xlim = [-2, 10]
-                    ylim = [-2, 10]
-
                 f = plt.figure()
 
+                plot_umaze_walls()
                 plt.scatter(
                     buffer.obs_buf[:, 0].cpu(),
                     buffer.obs_buf[:, 1].cpu(),
@@ -394,8 +389,24 @@ class EpochLogger(Logger):
                     s=2
                 )
 
-                if xlim and ylim:
-                    plt.xlim(xlim)
-                    plt.ylim(ylim)
+                self.tensorboard_writer.add_figure(
+                    'ReplayBuffers/RealReplayBuffer',
+                    f,
+                    epoch
+                )
 
-                self.tensorboard_writer.add_figure('ReplayBuffer', f, epoch)
+        if 'virtual_replay_buffer' in self.pytorch_saver_elements:
+            buffer = self.pytorch_saver_elements['virtual_replay_buffer']
+            if self.tensorboard_writer:
+                f = plt.figure()
+
+                plot_umaze_walls()
+                plt.scatter(
+                    buffer.obs_buf[:, 0].cpu(),
+                    buffer.obs_buf[:, 1].cpu(),
+                    marker='.',
+                    s=2
+                )
+
+                self.tensorboard_writer.add_figure(
+                    'ReplayBuffers/VirtualReplayBuffer', f, epoch)

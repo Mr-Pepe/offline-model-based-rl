@@ -133,6 +133,7 @@ class Trainer():
             'agent': self.agent,
             'model': self.env_model,
             'replay_buffer': self.real_replay_buffer,
+            'virtual_replay_buffer': self.virtual_replay_buffer,
         }
         )
 

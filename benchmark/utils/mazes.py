@@ -44,5 +44,5 @@ def plot_umaze_walls():
                  [wall[2], wall[3], wall[3], wall[2], wall[2]],
                  color='grey', zorder=-1)
 
-    plt.xlim([walls[:, 0].min(), walls[:, 1].max()])
-    plt.ylim([walls[:, 2].min(), walls[:, 3].max()])
+    plt.xlim([-3, 12])
+    plt.ylim([-3, 12])
