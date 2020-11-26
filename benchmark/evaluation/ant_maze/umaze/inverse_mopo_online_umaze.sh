@@ -1,9 +1,9 @@
-for seed in 0 1 2
+for seed in 0
 do
 python main.py \
-    --env antmaze-umaze-diverse-v0 \
+    --env antmaze-umaze-v0 \
     --seed $seed \
-    --epochs 200 \
+    --epochs 500 \
     --pretrain_epochs 0 \
     --steps_per_epoch 1000 \
     --init_steps 2000 \
@@ -23,12 +23,12 @@ python main.py \
     --model_val_split 0.2 \
     --model_patience 20 \
     --rollouts_per_step 200 \
-    --rollout_schedule 1 25 20 100 \
+    --rollout_schedule 1 20 1 200 \
     --train_model_every 250 \
-    --model_max_n_train_batches 2000 \
-    --model_pessimism 0 \
+    --model_max_n_train_batches 1300 \
+    --model_pessimism -5 \
     --num_test_episodes 10 \
-    --exp_name ant_maze_mbpo_online_umaze_diverse \
+    --exp_name ant_maze_inverse_mopo_online_umaze \
     --datestamp False \
     --log_dir "" \
     --device cuda \

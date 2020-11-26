@@ -1,7 +1,7 @@
 for seed in 0 1 2
 do
 python main.py \
-    --env antmaze-umaze-diverse-v0 \
+    --env antmaze-umaze-v0 \
     --seed $seed \
     --epochs 200 \
     --pretrain_epochs 0 \
@@ -17,7 +17,7 @@ python main.py \
     --agent_lr 3e-4 \
     --use_model False \
     --num_test_episodes 10 \
-    --exp_name ant_maze_sac_online_umaze_diverse \
+    --exp_name ant_maze_sac_online_umaze \
     --datestamp False \
     --log_dir "" \
     --device cpu \
