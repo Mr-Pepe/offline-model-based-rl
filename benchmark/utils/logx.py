@@ -399,11 +399,16 @@ class EpochLogger(Logger):
             buffer = self.pytorch_saver_elements['virtual_replay_buffer']
             if self.tensorboard_writer:
                 f = plt.figure()
+                rewards = buffer.rew_buf[:].cpu()
+                normalized_rewards = (rewards - rewards.min()) / \
+                    (rewards.max() - rewards.min())
 
                 plot_umaze_walls()
                 plt.scatter(
                     buffer.obs_buf[:, 0].cpu(),
                     buffer.obs_buf[:, 1].cpu(),
+                    c=normalized_rewards,
+                    cmap='cividis',
                     marker='.',
                     s=2
                 )
