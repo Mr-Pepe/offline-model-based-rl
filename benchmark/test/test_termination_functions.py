@@ -64,7 +64,7 @@ def test_walker2d_termination_function():
                                   walker2d_termination_fn(next_observations))
 
 
-@pytest.mark.fast
+@pytest.mark.medium
 def test_antmaze_umaze_termination_function():
 
     env = gym.make('antmaze-umaze-v0')

@@ -142,3 +142,44 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
                                                          time_sequential))
 
     assert time_parallel < time_sequential
+
+
+@pytest.mark.medium
+def test_use_random_actions_in_virtual_rollout():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    env = gym.make('maze2d-open-dense-v0')
+    observation_space = env.observation_space
+    action_space = env.action_space
+
+    obs_dim = observation_space.shape[0]
+    act_dim = action_space.shape[0]
+
+    start_observation = torch.as_tensor(env.reset(),
+                                        dtype=torch.float32,
+                                        device=device).unsqueeze(0)
+
+    buffer = ReplayBuffer(
+        obs_dim=obs_dim, act_dim=act_dim, size=int(1e6), device=device)
+    buffer.store(start_observation, 0, 0, 0, 0)
+
+    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
+    model.to(device)
+    agent = SAC(observation_space, action_space, device=device)
+
+    torch.random.manual_seed(0)
+    rollouts1 = generate_virtual_rollouts(model, agent, buffer, 1, 100)
+    torch.random.manual_seed(0)
+    rollouts2 = generate_virtual_rollouts(model, agent, buffer, 1, 100)
+    torch.random.manual_seed(0)
+    rollouts3 = generate_virtual_rollouts(model, agent, buffer, 1, 100,
+                                          random_action=True)
+    torch.random.manual_seed(0)
+    rollouts4 = generate_virtual_rollouts(model, agent, buffer, 1, 100,
+                                          random_action=True)
+
+    np.testing.assert_array_equal(rollouts1['next_obs'].cpu(),
+                                  rollouts2['next_obs'].cpu())
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal,
+        rollouts3['next_obs'].cpu(),
+        rollouts4['next_obs'].cpu(),)

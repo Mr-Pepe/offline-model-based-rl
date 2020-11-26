@@ -206,7 +206,8 @@ def test_actions_for_offline_model_based_training_with_fine_tuning():
     np.testing.assert_array_equal(action_log[:, Actions.UPDATE_AGENT],
                                   [1]*total_steps)
     np.testing.assert_array_equal(action_log[:, Actions.RANDOM_ACTION],
-                                  [0]*total_steps)
+                                  [1]*random_steps +
+                                  [0]*(total_steps-random_steps))
     np.testing.assert_array_equal(action_log[:, Actions.GENERATE_ROLLOUTS],
                                   [1]*total_steps)
     np.testing.assert_array_equal(action_log[:, Actions.INTERACT_WITH_ENV],

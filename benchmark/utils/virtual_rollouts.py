@@ -3,7 +3,8 @@ import torch
 
 def generate_virtual_rollouts(model, agent, buffer, steps,
                               n_rollouts=1, term_fn=None,
-                              stop_on_terminal=True, pessimism=0):
+                              stop_on_terminal=True, pessimism=0,
+                              random_action=False):
 
     model_is_training = model.training
     agent_is_training = agent.training
@@ -24,7 +25,10 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
     step = 0
 
     while step < steps and observations.numel() > 0:
-        actions = agent.act(observations)
+        if random_action:
+            actions = agent.act_randomly(observations)
+        else:
+            actions = agent.act(observations)
         pred = model.get_prediction(torch.as_tensor(
             torch.cat((observations, actions), dim=1),
             dtype=torch.float32), term_fn=term_fn,

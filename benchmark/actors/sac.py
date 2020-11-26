@@ -46,6 +46,7 @@ class SAC(nn.Module):
 
         obs_dim = observation_space.shape[0]
         act_dim = action_space.shape[0]
+        self.action_space = action_space
 
         # TODO: Action limit for clamping: critically, assumes all dimensions
         # share the same bound!
@@ -173,3 +174,8 @@ class SAC(nn.Module):
         with torch.no_grad():
             a, _ = self.pi(obs, deterministic, False)
             return a
+
+    def act_randomly(self, o, deterministic=False):
+        a = torch.as_tensor([self.action_space.sample() for _ in range(len(o))],
+                            device=o.device)
+        return a

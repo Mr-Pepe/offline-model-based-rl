@@ -201,6 +201,10 @@ class Trainer():
             for step_epoch in range(self.steps_per_epoch):
                 actions_this_step = [0 for i in range(len(Actions))]
 
+                take_random_action = \
+                    step_total + self.pretrain_epochs*self.steps_per_epoch < \
+                    self.random_steps
+
                 # Train environment model on real experience
                 if model_needs_training(step_total,
                                         self.use_model,
@@ -229,8 +233,7 @@ class Trainer():
                       end='\r')
 
                 if epoch > 0:
-                    if step_total < self.random_steps and \
-                            self.pretrain_epochs == 0:
+                    if take_random_action:
                         a = self.env.action_space.sample()
                         actions_this_step[Actions.RANDOM_ACTION] = 1
                     else:
@@ -271,7 +274,8 @@ class Trainer():
                             rollout_length,
                             n_rollouts=self.rollouts_per_step,
                             term_fn=self.term_fn,
-                            pessimism=0 if epoch > 0 else self.model_pessimism
+                            pessimism=0 if epoch > 0 else self.model_pessimism,
+                            random_action=take_random_action,
                         )
                         self.virtual_replay_buffer.store_batch(
                             rollouts['obs'],
@@ -285,6 +289,10 @@ class Trainer():
                                                 self.logger)
 
                         actions_this_step[Actions.GENERATE_ROLLOUTS] = 1
+
+                        if take_random_action:
+                            actions_this_step[Actions.RANDOM_ACTION] = 1
+
                     else:
                         self.agent.multi_update(self.agent_updates_per_step,
                                                 self.real_replay_buffer,
