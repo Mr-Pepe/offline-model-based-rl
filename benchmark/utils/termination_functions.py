@@ -1,3 +1,4 @@
+from benchmark.utils.mazes import U_MAZE_WALLS
 import torch
 
 
@@ -35,20 +36,26 @@ def walker2d_termination_fn(next_obs):
     return done
 
 
-def antmaze_termination_fn(next_obs):
+def antmaze_umaze_termination_fn(next_obs):
+    x = next_obs[:, 0]
+    y = next_obs[:, 1]
 
-    # This is technically not correct, as the environment terminates a
-    # rollout when reaching the goal
-    done = torch.as_tensor([False]).repeat(len(next_obs))
-    done = done[:, None]
-    return done
+    walls = U_MAZE_WALLS.to(x.device)
+
+    done = torch.zeros((x.numel(), len(walls)))
+
+    for i_wall, wall in enumerate(walls):
+        done[:, i_wall] = (wall[0] < x) * (x < wall[1]) * \
+            (wall[2] < y) * (y < wall[3])
+
+    return done.sum(dim=1).reshape(-1, 1)
 
 
 termination_functions = {
     'hopper': hopper_termination_fn,
     'half_cheetah': half_cheetah_termination_fn,
     'walker2d': walker2d_termination_fn,
-    'antmaze': antmaze_termination_fn,
+    'antmaze_umaze': antmaze_umaze_termination_fn,
 }
 
 function_to_names_mapping = {
@@ -71,13 +78,8 @@ function_to_names_mapping = {
                  'walker2d-medium-replay-v0',
                  'walker2d-medium-expert-v0',
                  ],
-    'antmaze': ['antmaze-umaze-v0',
-                'antmaze-umaze-diverse-v0',
-                'antmaze-medium-diverse-v0',
-                'antmaze-medium-play-v0',
-                'antmaze-large-diverse-v0',
-                'antmaze-large-play-v0',
-                ],
+    'antmaze_umaze': ['antmaze-umaze-v0',
+                      'antmaze-umaze-diverse-v0'],
 }
 
 

@@ -1,9 +1,13 @@
-from benchmark.utils.termination_functions import antmaze_termination_fn, half_cheetah_termination_fn, \
-    hopper_termination_fn, walker2d_termination_fn
-import gym
-import torch
-import numpy as np
+import matplotlib.pyplot as plt
 import pytest
+import numpy as np
+import torch
+import gym
+from benchmark.utils.termination_functions import \
+    antmaze_umaze_termination_fn, \
+    half_cheetah_termination_fn, \
+    hopper_termination_fn, \
+    walker2d_termination_fn
 
 
 def run_env(env, n_steps):
@@ -61,9 +65,29 @@ def test_walker2d_termination_function():
 
 
 @pytest.mark.fast
-def test_antmaze_termination_function():
+def test_antmaze_umaze_termination_function():
 
-    next_observations, dones = run_env(gym.make('antmaze-umaze-diverse-v0'),
-                                       100)
+    env = gym.make('antmaze-umaze-v0')
 
-    assert antmaze_termination_fn(next_observations).sum() == 0
+    x_points = 100
+    y_points = 100
+
+    observations = torch.zeros((x_points*y_points,
+                                env.observation_space.shape[0]))
+
+    x_random = torch.rand((x_points,))*15-3
+    y_random = torch.rand((y_points,))*15-3
+
+    for i_x, x in enumerate(x_random):
+        for i_y, y in enumerate(y_random):
+            observations[i_x*i_y, 0] = x
+            observations[i_x*i_y, 1] = y
+
+    dones = antmaze_umaze_termination_fn(observations).view(-1)
+
+    # plot_umaze_walls()
+    # plt.scatter(observations[dones == False, 0],
+    #             observations[dones == False, 1])
+    # plt.scatter(observations[dones == True, 0],
+    #             observations[dones == True, 1])
+    # plt.show()
