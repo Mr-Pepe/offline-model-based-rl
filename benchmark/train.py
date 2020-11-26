@@ -274,7 +274,7 @@ class Trainer():
                             rollout_length,
                             n_rollouts=self.rollouts_per_step,
                             term_fn=self.term_fn,
-                            pessimism=0 if epoch > 0 else self.model_pessimism,
+                            pessimism=self.model_pessimism,
                             random_action=take_random_action,
                         )
                         self.virtual_replay_buffer.store_batch(
