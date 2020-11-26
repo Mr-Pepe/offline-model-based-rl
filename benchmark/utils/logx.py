@@ -189,8 +189,6 @@ class Logger:
 
     def setup_pytorch_saver(self, what_to_save):
         """
-        Set up easy model saving for a single PyTorch model.
-
         Because PyTorch saving and loading is especially painless, this is
         very minimal; we just need references to whatever we would like to
         pickle. This is integrated into the logger because the logger
@@ -212,20 +210,22 @@ class Logger:
                 "First have to setup saving with self.setup_pytorch_saver"
             fpath = 'pyt_save'
             fpath = osp.join(self.output_dir, fpath)
-            fname = 'model' + ('%d' % itr if itr is not None else '') + '.pt'
-            fname = osp.join(fpath, fname)
-            os.makedirs(fpath, exist_ok=True)
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                # We are using a non-recommended way of saving PyTorch models,
-                # by pickling whole objects (which are dependent on the exact
-                # directory structure at the time of saving) as opposed to
-                # just saving network weights. This works sufficiently well
-                # for the purposes of Spinning Up, but you may want to do
-                # something different for your personal PyTorch project.
-                # We use a catch_warnings() context to avoid the warnings about
-                # not being able to save the source code.
-                torch.save(self.pytorch_saver_elements, fname)
+
+            for key, value in self.pytorch_saver_elements.items():
+                fname = key + ('%d' % itr if itr is not None else '') + '.pt'
+                fname = osp.join(fpath, fname)
+                os.makedirs(fpath, exist_ok=True)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    # We are using a non-recommended way of saving PyTorch models,
+                    # by pickling whole objects (which are dependent on the exact
+                    # directory structure at the time of saving) as opposed to
+                    # just saving network weights. This works sufficiently well
+                    # for the purposes of Spinning Up, but you may want to do
+                    # something different for your personal PyTorch project.
+                    # We use a catch_warnings() context to avoid the warnings about
+                    # not being able to save the source code.
+                    torch.save(value, fname)
 
     def dump_tabular(self):
         """

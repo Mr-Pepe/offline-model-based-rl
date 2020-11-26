@@ -113,8 +113,6 @@ class Trainer():
                                           **model_kwargs)
         self.env_model.to(device)
 
-        self.logger.setup_pytorch_saver(self.agent)
-
         if pretrain_epochs > 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
                 self.env,
@@ -130,6 +128,13 @@ class Trainer():
                                                   act_dim=act_dim,
                                                   size=buffer_size,
                                                   device=device)
+
+        self.logger.setup_pytorch_saver({
+            'agent': self.agent,
+            'model': self.env_model,
+            'replay_buffer': self.real_replay_buffer,
+        }
+        )
 
         # Get termination for environment, if model should be used
         if use_model:
