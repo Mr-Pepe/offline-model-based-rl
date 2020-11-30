@@ -11,7 +11,6 @@ from benchmark.utils.termination_functions import termination_functions
 import time
 
 
-@pytest.mark.current
 @pytest.mark.fast
 def test_generate_rollout_of_desired_length():
     env = gym.make('HalfCheetah-v2')

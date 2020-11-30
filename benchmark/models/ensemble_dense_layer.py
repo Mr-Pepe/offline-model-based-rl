@@ -38,14 +38,12 @@ class EnsembleDenseLayer(nn.Module):
         self.weights = nn.Parameter(weights)
         self.biases = nn.Parameter(biases)
 
-        if non_linearity == 'swish':
-            self.non_linearity = swish
-        elif non_linearity == 'leaky_relu':
+        if non_linearity == 'leaky_relu':
             self.non_linearity = F.leaky_relu
         elif non_linearity == 'tanh':
             self.non_linearity = torch.tanh
         elif non_linearity == 'linear':
-            self.non_linearity = lambda x: x
+            self.non_linearity = nn.Identity()
 
     def forward(self, inp):
         op = torch.baddbmm(self.biases, inp, self.weights)

@@ -214,12 +214,13 @@ class Trainer():
                                         self.train_model_every,
                                         model_trained_at_all):
 
-                    model_val_error = self.env_model.train_to_convergence(
+                    model_val_error, _ = self.env_model.train_to_convergence(
                         self.real_replay_buffer,
                         patience_value=0 if epoch < 1 else 1,
                         max_n_train_batches=-1 if epoch < 1 else self.model_max_n_train_batches,
                         **self.model_kwargs)
 
+                    model_val_error = model_val_error.mean()
                     model_trained_at_all = True
                     model_trained_this_epoch = True
                     steps_since_model_training = 0

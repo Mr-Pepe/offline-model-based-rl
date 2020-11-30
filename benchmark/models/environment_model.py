@@ -1,9 +1,7 @@
-from benchmark.models.ensemble_dense_layer import EnsembleDenseLayer
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
     deterministic_loss, probabilistic_loss
 from torch.optim.adam import Adam
-from benchmark.models.mlp import mlp
 from benchmark.models.multi_head_mlp import MultiHeadMlp
 import torch.nn as nn
 import torch
@@ -75,7 +73,8 @@ class EnvironmentModel(nn.Module):
             if term_fn:
                 done = term_fn(obs).to(device)
             else:
-                done = torch.zeros((self.n_networks, obs_act.shape[0], 1))
+                done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
+                                   device=device)
 
             out = torch.cat((obs,
                              reward[:, :, 0].view((self.n_networks, -1, 1)),
@@ -104,7 +103,8 @@ class EnvironmentModel(nn.Module):
             if term_fn:
                 done = term_fn(out[:, :, :-1]).to(device)
             else:
-                done = torch.zeros((self.n_networks, obs_act.shape[0], 1))
+                done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
+                                   device=device)
 
             out = torch.cat((out, done), dim=2)
 
@@ -167,18 +167,15 @@ class EnvironmentModel(nn.Module):
                 patience = patience[0]
 
         n_train_batches = int((data.size * (1-val_split)) // batch_size)
-        n_val_batches = int((data.size * val_split) // batch_size)
+        n_val_samples = int((data.size * val_split))
 
-        if n_train_batches == 0 or n_val_batches == 0:
+        if n_train_batches == 0 or n_val_samples == 0:
             raise ValueError(
                 "Dataset of size {} not big enough to generate a {} % \
                              validation split with batch size {}."
                 .format(data.size,
                         val_split*100,
                         batch_size))
-
-        avg_val_losses = [1e10 for i in range(self.n_networks)]
-        n_batches_trained = [0 for i in range(self.n_networks)]
 
         print('')
         print("Buffer size: {} Train batches per epoch: {} Stopping after {} batches".format(
@@ -187,98 +184,87 @@ class EnvironmentModel(nn.Module):
             max_n_train_batches
         ))
 
-        for i_network, network in enumerate(self.networks):
-            device = next(network.parameters()).device
-            optim = Adam(network.parameters(), lr=lr)
+        device = next(self.parameters()).device
+        optim = Adam(self.parameters(), lr=lr)
 
-            min_val_loss = 1e10
-            n_bad_val_losses = 0
-            avg_val_loss = 0
+        min_val_loss = 1e10
+        n_bad_val_losses = 0
+        avg_val_loss = 0
+        avg_train_loss = 0
+
+        batches_trained = 0
+
+        stop_training = False
+
+        avg_val_losses = torch.zeros((self.n_networks))
+
+        while n_bad_val_losses < patience:
+
             avg_train_loss = 0
 
-            batches_trained = 0
+            for i in range(n_train_batches):
+                x, y = get_x_y_from_batch(
+                    data.sample_train_batch(batch_size,
+                                            val_split),
+                    device)
 
-            stop_training = False
-
-            while n_bad_val_losses < patience:
-
-                avg_train_loss = 0
-
-                for i in range(n_train_batches):
-                    x, y = get_x_y_from_batch(
-                        data.sample_train_batch(batch_size,
-                                                val_split),
-                        device)
-
-                    optim.zero_grad()
-                    if self.type == 'deterministic':
-                        loss = deterministic_loss(x, y, self, i_network)
-                    else:
-                        loss = probabilistic_loss(x, y, self, i_network)
-
-                    avg_train_loss += loss.item()
-                    loss.backward(retain_graph=True)
-                    optim.step()
-
-                    if max_n_train_batches != -1 and \
-                            max_n_train_batches <= batches_trained:
-                        stop_training = True
-                        break
-
-                    batches_trained += 1
-
-                if debug:
-                    print('')
-                    print("Network: {}/{} Train loss: {}".format(
-                        i_network+1,
-                        self.n_networks,
-                        avg_train_loss/n_train_batches))
-
-                avg_val_loss = 0
-                for i in range(n_val_batches):
-                    x, y = get_x_y_from_batch(
-                        data.sample_val_batch(batch_size,
-                                              val_split),
-                        device)
-
-                    if self.type == 'deterministic':
-                        avg_val_loss += deterministic_loss(x,
-                                                           y,
-                                                           self,
-                                                           i_network).item()
-                    else:
-                        avg_val_loss += probabilistic_loss(x,
-                                                           y,
-                                                           self,
-                                                           i_network,
-                                                           only_mse=True).item()
-
-                avg_val_loss /= n_val_batches
-
-                if avg_val_loss < min_val_loss:
-                    n_bad_val_losses = 0
-                    min_val_loss = avg_val_loss
+                optim.zero_grad()
+                if self.type == 'deterministic':
+                    loss = deterministic_loss(x, y, self)
                 else:
-                    n_bad_val_losses += 1
+                    loss = probabilistic_loss(x, y, self)
 
-                print("Network: {}/{} trained on {} batches  Patience: {}/{} Val loss: {}".format(
-                    i_network+1,
-                    self.n_networks,
-                    batches_trained,
-                    n_bad_val_losses,
-                    patience,
-                    avg_val_loss), end='\r')
+                avg_train_loss += loss.item()
+                loss.backward(retain_graph=True)
+                optim.step()
 
-                if stop_training:
+                if max_n_train_batches != -1 and \
+                        max_n_train_batches <= batches_trained:
+                    stop_training = True
                     break
 
-            avg_val_losses[i_network] = avg_val_loss
-            n_batches_trained[i_network] = batches_trained
+                batches_trained += 1
 
-            print("Network: {}/{} trained on {} batches. Val loss: {}".format(
-                i_network+1,
-                self.n_networks,
+            if debug:
+                print('')
+                print("Train loss: {}".format(
+                    avg_train_loss/n_train_batches))
+
+            for i_network in range(self.n_networks):
+                x, y = get_x_y_from_batch(
+                    data.sample_val_batch(n_val_samples,
+                                          val_split),
+                    device)
+
+                if self.type == 'deterministic':
+                    avg_val_losses[i_network] = deterministic_loss(
+                        x,
+                        y,
+                        self,
+                        i_network).item()
+                else:
+                    avg_val_losses[i_network] = probabilistic_loss(
+                        x,
+                        y,
+                        self,
+                        i_network,
+                        only_mse=True).item()
+
+            avg_val_loss = avg_val_losses.mean()
+
+            if avg_val_loss < min_val_loss:
+                n_bad_val_losses = 0
+                min_val_loss = avg_val_loss
+            else:
+                n_bad_val_losses += 1
+
+            if stop_training:
+                break
+
+            print("Train batches: {} Patience: {}/{} Val losses: {}".format(
                 batches_trained,
-                avg_val_loss))
+                n_bad_val_losses,
+                patience,
+                avg_val_losses.tolist()), end='\r')
 
-        return avg_val_losses, n_batches_trained
+        return avg_val_losses, batches_trained
