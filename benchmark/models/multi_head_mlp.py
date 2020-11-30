@@ -1,9 +1,10 @@
+from benchmark.models.ensemble_dense_layer import EnsembleDenseLayer
 import torch.nn as nn
-
+import torch
 
 class MultiHeadMlp(nn.Module):
 
-    def __init__(self, sizes, obs_dim, double_output=False):
+    def __init__(self, obs_dim, act_dim, hidden, n_networks):
         """
             A multi headed network to use in an environment model.
             The output is multiheaded for observations and reward.
@@ -12,34 +13,38 @@ class MultiHeadMlp(nn.Module):
         """
         super().__init__()
 
-        layers = []
+        self.n_networks = n_networks
 
-        for i_layer in range(len(sizes)-2):
-            layers += [nn.Linear(sizes[i_layer], sizes[i_layer+1]), nn.ReLU()]
+        layers = []
+        layers.append(EnsembleDenseLayer(obs_dim + act_dim,
+                                         hidden[0],
+                                         n_networks))
+        for lyr_idx in range(1, len(hidden) - 1):
+            layers.append(EnsembleDenseLayer(hidden[lyr_idx-1],
+                                             hidden[lyr_idx],
+                                             n_networks))
 
         self.layers = nn.Sequential(*layers)
 
-        obs_out_dim = obs_dim + double_output*obs_dim
+        obs_out_dim = 2*obs_dim
 
         self.obs_layer = nn.Sequential(
-            nn.Linear(sizes[-2], sizes[-1]),
-            nn.ReLU(),
-            nn.Linear(sizes[-1], obs_out_dim)
+            EnsembleDenseLayer(hidden[-2], hidden[-1], n_networks),
+            EnsembleDenseLayer(hidden[-1], obs_out_dim,
+                               n_networks, non_linearity='linear')
         )
 
-        other_out_dim = 2 if double_output else 1
+        reward_out_dim = 2
 
         self.reward_layer = nn.Sequential(
-            nn.Linear(sizes[-2], sizes[-1]),
-            nn.ReLU(),
-            nn.Linear(sizes[-1], other_out_dim)
+            EnsembleDenseLayer(hidden[-2], hidden[-1], n_networks),
+            EnsembleDenseLayer(
+                hidden[-1], reward_out_dim,
+                n_networks, non_linearity='linear')
         )
 
     def forward(self, x):
-        """
-        Returns three separate outputs for observation, reward, done signal.
-        """
-        features = self.layers(x)
+        features = self.layers(torch.stack(self.n_networks * [x]))
 
         obs = self.obs_layer(features)
         reward = self.reward_layer(features)

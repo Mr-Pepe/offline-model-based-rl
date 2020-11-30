@@ -1,3 +1,4 @@
+from benchmark.models.ensemble_dense_layer import EnsembleDenseLayer
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
     deterministic_loss, probabilistic_loss
@@ -19,6 +20,7 @@ class EnvironmentModel(nn.Module):
                  hidden=[128, 128],
                  type='deterministic',
                  n_networks=1,
+                 device='cpu',
                  **_):
         """
             type (string): deterministic or probabilistic
@@ -38,39 +40,27 @@ class EnvironmentModel(nn.Module):
         if type != 'deterministic' and type != 'probabilistic':
             raise ValueError("Unknown type {}".format(type))
 
-        self.networks = []
+        self.layers = MultiHeadMlp(obs_dim, act_dim, hidden, n_networks)
 
-        for i_network in range(n_networks):
-            self.networks.append(MultiHeadMlp(
-                [obs_dim + act_dim] + hidden,
-                self.obs_dim,
-                double_output=type == 'probabilistic'))
+        self.to(device)
 
-            # Taken from https://github.com/kchua/handful-of-trials/blob/master/
-            # dmbrl/modeling/models/BNN.py
-            self.networks[i_network].max_logvar = Parameter(torch.ones(
-                (self.out_dim))/2,
-                requires_grad=True)
-            self.networks[i_network].min_logvar = Parameter(torch.ones(
-                (self.out_dim))*-10,
-                requires_grad=True)
+        # Taken from https://github.com/kchua/handful-of-trials/blob/master/
+        # dmbrl/modeling/models/BNN.py
+        self.max_logvar = Parameter(torch.ones(
+            n_networks,
+            (self.out_dim))/2,
+            requires_grad=True)
+        self.min_logvar = Parameter(torch.ones(
+            n_networks,
+            (self.out_dim))*-10,
+            requires_grad=True)
 
-        self.networks = nn.ModuleList(self.networks)
+    def forward(self, obs_act, term_fn=None):
 
-        self.done_network = mlp([self.obs_dim, 32, 32, 32, 1],
-                                nn.ReLU,
-                                nn.Sigmoid)
-
-    def forward(self, obs_act, i_network=0, term_fn=None):
-
-        network = self.networks[i_network]
-
-        device = next(network.parameters()).device
+        device = next(self.layers.parameters()).device
         obs_act = self.check_device_and_shape(obs_act, device)
 
-        # TODO: Transform angular input to [sin(x), cos(x)]
-
-        obs, reward = network(obs_act)
+        obs, reward = self.layers(obs_act)
 
         out = 0
         mean = 0
@@ -80,26 +70,30 @@ class EnvironmentModel(nn.Module):
 
         # The model only learns a residual, so the input has to be added
         if self.type == 'deterministic':
-            obs = obs + obs_act[:, :self.obs_dim]
+            obs = obs[:, :, :self.obs_dim] + obs_act[:, :self.obs_dim]
 
             if term_fn:
                 done = term_fn(obs).to(device)
             else:
-                done = self.done_network(obs)
+                done = torch.zeros((self.n_networks, obs_act.shape[0], 1))
 
-            out = torch.cat((obs, reward, done), dim=1)
+            out = torch.cat((obs,
+                             reward[:, :, 0].view((self.n_networks, -1, 1)),
+                             done), dim=2)
 
         elif self.type == 'probabilistic':
-            obs_mean = obs[:, :self.obs_dim] + obs_act[:, :self.obs_dim]
-            reward_mean = reward[:, 0].unsqueeze(1)
-            mean = torch.cat((obs_mean, reward_mean), dim=1)
+            obs_mean = obs[:, :, :self.obs_dim] + obs_act[:, :self.obs_dim]
+            reward_mean = reward[:, :, 0].view((self.n_networks, -1, 1))
+            mean = torch.cat((obs_mean, reward_mean), dim=2)
 
-            obs_logvar = obs[:, self.obs_dim:]
-            reward_logvar = reward[:, 1].unsqueeze(1)
-            max_logvar = network.max_logvar
-            min_logvar = network.min_logvar
+            obs_logvar = obs[:, :, self.obs_dim:]
+            reward_logvar = reward[:, :, 1].view((self.n_networks, -1, 1))
+            logvar = torch.cat((obs_logvar, reward_logvar), dim=2)
 
-            logvar = torch.cat((obs_logvar, reward_logvar), dim=1)
+            max_logvar = torch.stack(
+                logvar.shape[1] * [self.max_logvar], dim=1)
+            min_logvar = torch.stack(
+                logvar.shape[1] * [self.min_logvar], dim=1)
             logvar = max_logvar - softplus(max_logvar - logvar)
             logvar = min_logvar + softplus(logvar - min_logvar)
 
@@ -108,11 +102,11 @@ class EnvironmentModel(nn.Module):
             out = torch.normal(mean, std)
 
             if term_fn:
-                done = term_fn(out[:, :-1]).to(device)
+                done = term_fn(out[:, :, :-1]).to(device)
             else:
-                done = self.done_network(out[:, :-1])
+                done = torch.zeros((self.n_networks, obs_act.shape[0], 1))
 
-            out = torch.cat((out, done), dim=1)
+            out = torch.cat((out, done), dim=2)
 
         return out, \
             mean, \
@@ -128,31 +122,22 @@ class EnvironmentModel(nn.Module):
                                       (1,)) if i_network == -1 else i_network
 
             with torch.no_grad():
-                prediction, _, _, _, _ = self.forward(x,
-                                                      i_network,
-                                                      term_fn=term_fn)
+                predictions, _, _, _, _ = self.forward(x,
+                                                       term_fn=term_fn)
+
+            prediction = predictions[i_network].view(x.shape[0], -1)
 
         else:
             if self.type != 'probabilistic':
                 raise ValueError("Can not predict pessimistically because \
                     model is not probabilistic")
 
-            device = next(self.networks[0].parameters()).device
+            device = next(self.layers.parameters()).device
 
-            predictions = torch.zeros((self.n_networks,
-                                       x.shape[0],
-                                       self.obs_dim+2),
-                                      device=device)
-
-            logvars = torch.zeros(
-                (self.n_networks, x.shape[0], self.obs_dim+1))
-
-            for i_network in range(self.n_networks):
-                with torch.no_grad():
-                    predictions[i_network], _, logvars[i_network], _, _ = \
-                        self.forward(x,
-                                     i_network,
-                                     term_fn=term_fn)
+            with torch.no_grad():
+                predictions, _, logvars, _, _ = \
+                    self.forward(x,
+                                 term_fn=term_fn)
 
             prediction = predictions.mean(dim=0)
 

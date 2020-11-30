@@ -4,10 +4,10 @@ import numpy as np
 import torch
 import gym
 from benchmark.utils.termination_functions import \
-    antmaze_umaze_termination_fn, \
     half_cheetah_termination_fn, \
-    hopper_termination_fn, \
+    hopper_termination_fn, umaze_termination_fn, \
     walker2d_termination_fn
+import d4rl # noqa
 
 
 def run_env(env, n_steps):
@@ -37,8 +37,9 @@ def test_hopper_termination_function():
 
     assert dones.sum() > 0
 
-    np.testing.assert_array_equal(dones,
-                                  hopper_termination_fn(next_observations))
+    np.testing.assert_array_equal(torch.stack(3*[dones]),
+                                  hopper_termination_fn(
+                                      torch.stack(3*[next_observations])))
 
 
 @pytest.mark.fast
@@ -48,9 +49,9 @@ def test_half_cheetah_termination_function():
     # Halg cheetah does not generate terminal states
     assert dones.sum() == 0
 
-    np.testing.assert_array_equal(dones,
+    np.testing.assert_array_equal(torch.stack(3*[dones]),
                                   half_cheetah_termination_fn(
-                                      next_observations))
+                                      torch.stack(3*[next_observations])))
 
 
 @pytest.mark.fast
@@ -60,12 +61,13 @@ def test_walker2d_termination_function():
 
     assert dones.sum() > 0
 
-    np.testing.assert_array_equal(dones,
-                                  walker2d_termination_fn(next_observations))
+    np.testing.assert_array_equal(torch.stack(3*[dones]),
+                                  walker2d_termination_fn(
+                                      torch.stack(3*[next_observations])))
 
 
 @pytest.mark.medium
-def test_antmaze_umaze_termination_function():
+def test_umaze_termination_function():
 
     env = gym.make('antmaze-umaze-v0')
 
@@ -83,7 +85,11 @@ def test_antmaze_umaze_termination_function():
             observations[i_x*i_y, 0] = x
             observations[i_x*i_y, 1] = y
 
-    dones = antmaze_umaze_termination_fn(observations).view(-1)
+    dones = umaze_termination_fn(observations.unsqueeze(0)).view(-1)
+
+    np.testing.assert_array_equal(torch.stack(3*[dones]).shape,
+                                  umaze_termination_fn(
+                                      torch.stack(3*[observations])).shape[:2])
 
     # plot_umaze_walls()
     # plt.scatter(observations[dones == False, 0],

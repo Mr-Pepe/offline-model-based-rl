@@ -36,7 +36,7 @@ def test_takes_state_and_action_as_input_and_outputs_state_reward_done():
     input = torch.rand(tensor_size)
     output, _, _, _, _ = model(input)
 
-    np.testing.assert_array_equal(output.shape, (3, obs_dim+2))
+    np.testing.assert_array_equal(output.shape, (1, 3, obs_dim+2))
 
 
 @pytest.mark.medium
@@ -239,9 +239,9 @@ def test_deterministic_ensemble_gives_different_predictions_per_model():
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output1, _, _, _, _ = model(input, 0)
-    output2, _, _, _, _ = model(input, 1)
-    output3, _, _, _, _ = model(input, 2)
+    output1 = model.get_prediction(input, 0)
+    output2 = model.get_prediction(input, 1)
+    output3 = model.get_prediction(input, 2)
 
     np.testing.assert_raises(
         AssertionError, np.testing.assert_array_equal,
@@ -339,7 +339,7 @@ def test_deterministic_model_returns_binary_done_signal():
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output = model.get_prediction(input)
+    output = model.get_prediction(input, 0)
 
     for value in output[:, -1]:
         assert (value == 0 or value == 1)
@@ -355,13 +355,10 @@ def test_probabilistic_model_returns_binary_done_signal():
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output = model.get_prediction(input).detach().numpy()
-
-    assert output[:, -1].any()
+    output = model.get_prediction(input, 0).detach().numpy()
 
     for value in output[:, -1]:
         assert (value == 0 or value == 1)
-
 
 @pytest.mark.fast
 def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
@@ -373,7 +370,7 @@ def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output = model.get_prediction(input,
+    output = model.get_prediction(input, 0,
                                   term_fn=termination_functions['hopper'])
 
     for value in output[:, -1]:
@@ -497,17 +494,19 @@ def test_pessimistic_prediction_throws_error_if_model_not_probabilistic():
         model.get_prediction(input, pessimism=1)
 
 
+@pytest.mark.current
 @pytest.mark.fast
 def test_get_prediction_from_pessimistic_model():
     obs_dim = 5
     act_dim = 6
     n_samples = 100
+    n_networks = 2
 
     model = EnvironmentModel(obs_dim,
                              act_dim,
                              hidden=[2, 2],
                              type='probabilistic',
-                             n_networks=2)
+                             n_networks=n_networks)
 
     tensor_size = (n_samples, obs_dim+act_dim)
     input = torch.rand(tensor_size)
