@@ -166,5 +166,4 @@ def test_training_stops_after_specified_number_of_batches():
         max_n_train_batches=50
     )
 
-    for train_batches in n_train_batches:
-        assert train_batches == 50
+    assert n_train_batches == 50

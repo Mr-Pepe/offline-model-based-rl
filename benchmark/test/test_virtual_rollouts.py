@@ -66,11 +66,14 @@ def test_generate_rollout_stops_on_terminal():
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
     agent = SAC(observation_space, action_space)
 
-    virtual_rollout = generate_virtual_rollouts(model,
-                                                agent,
-                                                buffer,
-                                                10,
-                                                stop_on_terminal=True)
+    virtual_rollout = generate_virtual_rollouts(
+        model,
+        agent,
+        buffer,
+        10,
+        stop_on_terminal=True,
+        term_fn=lambda x: torch.ones((1, 1, 1))
+    )
 
     assert len(virtual_rollout['obs']) < 10
 

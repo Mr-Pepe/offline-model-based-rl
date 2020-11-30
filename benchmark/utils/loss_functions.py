@@ -1,13 +1,24 @@
 import torch
 
 
-def deterministic_loss(x, y, model, i_network=0):
-    y_pred, _, _, _, _ = model(x, i_network)
-    return torch.square(y_pred[:, :-1] - y).mean()
+def deterministic_loss(x, y, model, i_network=-1):
+    y_pred, _, _, _, _ = model(x)
+
+    if i_network == -1:
+        return torch.square(y_pred[:, :, :-1] - y.unsqueeze(0)).mean()
+    else:
+        return torch.square(y_pred[i_network, :, :-1] - y.unsqueeze(0)).mean()
 
 
-def probabilistic_loss(x, y, model, i_network=0, only_mse=False):
-    _, mean, logvar, max_logvar, min_logvar = model(x, i_network)
+def probabilistic_loss(x, y, model, i_network=-1, only_mse=False):
+    _, mean, logvar, max_logvar, min_logvar = model(x)
+
+    if i_network > -1:
+        mean = mean[i_network]
+        logvar = logvar[i_network]
+        max_logvar = max_logvar[i_network]
+        min_logvar = min_logvar[i_network]
+
     inv_var = torch.exp(-logvar)
 
     if only_mse:
@@ -17,6 +28,4 @@ def probabilistic_loss(x, y, model, i_network=0, only_mse=False):
         var_loss = logvar.mean()
         var_bound_loss = 0.01 * max_logvar.sum() - 0.01 * min_logvar.sum()
 
-        # print("{:.3f}, {:.3f}, {:.3f}".format(
-        #     mse_loss, var_loss, var_bound_loss))
         return mse_loss + var_loss + var_bound_loss

@@ -36,7 +36,7 @@ def test_takes_state_and_action_as_input_and_outputs_state_reward_done():
     input = torch.rand(tensor_size)
     output, _, _, _, _ = model(input)
 
-    np.testing.assert_array_equal(output.shape, (3, obs_dim+2))
+    np.testing.assert_array_equal(output.shape, (1, 3, obs_dim+2))
 
 
 @pytest.mark.medium
@@ -45,10 +45,10 @@ def test_single_deterministic_network_overfits_on_single_sample():
     model = EnvironmentModel(1, 1)
 
     x = torch.as_tensor([3, 3], dtype=torch.float32)
-    y = torch.as_tensor([5, 4, 1], dtype=torch.float32)
+    y = torch.as_tensor([5, 4, 0], dtype=torch.float32)
     lr = 1e-3
 
-    optim = Adam(model.networks[0].parameters(), lr=lr)
+    optim = Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
     y_pred = 0
@@ -56,12 +56,12 @@ def test_single_deterministic_network_overfits_on_single_sample():
     for i in range(1000):
         optim.zero_grad()
         y_pred, _, _, _, _ = model(x)
-        loss = criterion(y_pred[:, :-1].view(-1), y[:-1])
+        loss = criterion(y_pred, y.view(1, 1, -1))
         print("Loss: {}".format(loss))
         loss.backward()
         optim.step()
 
-    assert criterion(y[:-1], y_pred[:, :-1].view(-1)).item() < 2e-5
+    assert criterion(y.view(1, 1, -1), y_pred).item() < 2e-5
 
 
 @pytest.mark.medium
@@ -70,9 +70,10 @@ def test_single_deterministic_network_overfits_on_batch():
 
     x = torch.rand((10, 7))
     y = torch.rand((10, 5))
+    y[:, -1] = 0
     lr = 1e-3
 
-    optim = Adam(model.networks[0].parameters(), lr=lr)
+    optim = Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
     y_pred = 0
@@ -80,12 +81,12 @@ def test_single_deterministic_network_overfits_on_batch():
     for i in range(1000):
         optim.zero_grad()
         y_pred, _, _, _, _ = model(x)
-        loss = criterion(y_pred[:, :-1], y[:, :-1])
+        loss = criterion(y_pred, y.unsqueeze(0))
         print("Loss: {}".format(loss))
         loss.backward()
         optim.step()
 
-    assert criterion(y[:, :-1], y_pred[:, :-1]).item() < 1e-5
+    assert criterion(y_pred, y.unsqueeze(0)).item() < 1e-5
 
 
 @pytest.mark.medium
@@ -106,10 +107,8 @@ def test_deterministic_model_trains_on_offline_data():
     lr = 1e-2
     batch_size = 1024
 
-    obs_rew_optim = Adam(model.networks[0].parameters(), lr=lr)
-    done_optim = Adam(model.done_network.parameters(), lr=lr)
+    obs_rew_optim = Adam(model.parameters(), lr=lr)
     obs_rew_criterion = nn.MSELoss()
-    done_criterion = nn.BCELoss()
 
     losses = []
 
@@ -128,17 +127,12 @@ def test_deterministic_model_trains_on_offline_data():
                             device=device)
 
         obs_rew_optim.zero_grad()
-        done_optim.zero_grad()
         y_pred, _, _, _, _ = model(x)
-        obs_rew_loss = obs_rew_criterion(y_pred[:, :-1], y[:, :-1])
-        done_loss = done_criterion(y_pred[:, -1], y[:, -1])
-        print("Obs/Reward loss: {}   Done loss: {}".format(obs_rew_loss,
-                                                           done_loss))
-        loss = obs_rew_loss + done_loss
+        loss = obs_rew_criterion(y_pred, y.unsqueeze(0))
+        print("Obs/Reward loss: {}".format(loss))
         losses.append(loss.item())
         loss.backward()
         obs_rew_optim.step()
-        done_optim.step()
 
     assert losses[-1] < 1
 
@@ -167,7 +161,7 @@ def test_raises_error_if_type_unknown():
         EnvironmentModel(1, 2, [2, 2], type="asdasd")
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -185,7 +179,7 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
     model.to(device)
 
     lr = 1e-4
-    optim = Adam(model.networks[0].parameters(), lr=lr)
+    optim = Adam(model.parameters(), lr=lr)
 
     loss = torch.tensor(0)
 
@@ -195,37 +189,39 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
             torch.reshape(x, (-1, 1)))
         inv_var = torch.exp(-logvar)
 
-        mse_loss = (torch.square(mean[:, 0] - y) * inv_var[:, 0]).mean()
-        var_loss = logvar[:, 0].mean()
+        mse_loss = (torch.square(mean[:, :, 0] - y) * inv_var[:, :, 0]).mean()
+        var_loss = logvar[:, :, 0].mean()
         var_bound_loss = 0.01 * \
-            max_logvar[0].sum() - 0.01 * min_logvar[0].sum()
+            max_logvar[:, :, 0].sum() - 0.01 * min_logvar[:, :, 0].sum()
         loss = mse_loss + var_loss + var_bound_loss
 
-        print("Loss: {:.3f}, MSE: {:.3f}, VAR: {:.3f}, VAR BOUND: {:.3f}"
-              .format(loss, mse_loss, var_loss, var_bound_loss))
+        if i % 100 == 0:
+            print("Step {}/{} Loss: {:.3f}, MSE: {:.3f}, VAR: {:.3f}, VAR BOUND: {:.3f}"
+                  .format(i, steps, loss, mse_loss, var_loss, var_bound_loss))
         loss.backward(retain_graph=True)
         optim.step()
 
     if not plot:
-        assert loss.item() < -2
+        assert loss.item() < 200
 
     else:
         x_true = torch.arange(-3*PI, 3*PI, 0.01)
         y_true = torch.sin(x_true)
 
         _, mean, logvar, _, _ = model(torch.reshape(x_true, (-1, 1)))
-        mean = mean[:, 0].detach().cpu()
-        logvar = logvar[:, 0].detach().cpu()
+        mean = mean[:, :, 0].detach().cpu()
+        logvar = logvar[:, :, 0].detach().cpu()
 
         std = torch.exp(0.5*logvar)
 
         x = x.cpu()
         y = y.cpu()
 
-        plt.fill_between(x_true, mean+std, mean-std, color='lightcoral')
+        plt.fill_between(x_true, (mean+std).view(-1), (mean-std).view(-1),
+                         color='lightcoral')
         plt.scatter(x[800:1200], y[800:1200], color='green', marker='x')
         plt.plot(x_true, y_true, color='black')
-        plt.plot(x_true, mean, color='red')
+        plt.plot(x_true, mean.view(-1), color='red')
 
         plt.show()
 
@@ -239,9 +235,9 @@ def test_deterministic_ensemble_gives_different_predictions_per_model():
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output1, _, _, _, _ = model(input, 0)
-    output2, _, _, _, _ = model(input, 1)
-    output3, _, _, _, _ = model(input, 2)
+    output1 = model.get_prediction(input, 0)
+    output2 = model.get_prediction(input, 1)
+    output3 = model.get_prediction(input, 2)
 
     np.testing.assert_raises(
         AssertionError, np.testing.assert_array_equal,
@@ -268,30 +264,24 @@ def test_deterministic_ensemble_overfits_on_batch():
 
     x = torch.rand((10, 7))
     y = torch.rand((10, 5))
+    y[:, -1] = 0
     lr = 1e-3
 
-    optims = [Adam(model.networks[i_network].parameters(), lr=lr)
-              for i_network in range(n_networks)]
+    optim = Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
-    y_pred = [0 for i in range(n_networks)]
-    losses = [1e10 for i in range(n_networks)]
+    loss = torch.as_tensor(0)
 
     for step in range(500):
-        for i_network in range(n_networks):
-            optim = optims[i_network]
-            optim.zero_grad()
-            y_pred, _, _, _, _ = model(x, i_network=i_network)
-            loss = criterion(y_pred[:, :-1], y[:, :-1])
-            loss.backward()
-            optim.step()
+        optim.zero_grad()
+        y_pred, _, _, _, _ = model(x)
+        loss = criterion(y_pred, torch.stack(n_networks*[y]))
+        loss.backward()
+        optim.step()
 
-            losses[i_network] = loss.item()
+        print(loss.item())
 
-        print(losses)
-
-    for i_network in range(n_networks):
-        assert losses[i_network] < 2e-5
+    assert loss.item() < 1e-5
 
 
 @pytest.mark.fast
@@ -339,7 +329,7 @@ def test_deterministic_model_returns_binary_done_signal():
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output = model.get_prediction(input)
+    output = model.get_prediction(input, 0)
 
     for value in output[:, -1]:
         assert (value == 0 or value == 1)
@@ -355,9 +345,7 @@ def test_probabilistic_model_returns_binary_done_signal():
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output = model.get_prediction(input).detach().numpy()
-
-    assert output[:, -1].any()
+    output = model.get_prediction(input, 0).detach().numpy()
 
     for value in output[:, -1]:
         assert (value == 0 or value == 1)
@@ -373,7 +361,7 @@ def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output = model.get_prediction(input,
+    output = model.get_prediction(input, 0,
                                   term_fn=termination_functions['hopper'])
 
     for value in output[:, -1]:
@@ -502,12 +490,13 @@ def test_get_prediction_from_pessimistic_model():
     obs_dim = 5
     act_dim = 6
     n_samples = 100
+    n_networks = 2
 
     model = EnvironmentModel(obs_dim,
                              act_dim,
                              hidden=[2, 2],
                              type='probabilistic',
-                             n_networks=2)
+                             n_networks=n_networks)
 
     tensor_size = (n_samples, obs_dim+act_dim)
     input = torch.rand(tensor_size)

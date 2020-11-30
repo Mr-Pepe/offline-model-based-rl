@@ -2,7 +2,6 @@ from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
     deterministic_loss, probabilistic_loss
 from torch.optim.adam import Adam
-from benchmark.models.mlp import mlp
 from benchmark.models.multi_head_mlp import MultiHeadMlp
 import torch.nn as nn
 import torch
@@ -19,6 +18,7 @@ class EnvironmentModel(nn.Module):
                  hidden=[128, 128],
                  type='deterministic',
                  n_networks=1,
+                 device='cpu',
                  **_):
         """
             type (string): deterministic or probabilistic
@@ -38,39 +38,27 @@ class EnvironmentModel(nn.Module):
         if type != 'deterministic' and type != 'probabilistic':
             raise ValueError("Unknown type {}".format(type))
 
-        self.networks = []
+        self.layers = MultiHeadMlp(obs_dim, act_dim, hidden, n_networks)
 
-        for i_network in range(n_networks):
-            self.networks.append(MultiHeadMlp(
-                [obs_dim + act_dim] + hidden,
-                self.obs_dim,
-                double_output=type == 'probabilistic'))
+        self.to(device)
 
-            # Taken from https://github.com/kchua/handful-of-trials/blob/master/
-            # dmbrl/modeling/models/BNN.py
-            self.networks[i_network].max_logvar = Parameter(torch.ones(
-                (self.out_dim))/2,
-                requires_grad=True)
-            self.networks[i_network].min_logvar = Parameter(torch.ones(
-                (self.out_dim))*-10,
-                requires_grad=True)
+        # Taken from https://github.com/kchua/handful-of-trials/blob/master/
+        # dmbrl/modeling/models/BNN.py
+        self.max_logvar = Parameter(torch.ones(
+            n_networks,
+            (self.out_dim))/2,
+            requires_grad=True)
+        self.min_logvar = Parameter(torch.ones(
+            n_networks,
+            (self.out_dim))*-10,
+            requires_grad=True)
 
-        self.networks = nn.ModuleList(self.networks)
+    def forward(self, obs_act, term_fn=None):
 
-        self.done_network = mlp([self.obs_dim, 32, 32, 32, 1],
-                                nn.ReLU,
-                                nn.Sigmoid)
-
-    def forward(self, obs_act, i_network=0, term_fn=None):
-
-        network = self.networks[i_network]
-
-        device = next(network.parameters()).device
+        device = next(self.layers.parameters()).device
         obs_act = self.check_device_and_shape(obs_act, device)
 
-        # TODO: Transform angular input to [sin(x), cos(x)]
-
-        obs, reward = network(obs_act)
+        obs, reward = self.layers(obs_act)
 
         out = 0
         mean = 0
@@ -80,26 +68,31 @@ class EnvironmentModel(nn.Module):
 
         # The model only learns a residual, so the input has to be added
         if self.type == 'deterministic':
-            obs = obs + obs_act[:, :self.obs_dim]
+            obs = obs[:, :, :self.obs_dim] + obs_act[:, :self.obs_dim]
 
             if term_fn:
                 done = term_fn(obs).to(device)
             else:
-                done = self.done_network(obs)
+                done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
+                                   device=device)
 
-            out = torch.cat((obs, reward, done), dim=1)
+            out = torch.cat((obs,
+                             reward[:, :, 0].view((self.n_networks, -1, 1)),
+                             done), dim=2)
 
         elif self.type == 'probabilistic':
-            obs_mean = obs[:, :self.obs_dim] + obs_act[:, :self.obs_dim]
-            reward_mean = reward[:, 0].unsqueeze(1)
-            mean = torch.cat((obs_mean, reward_mean), dim=1)
+            obs_mean = obs[:, :, :self.obs_dim] + obs_act[:, :self.obs_dim]
+            reward_mean = reward[:, :, 0].view((self.n_networks, -1, 1))
+            mean = torch.cat((obs_mean, reward_mean), dim=2)
 
-            obs_logvar = obs[:, self.obs_dim:]
-            reward_logvar = reward[:, 1].unsqueeze(1)
-            max_logvar = network.max_logvar
-            min_logvar = network.min_logvar
+            obs_logvar = obs[:, :, self.obs_dim:]
+            reward_logvar = reward[:, :, 1].view((self.n_networks, -1, 1))
+            logvar = torch.cat((obs_logvar, reward_logvar), dim=2)
 
-            logvar = torch.cat((obs_logvar, reward_logvar), dim=1)
+            max_logvar = torch.stack(
+                logvar.shape[1] * [self.max_logvar], dim=1)
+            min_logvar = torch.stack(
+                logvar.shape[1] * [self.min_logvar], dim=1)
             logvar = max_logvar - softplus(max_logvar - logvar)
             logvar = min_logvar + softplus(logvar - min_logvar)
 
@@ -108,11 +101,12 @@ class EnvironmentModel(nn.Module):
             out = torch.normal(mean, std)
 
             if term_fn:
-                done = term_fn(out[:, :-1]).to(device)
+                done = term_fn(out[:, :, :-1]).to(device)
             else:
-                done = self.done_network(out[:, :-1])
+                done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
+                                   device=device)
 
-            out = torch.cat((out, done), dim=1)
+            out = torch.cat((out, done), dim=2)
 
         return out, \
             mean, \
@@ -128,31 +122,22 @@ class EnvironmentModel(nn.Module):
                                       (1,)) if i_network == -1 else i_network
 
             with torch.no_grad():
-                prediction, _, _, _, _ = self.forward(x,
-                                                      i_network,
-                                                      term_fn=term_fn)
+                predictions, _, _, _, _ = self.forward(x,
+                                                       term_fn=term_fn)
+
+            prediction = predictions[i_network].view(x.shape[0], -1)
 
         else:
             if self.type != 'probabilistic':
                 raise ValueError("Can not predict pessimistically because \
                     model is not probabilistic")
 
-            device = next(self.networks[0].parameters()).device
+            device = next(self.layers.parameters()).device
 
-            predictions = torch.zeros((self.n_networks,
-                                       x.shape[0],
-                                       self.obs_dim+2),
-                                      device=device)
-
-            logvars = torch.zeros(
-                (self.n_networks, x.shape[0], self.obs_dim+1))
-
-            for i_network in range(self.n_networks):
-                with torch.no_grad():
-                    predictions[i_network], _, logvars[i_network], _, _ = \
-                        self.forward(x,
-                                     i_network,
-                                     term_fn=term_fn)
+            with torch.no_grad():
+                predictions, _, logvars, _, _ = \
+                    self.forward(x,
+                                 term_fn=term_fn)
 
             prediction = predictions.mean(dim=0)
 
@@ -182,18 +167,15 @@ class EnvironmentModel(nn.Module):
                 patience = patience[0]
 
         n_train_batches = int((data.size * (1-val_split)) // batch_size)
-        n_val_batches = int((data.size * val_split) // batch_size)
+        n_val_samples = int((data.size * val_split))
 
-        if n_train_batches == 0 or n_val_batches == 0:
+        if n_train_batches == 0 or n_val_samples == 0:
             raise ValueError(
                 "Dataset of size {} not big enough to generate a {} % \
                              validation split with batch size {}."
                 .format(data.size,
                         val_split*100,
                         batch_size))
-
-        avg_val_losses = [1e10 for i in range(self.n_networks)]
-        n_batches_trained = [0 for i in range(self.n_networks)]
 
         print('')
         print("Buffer size: {} Train batches per epoch: {} Stopping after {} batches".format(
@@ -202,98 +184,87 @@ class EnvironmentModel(nn.Module):
             max_n_train_batches
         ))
 
-        for i_network, network in enumerate(self.networks):
-            device = next(network.parameters()).device
-            optim = Adam(network.parameters(), lr=lr)
+        device = next(self.parameters()).device
+        optim = Adam(self.parameters(), lr=lr)
 
-            min_val_loss = 1e10
-            n_bad_val_losses = 0
-            avg_val_loss = 0
+        min_val_loss = 1e10
+        n_bad_val_losses = 0
+        avg_val_loss = 0
+        avg_train_loss = 0
+
+        batches_trained = 0
+
+        stop_training = False
+
+        avg_val_losses = torch.zeros((self.n_networks))
+
+        while n_bad_val_losses < patience:
+
             avg_train_loss = 0
 
-            batches_trained = 0
+            for i in range(n_train_batches):
+                x, y = get_x_y_from_batch(
+                    data.sample_train_batch(batch_size,
+                                            val_split),
+                    device)
 
-            stop_training = False
-
-            while n_bad_val_losses < patience:
-
-                avg_train_loss = 0
-
-                for i in range(n_train_batches):
-                    x, y = get_x_y_from_batch(
-                        data.sample_train_batch(batch_size,
-                                                val_split),
-                        device)
-
-                    optim.zero_grad()
-                    if self.type == 'deterministic':
-                        loss = deterministic_loss(x, y, self, i_network)
-                    else:
-                        loss = probabilistic_loss(x, y, self, i_network)
-
-                    avg_train_loss += loss.item()
-                    loss.backward(retain_graph=True)
-                    optim.step()
-
-                    if max_n_train_batches != -1 and \
-                            max_n_train_batches <= batches_trained:
-                        stop_training = True
-                        break
-
-                    batches_trained += 1
-
-                if debug:
-                    print('')
-                    print("Network: {}/{} Train loss: {}".format(
-                        i_network+1,
-                        self.n_networks,
-                        avg_train_loss/n_train_batches))
-
-                avg_val_loss = 0
-                for i in range(n_val_batches):
-                    x, y = get_x_y_from_batch(
-                        data.sample_val_batch(batch_size,
-                                              val_split),
-                        device)
-
-                    if self.type == 'deterministic':
-                        avg_val_loss += deterministic_loss(x,
-                                                           y,
-                                                           self,
-                                                           i_network).item()
-                    else:
-                        avg_val_loss += probabilistic_loss(x,
-                                                           y,
-                                                           self,
-                                                           i_network,
-                                                           only_mse=True).item()
-
-                avg_val_loss /= n_val_batches
-
-                if avg_val_loss < min_val_loss:
-                    n_bad_val_losses = 0
-                    min_val_loss = avg_val_loss
+                optim.zero_grad()
+                if self.type == 'deterministic':
+                    loss = deterministic_loss(x, y, self)
                 else:
-                    n_bad_val_losses += 1
+                    loss = probabilistic_loss(x, y, self)
 
-                print("Network: {}/{} trained on {} batches  Patience: {}/{} Val loss: {}".format(
-                    i_network+1,
-                    self.n_networks,
-                    batches_trained,
-                    n_bad_val_losses,
-                    patience,
-                    avg_val_loss), end='\r')
+                avg_train_loss += loss.item()
+                loss.backward(retain_graph=True)
+                optim.step()
 
-                if stop_training:
+                if max_n_train_batches != -1 and \
+                        max_n_train_batches <= batches_trained:
+                    stop_training = True
                     break
 
-            avg_val_losses[i_network] = avg_val_loss
-            n_batches_trained[i_network] = batches_trained
+                batches_trained += 1
 
-            print("Network: {}/{} trained on {} batches. Val loss: {}".format(
-                i_network+1,
-                self.n_networks,
+            if debug:
+                print('')
+                print("Train loss: {}".format(
+                    avg_train_loss/n_train_batches))
+
+            for i_network in range(self.n_networks):
+                x, y = get_x_y_from_batch(
+                    data.sample_val_batch(n_val_samples,
+                                          val_split),
+                    device)
+
+                if self.type == 'deterministic':
+                    avg_val_losses[i_network] = deterministic_loss(
+                        x,
+                        y,
+                        self,
+                        i_network).item()
+                else:
+                    avg_val_losses[i_network] = probabilistic_loss(
+                        x,
+                        y,
+                        self,
+                        i_network,
+                        only_mse=True).item()
+
+            avg_val_loss = avg_val_losses.mean()
+
+            if avg_val_loss < min_val_loss:
+                n_bad_val_losses = 0
+                min_val_loss = avg_val_loss
+            else:
+                n_bad_val_losses += 1
+
+            if stop_training:
+                break
+
+            print("Train batches: {} Patience: {}/{} Val losses: {}".format(
                 batches_trained,
-                avg_val_loss))
+                n_bad_val_losses,
+                patience,
+                avg_val_losses.tolist()), end='\r')
 
-        return avg_val_losses, n_batches_trained
+        return avg_val_losses, batches_trained
