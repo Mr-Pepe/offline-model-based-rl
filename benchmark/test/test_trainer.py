@@ -159,7 +159,7 @@ def test_actions_for_offline_model_free_training_with_fine_tuning():
                                   [1]*steps_per_epoch*epochs)
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_actions_for_offline_model_based_training_with_fine_tuning():
     epochs = 5
     pretrain_epochs = 3
@@ -236,7 +236,7 @@ def test_trainer_picks_correct_termination_functions():
     assert trainer.term_fn == termination_functions['walker2d']
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_results_are_reproducible():
     epochs = 5
     steps_per_epoch = 100

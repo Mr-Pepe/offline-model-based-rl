@@ -1,3 +1,5 @@
+from benchmark.utils.load_dataset import load_dataset_from_env
+from benchmark.utils.mazes import plot_umaze_walls
 from benchmark.utils.replay_buffer import ReplayBuffer
 import numpy as np
 import pytest
@@ -9,6 +11,7 @@ from benchmark.models.environment_model import EnvironmentModel
 import gym
 from benchmark.utils.termination_functions import termination_functions
 import time
+import matplotlib.pyplot as plt
 
 
 @pytest.mark.fast
@@ -29,7 +32,7 @@ def test_generate_rollout_of_desired_length():
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
     agent = SAC(observation_space, action_space)
 
-    virtual_rollout = generate_virtual_rollouts(
+    virtual_rollout, _ = generate_virtual_rollouts(
         model,
         agent,
         buffer,
@@ -66,7 +69,7 @@ def test_generate_rollout_stops_on_terminal():
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
     agent = SAC(observation_space, action_space)
 
-    virtual_rollout = generate_virtual_rollouts(
+    virtual_rollout, _ = generate_virtual_rollouts(
         model,
         agent,
         buffer,
@@ -110,7 +113,7 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
 
     start_time = time.time()
     for i in range(n_runs):
-        rollout = generate_virtual_rollouts(
+        rollout, _ = generate_virtual_rollouts(
             model, agent, parallel_buffer, rollout_length,
             n_rollouts=n_rollouts,
             stop_on_terminal=False)
@@ -126,11 +129,11 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
     start_time = time.time()
 
     for i in range(n_runs*n_rollouts):
-        rollout = generate_virtual_rollout(model,
-                                           agent,
-                                           start_observation,
-                                           rollout_length,
-                                           stop_on_terminal=False)
+        rollout, _ = generate_virtual_rollout(model,
+                                              agent,
+                                              start_observation,
+                                              rollout_length,
+                                              stop_on_terminal=False)
 
         for step in rollout:
             sequential_buffer.store(
@@ -170,15 +173,15 @@ def test_use_random_actions_in_virtual_rollout():
     agent = SAC(observation_space, action_space, device=device)
 
     torch.random.manual_seed(0)
-    rollouts1 = generate_virtual_rollouts(model, agent, buffer, 1, 100)
+    rollouts1, _ = generate_virtual_rollouts(model, agent, buffer, 1, 100)
     torch.random.manual_seed(0)
-    rollouts2 = generate_virtual_rollouts(model, agent, buffer, 1, 100)
+    rollouts2, _ = generate_virtual_rollouts(model, agent, buffer, 1, 100)
     torch.random.manual_seed(0)
-    rollouts3 = generate_virtual_rollouts(model, agent, buffer, 1, 100,
-                                          random_action=True)
+    rollouts3, _ = generate_virtual_rollouts(model, agent, buffer, 1, 100,
+                                             random_action=True)
     torch.random.manual_seed(0)
-    rollouts4 = generate_virtual_rollouts(model, agent, buffer, 1, 100,
-                                          random_action=True)
+    rollouts4, _ = generate_virtual_rollouts(model, agent, buffer, 1, 100,
+                                             random_action=True)
 
     np.testing.assert_array_equal(rollouts1['next_obs'].cpu(),
                                   rollouts2['next_obs'].cpu())
@@ -186,3 +189,101 @@ def test_use_random_actions_in_virtual_rollout():
         AssertionError, np.testing.assert_array_equal,
         rollouts3['next_obs'].cpu(),
         rollouts4['next_obs'].cpu(),)
+
+
+@pytest.mark.current
+@pytest.mark.medium
+def test_continuously_grow_rollouts(plot=False):
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    env = gym.make('antmaze-umaze-v0')
+    observation_space = env.observation_space
+    action_space = env.action_space
+    seed = 1
+    torch.random.manual_seed(seed)
+    np.random.seed(seed)
+    env.seed(seed)
+    env.action_space.seed(seed)
+
+    obs_dim = observation_space.shape[0]
+    act_dim = action_space.shape[0]
+
+    buffer, _, _ = load_dataset_from_env(env, 10000, buffer_device=device)
+
+    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',
+                             n_networks=3, device=device)
+
+    model.train_to_convergence(buffer, patience=1)
+
+    # Reinitialize buffer
+    buffer = ReplayBuffer(obs_dim=obs_dim,
+                          act_dim=act_dim,
+                          size=int(1e6),
+                          device=device)
+
+    virtual_buffer = ReplayBuffer(obs_dim=obs_dim,
+                                  act_dim=act_dim,
+                                  size=int(1e6),
+                                  device=device)
+
+    o = env.reset()
+
+    steps = 1000
+
+    for _ in range(steps):
+        a = env.action_space.sample()
+        o2, r, d, _ = env.step(a)
+        buffer.store(torch.as_tensor(o),
+                     torch.as_tensor(a),
+                     torch.as_tensor(r),
+                     torch.as_tensor(o2),
+                     torch.as_tensor(d)
+                     )
+        o = o2
+
+        if d:
+            o = env.reset()
+
+    if plot:
+        plot_umaze_walls()
+        plt.scatter(buffer.obs_buf[:steps, 0].cpu(),
+                    buffer.obs_buf[:steps, 1].cpu(),
+                    marker='.',
+                    s=2)
+        plt.show()
+
+    agent = SAC(observation_space, action_space, device=device)
+
+    last_observations = None
+
+    steps = 100
+    n_rollouts = 100
+    steps_per_rollout = 1
+
+    for step in range(steps):
+        rollouts, last_observations = generate_virtual_rollouts(
+            model,
+            agent,
+            buffer,
+            steps=steps_per_rollout,
+            n_rollouts=n_rollouts,
+            random_action=True,
+            prev_obs=last_observations,
+            term_fn=termination_functions['umaze'],
+            stop_on_terminal=True)
+
+        virtual_buffer.store_batch(rollouts['obs'],
+                                   rollouts['act'],
+                                   rollouts['rew'],
+                                   rollouts['next_obs'],
+                                   rollouts['done'])
+
+        if plot and step % 1 == 0:
+            plot_umaze_walls()
+            plt.scatter(
+                virtual_buffer.obs_buf[:(
+                    step+1)*n_rollouts*steps_per_rollout, 0].cpu(),
+                virtual_buffer.obs_buf[:(
+                    step+1)*n_rollouts*steps_per_rollout, 1].cpu(),
+                marker='.',
+                s=2)
+            plt.show()

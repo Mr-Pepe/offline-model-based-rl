@@ -37,6 +37,7 @@ class Trainer():
                  model_max_n_train_batches=-1,
                  rollouts_per_step=10,
                  rollout_schedule=[1, 1, 20, 100],
+                 continuous_rollouts=False,
                  train_model_every=250,
                  buffer_size=int(1e6),
                  pretrain_epochs=0,
@@ -161,6 +162,7 @@ class Trainer():
         self.rollouts_per_step = rollouts_per_step
         self.rollout_schedule = rollout_schedule
         self.train_model_every = train_model_every
+        self.continuous_rollouts = continuous_rollouts
         self.model_pessimism = model_pessimism
         self.model_max_n_train_batches = model_max_n_train_batches
 
@@ -185,6 +187,8 @@ class Trainer():
         action_log = []
 
         model_trained_at_all = False
+
+        prev_obs = None
 
         for epoch in range(-self.pretrain_epochs+1, self.epochs + 1):
 
@@ -268,7 +272,7 @@ class Trainer():
                 # Update agent
                 if step_total >= self.init_steps or self.pretrain_epochs > 0:
                     if self.use_model:
-                        rollouts = generate_virtual_rollouts(
+                        rollouts, prev_obs = generate_virtual_rollouts(
                             self.env_model,
                             self.agent,
                             self.real_replay_buffer,
@@ -277,6 +281,7 @@ class Trainer():
                             term_fn=self.term_fn,
                             pessimism=self.model_pessimism,
                             random_action=take_random_action,
+                            prev_obs=prev_obs if self.continuous_rollouts else None,
                         )
                         self.virtual_replay_buffer.store_batch(
                             rollouts['obs'],

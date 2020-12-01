@@ -398,7 +398,7 @@ def test_deterministic_model_does_not_always_output_terminal():
     virtual_buffer = ReplayBuffer(obs_dim, act_dim, 10000, device=device)
 
     for model_rollout in range(10):
-        rollout = generate_virtual_rollouts(
+        rollout, _ = generate_virtual_rollouts(
             model,
             agent,
             real_buffer,
@@ -450,7 +450,7 @@ def test_probabilistic_model_does_not_always_output_terminal():
 
     for model_rollout in range(10):
 
-        rollout = generate_virtual_rollouts(
+        rollout, _ = generate_virtual_rollouts(
             model,
             agent,
             real_buffer,

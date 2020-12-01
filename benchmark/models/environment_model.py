@@ -40,8 +40,6 @@ class EnvironmentModel(nn.Module):
 
         self.layers = MultiHeadMlp(obs_dim, act_dim, hidden, n_networks)
 
-        self.to(device)
-
         # Taken from https://github.com/kchua/handful-of-trials/blob/master/
         # dmbrl/modeling/models/BNN.py
         self.max_logvar = Parameter(torch.ones(
@@ -52,6 +50,8 @@ class EnvironmentModel(nn.Module):
             n_networks,
             (self.out_dim))*-10,
             requires_grad=True)
+
+        self.to(device)
 
     def forward(self, obs_act, term_fn=None):
 

@@ -4,7 +4,7 @@ import torch
 def generate_virtual_rollouts(model, agent, buffer, steps,
                               n_rollouts=1, term_fn=None,
                               stop_on_terminal=True, pessimism=0,
-                              random_action=False):
+                              random_action=False, prev_obs=None):
 
     model_is_training = model.training
     agent_is_training = agent.training
@@ -20,7 +20,15 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
     out_rewards = None
     out_dones = None
 
-    observations = buffer.sample_batch(n_rollouts)['obs']
+    if prev_obs is None:
+        observations = buffer.sample_batch(n_rollouts)['obs']
+    else:
+        observations = prev_obs
+
+        if len(observations) < n_rollouts:
+            observations = torch.cat((
+                observations,
+                buffer.sample_batch(n_rollouts-len(observations))['obs']))
 
     step = 0
 
@@ -34,26 +42,31 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
             dtype=torch.float32), term_fn=term_fn,
             pessimism=pessimism)
 
+        observations = observations.detach().clone()
+        actions = actions.detach().clone()
+        next_observations = pred[:, :-2].detach().clone()
+        rewards = pred[:, -2].detach().clone()
+        dones = pred[:, -1].detach().clone()
+
         if out_observations is None:
-            out_observations = observations.detach().clone()
-            out_actions = actions.detach().clone()
-            out_next_observations = pred[:, :-2].detach().clone()
-            out_rewards = pred[:, -2].detach().clone()
-            out_dones = pred[:, -1].detach().clone()
+            out_observations = observations
+            out_actions = actions
+            out_next_observations = next_observations
+            out_rewards = rewards
+            out_dones = dones
         else:
             out_observations = torch.cat((out_observations,
-                                          observations.detach().clone()))
-            out_actions = torch.cat((out_actions, actions.detach().clone()))
+                                          observations))
+            out_actions = torch.cat((out_actions, actions))
             out_next_observations = torch.cat((out_next_observations,
-                                               pred[:, :-2].detach().clone()))
-            out_rewards = torch.cat((out_rewards,
-                                     pred[:, -2].detach().clone()))
-            out_dones = torch.cat((out_dones, pred[:, -1].detach().clone()))
+                                               next_observations))
+            out_rewards = torch.cat((out_rewards, rewards))
+            out_dones = torch.cat((out_dones, dones))
 
         if stop_on_terminal:
-            observations = pred[pred[:, -1] == 0, :-2]
+            observations = next_observations[dones == 0]
         else:
-            observations = pred[:, :-2]
+            observations = next_observations
 
         step += 1
 
@@ -66,7 +79,7 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
             'act': out_actions,
             'rew': out_rewards,
             'next_obs': out_next_observations,
-            'done': out_dones}
+            'done': out_dones}, observations
 
 
 def generate_virtual_rollout(model, agent, start_observation, steps,

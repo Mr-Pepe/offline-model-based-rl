@@ -34,7 +34,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_patience', nargs='+', type=int, default=[20])
     parser.add_argument('--rollouts_per_step', type=int, default=100)
     parser.add_argument('--rollout_schedule', nargs='+',
-                        type=int, default=[1, 1, 20, 100])
+    parser.add_argument('--continuous_rollouts', type=str2bool, default=False)
     parser.add_argument('--train_model_every', type=int, default=250)
     parser.add_argument('--model_max_n_train_batches', type=int, default=2000)
     parser.add_argument('--model_pessimism', type=int, default=0)
@@ -89,6 +89,7 @@ if __name__ == '__main__':
                       agent_updates_per_step=args.agent_updates_per_step,
                       rollouts_per_step=args.rollouts_per_step,
                       rollout_schedule=args.rollout_schedule,
+                      continuous_rollouts=args.continuous_rollouts,
                       train_model_every=args.train_model_every,
                       num_test_episodes=args.num_test_episodes,
                       render=args.render)
