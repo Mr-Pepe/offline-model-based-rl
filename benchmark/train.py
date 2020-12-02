@@ -198,6 +198,7 @@ class Trainer():
             agent_update_performed = False
             model_trained_this_epoch = False
             episode_finished = False
+            tested_agent = False
 
             rollout_length = get_rollout_length_from_schedule(
                 self.rollout_schedule,
@@ -319,20 +320,25 @@ class Trainer():
             if (epoch % self.save_freq == 0) or (epoch == self.epochs):
                 self.logger.save_state({'env': self.env}, None)
 
-            # Test the performance of the deterministic version of the agent.
-            test_return = test_agent(self.test_env,
-                                     self.agent,
-                                     self.max_ep_len,
-                                     self.num_test_episodes,
-                                     self.logger,
-                                     self.render and
-                                     step_total > self.init_steps)
+            test_return = 0
+
+            if step_total > self.init_steps or epoch < 1:
+                # Test the performance of the deterministic version of the agent.
+                test_return = test_agent(self.test_env,
+                                         self.agent,
+                                         self.max_ep_len,
+                                         self.num_test_episodes,
+                                         self.logger,
+                                         self.render and
+                                         step_total > self.init_steps)
+
+                tested_agent = True
 
             test_performances.append([epoch, test_return])
 
             log_end_of_epoch(self.logger, epoch, step_total, start_time,
                              agent_update_performed, model_trained_this_epoch,
-                             rollout_length, episode_finished)
+                             rollout_length, episode_finished, tested_agent)
 
         return torch.as_tensor(test_performances, dtype=torch.float32), \
             torch.as_tensor(action_log, dtype=torch.float32)
@@ -340,7 +346,7 @@ class Trainer():
 
 def log_end_of_epoch(logger, epoch, step_total, start_time,
                      agent_update_performed, model_trained, rollout_length,
-                     episode_finished):
+                     episode_finished, tested_agent):
 
     logger.log_tabular('Epoch', epoch, epoch)
 
@@ -351,11 +357,13 @@ def log_end_of_epoch(logger, epoch, step_total, start_time,
         logger.store(EpLen=0)
 
     logger.log_tabular('EpRet', epoch, with_min_and_max=True)
-
-    logger.log_tabular('TestEpRet', epoch, with_min_and_max=True)
-
     logger.log_tabular('EpLen', epoch, average_only=True)
 
+    if not tested_agent:
+        logger.store(TestEpRet=0)
+        logger.store(TestEpLen=0)
+
+    logger.log_tabular('TestEpRet', epoch, with_min_and_max=True)
     logger.log_tabular('TestEpLen', epoch, average_only=True)
 
     logger.log_tabular('TotalEnvInteracts', epoch, step_total)
