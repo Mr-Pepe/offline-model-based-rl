@@ -39,7 +39,8 @@ class Trainer():
                  rollout_schedule=[1, 1, 20, 100],
                  continuous_rollouts=False,
                  train_model_every=250,
-                 buffer_size=int(1e6),
+                 real_buffer_size=int(1e6),
+                 virtual_buffer_size=int(1e6),
                  pretrain_epochs=0,
                  logger_kwargs=dict(),
                  save_freq=1,
@@ -117,17 +118,17 @@ class Trainer():
         if pretrain_epochs > 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
                 self.env,
-                buffer_size=buffer_size,
+                buffer_size=real_buffer_size,
                 buffer_device=device)
         else:
             self.real_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
                                                    act_dim=act_dim,
-                                                   size=buffer_size,
+                                                   size=real_buffer_size,
                                                    device=device)
 
         self.virtual_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
                                                   act_dim=act_dim,
-                                                  size=buffer_size,
+                                                  size=virtual_buffer_size,
                                                   device=device)
 
         self.logger.setup_pytorch_saver({

@@ -13,9 +13,10 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=125)
     parser.add_argument('--pretrain_epochs', type=int, default=125)
     parser.add_argument('--steps_per_epoch', type=int, default=1000)
-    parser.add_argument('--init_steps', type=int, default=10000)
-    parser.add_argument('--random_steps', type=int, default=10000)
-    parser.add_argument('--buffer_size', type=int, default=int(1e6))
+    parser.add_argument('--init_steps', type=int, default=3000)
+    parser.add_argument('--random_steps', type=int, default=5000)
+    parser.add_argument('--real_buffer_size', type=int, default=int(1e6))
+    parser.add_argument('--virtual_buffer_size', type=int, default=int(1e6))
 
     parser.add_argument('--hid', type=int, default=200)
     parser.add_argument('--l', type=int, default=4)
@@ -82,7 +83,8 @@ if __name__ == '__main__':
                       random_steps=args.random_steps,
                       logger_kwargs=logger_kwargs,
                       device=device,
-                      buffer_size=args.buffer_size,
+                      real_buffer_size=args.real_buffer_size,
+                      virtual_buffer_size=args.virtual_buffer_size,
                       use_model=args.use_model,
                       model_pessimism=args.model_pessimism,
                       model_max_n_train_batches=args.model_max_n_train_batches,
