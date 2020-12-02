@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('--random_steps', type=int, default=5000)
     parser.add_argument('--real_buffer_size', type=int, default=int(1e6))
     parser.add_argument('--virtual_buffer_size', type=int, default=int(1e6))
-    parser.add_argument('--n_samples_from_dataset', type=int, default=-1)
+    parser.add_argument('--n_samples_from_dataset', type=int, default=50000)
 
     parser.add_argument('--hid', type=int, default=200)
     parser.add_argument('--l', type=int, default=4)
@@ -36,7 +36,9 @@ if __name__ == '__main__':
     parser.add_argument('--model_patience', nargs='+', type=int, default=[20])
     parser.add_argument('--rollouts_per_step', type=int, default=100)
     parser.add_argument('--rollout_schedule', nargs='+',
+                        type=int, default=[1, 1, 20, 100])
     parser.add_argument('--continuous_rollouts', type=str2bool, default=False)
+    parser.add_argument('--max_rollout_length', type=int, default=10000)
     parser.add_argument('--train_model_every', type=int, default=250)
     parser.add_argument('--model_max_n_train_batches', type=int, default=2000)
     parser.add_argument('--model_pessimism', type=int, default=0)
@@ -96,6 +98,7 @@ if __name__ == '__main__':
                       train_model_every=args.train_model_every,
                       num_test_episodes=args.num_test_episodes,
                       n_samples_from_dataset=args.n_samples_from_dataset,
+                      max_rollout_length=args.max_rollout_length,
                       render=args.render)
 
     trainer.train()

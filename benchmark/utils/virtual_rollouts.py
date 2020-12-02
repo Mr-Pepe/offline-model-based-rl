@@ -4,7 +4,8 @@ import torch
 def generate_virtual_rollouts(model, agent, buffer, steps,
                               n_rollouts=1, term_fn=None,
                               stop_on_terminal=True, pessimism=0,
-                              random_action=False, prev_obs=None):
+                              random_action=False, prev_obs=None,
+                              max_rollout_length=-1):
 
     model_is_training = model.training
     agent_is_training = agent.training
@@ -22,13 +23,20 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
 
     if prev_obs is None:
         observations = buffer.sample_batch(n_rollouts)['obs']
+        lengths = torch.zeros((n_rollouts)).to(observations.device)
     else:
-        observations = prev_obs
+        observations = prev_obs['obs']
+        lengths = prev_obs['lengths']
+
+        n_new_rollouts = n_rollouts-len(observations)
 
         if len(observations) < n_rollouts:
             observations = torch.cat((
                 observations,
-                buffer.sample_batch(n_rollouts-len(observations))['obs']))
+                buffer.sample_batch(n_new_rollouts)['obs']))
+
+            lengths = torch.cat(
+                (lengths, torch.zeros(n_new_rollouts).to(lengths.device)))
 
     step = 0
 
@@ -63,8 +71,13 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
             out_rewards = torch.cat((out_rewards, rewards))
             out_dones = torch.cat((out_dones, dones))
 
+        lengths += 1
+
         if stop_on_terminal:
+            if max_rollout_length != -1:
+                dones = torch.logical_or(dones, lengths == max_rollout_length)
             observations = next_observations[dones == 0]
+            lengths = lengths[dones == 0]
         else:
             observations = next_observations
 
@@ -79,7 +92,7 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
             'act': out_actions,
             'rew': out_rewards,
             'next_obs': out_next_observations,
-            'done': out_dones}, observations
+            'done': out_dones}, {'obs': observations, 'lengths': lengths}
 
 
 def generate_virtual_rollout(model, agent, start_observation, steps,

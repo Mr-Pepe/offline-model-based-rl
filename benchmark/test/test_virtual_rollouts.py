@@ -195,7 +195,7 @@ def test_use_random_actions_in_virtual_rollout():
 @pytest.mark.medium
 def test_continuously_grow_rollouts(plot=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    env = gym.make('antmaze-umaze-v0')
+    env = gym.make('hopper-random-v0')
     observation_space = env.observation_space
     action_space = env.action_space
     seed = 1
@@ -258,6 +258,7 @@ def test_continuously_grow_rollouts(plot=False):
     steps = 100
     n_rollouts = 100
     steps_per_rollout = 1
+    max_rollout_length = 10
 
     for step in range(steps):
         rollouts, last_observations = generate_virtual_rollouts(
@@ -268,14 +269,18 @@ def test_continuously_grow_rollouts(plot=False):
             n_rollouts=n_rollouts,
             random_action=True,
             prev_obs=last_observations,
-            term_fn=termination_functions['umaze'],
-            stop_on_terminal=True)
+            term_fn=termination_functions['hopper'],
+            stop_on_terminal=True,
+            max_rollout_length=max_rollout_length)
 
         virtual_buffer.store_batch(rollouts['obs'],
                                    rollouts['act'],
                                    rollouts['rew'],
                                    rollouts['next_obs'],
                                    rollouts['done'])
+
+        for length in last_observations['lengths']:
+            assert length > 0 and length <= max_rollout_length
 
         if plot and step % 1 == 0:
             plot_umaze_walls()

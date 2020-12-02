@@ -38,6 +38,7 @@ class Trainer():
                  model_max_n_train_batches=-1,
                  rollouts_per_step=10,
                  rollout_schedule=[1, 1, 20, 100],
+                 max_rollout_length=999999,
                  continuous_rollouts=False,
                  train_model_every=250,
                  real_buffer_size=int(1e6),
@@ -164,6 +165,7 @@ class Trainer():
         self.use_model = use_model
         self.rollouts_per_step = rollouts_per_step
         self.rollout_schedule = rollout_schedule
+        self.max_rollout_length = max_rollout_length
         self.train_model_every = train_model_every
         self.continuous_rollouts = continuous_rollouts
         self.model_pessimism = model_pessimism
@@ -286,6 +288,7 @@ class Trainer():
                             pessimism=self.model_pessimism,
                             random_action=take_random_action,
                             prev_obs=prev_obs if self.continuous_rollouts else None,
+                            max_rollout_length=self.max_rollout_length
                         )
                         self.virtual_replay_buffer.store_batch(
                             rollouts['obs'],
