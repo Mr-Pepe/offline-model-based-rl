@@ -41,11 +41,18 @@ def umaze_termination_fn(next_obs):
 
     walls = U_MAZE_WALLS.to(x.device)
 
-    done = torch.zeros((next_obs.shape[0], x[0].numel(), len(walls)))
+    done = torch.zeros((next_obs.shape[0], x[0].numel(), len(walls)+1))
 
     for i_wall, wall in enumerate(walls):
-        done[:, :, i_wall] = (wall[0] < x) * (x < wall[1]) * \
-            (wall[2] < y) * (y < wall[3])
+        done[:, :, i_wall] = (wall[0] <= x) * (x <= wall[1]) * \
+            (wall[2] <= y) * (y <= wall[3])
+
+    x_min = walls[:, 0].min()
+    x_max = walls[:, 1].max()
+    y_min = walls[:, 2].min()
+    y_max = walls[:, 3].max()
+
+    done[:, :, -1] = (x_max <= x) + (x <= x_min) + (y_max <= y) + (y <= y_min)
 
     return done.sum(dim=2).reshape(next_obs.shape[0], -1, 1)
 
