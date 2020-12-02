@@ -1,3 +1,5 @@
+import warnings
+from benchmark.utils.termination_functions import termination_functions
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
     deterministic_loss, probabilistic_loss
@@ -102,6 +104,14 @@ class EnvironmentModel(nn.Module):
 
             if term_fn:
                 done = term_fn(out[:, :, :-1]).to(device)
+
+                if torch.any(done > 0) and term_fn == termination_functions['umaze']:
+                    for i_network in range(self.n_networks):
+                        out[i_network, (done[i_network] > 0).view(-1), :-1] = \
+                            obs_act[done[i_network][:, 0] > 0, :self.obs_dim]
+
+                if term_fn(out[:, :, :-1]).to(device).sum() > 0:
+                    warnings.warn("Still terminal states after resetting.")
             else:
                 done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
                                    device=device)
