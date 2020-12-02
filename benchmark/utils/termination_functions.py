@@ -1,4 +1,4 @@
-from benchmark.utils.mazes import U_MAZE_WALLS
+from benchmark.utils.mazes import ANTMAZE_UMAZE_WALLS
 import torch
 
 
@@ -35,11 +35,11 @@ def walker2d_termination_fn(next_obs):
     return done
 
 
-def umaze_termination_fn(next_obs):
+def antmaze_umaze_termination_fn(next_obs):
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
-    walls = U_MAZE_WALLS.to(x.device)
+    walls = ANTMAZE_UMAZE_WALLS.to(x.device)
 
     done = torch.zeros((next_obs.shape[0], x[0].numel(), len(walls)+1))
 
@@ -61,7 +61,7 @@ termination_functions = {
     'hopper': hopper_termination_fn,
     'half_cheetah': half_cheetah_termination_fn,
     'walker2d': walker2d_termination_fn,
-    'umaze': umaze_termination_fn,
+    'antmaze_umaze': antmaze_umaze_termination_fn,
 }
 
 function_to_names_mapping = {
@@ -84,9 +84,8 @@ function_to_names_mapping = {
                  'walker2d-medium-replay-v0',
                  'walker2d-medium-expert-v0',
                  ],
-    'umaze': ['antmaze-umaze-v0',
-              'antmaze-umaze-diverse-v0',
-              'maze2d-umaze-dense-v1'],
+    'antmaze_umaze': ['antmaze-umaze-v0',
+                      'antmaze-umaze-diverse-v0'],
 }
 
 

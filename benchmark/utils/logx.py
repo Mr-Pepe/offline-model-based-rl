@@ -7,7 +7,7 @@ Some simple logging functionality, inspired by rllab's logging.
 Logs to a tab-separated-values file (path/to/output_directory/progress.txt)
 
 """
-from benchmark.utils.mazes import plot_umaze_walls
+from benchmark.utils.mazes import plot_antmaze_umaze_walls
 import json
 import joblib
 import numpy as np
@@ -381,7 +381,7 @@ class EpochLogger(Logger):
             if self.tensorboard_writer:
                 f = plt.figure()
 
-                plot_umaze_walls()
+                plot_antmaze_umaze_walls()
                 plt.scatter(
                     buffer.obs_buf[:, 0].cpu(),
                     buffer.obs_buf[:, 1].cpu(),
@@ -400,14 +400,12 @@ class EpochLogger(Logger):
             if self.tensorboard_writer:
                 f = plt.figure()
                 rewards = buffer.rew_buf[:].cpu()
-                normalized_rewards = (rewards - rewards.min()) / \
-                    (rewards.max() - rewards.min())
 
-                plot_umaze_walls()
+                plot_antmaze_umaze_walls()
                 plt.scatter(
                     buffer.obs_buf[:, 0].cpu(),
                     buffer.obs_buf[:, 1].cpu(),
-                    c=normalized_rewards,
+                    c=rewards,
                     cmap='cividis',
                     marker='.',
                     s=2

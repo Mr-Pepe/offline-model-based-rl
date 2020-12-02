@@ -1,5 +1,5 @@
 from benchmark.utils.load_dataset import load_dataset_from_env
-from benchmark.utils.mazes import plot_umaze_walls
+from benchmark.utils.mazes import plot_antmaze_umaze_walls
 from benchmark.utils.replay_buffer import ReplayBuffer
 import numpy as np
 import pytest
@@ -244,7 +244,7 @@ def test_continuously_grow_rollouts(plot=False):
             o = env.reset()
 
     if plot:
-        plot_umaze_walls()
+        plot_antmaze_umaze_walls()
         plt.scatter(buffer.obs_buf[:steps, 0].cpu(),
                     buffer.obs_buf[:steps, 1].cpu(),
                     marker='.',
@@ -283,7 +283,7 @@ def test_continuously_grow_rollouts(plot=False):
             assert length > 0 and length <= max_rollout_length
 
         if plot and step % 1 == 0:
-            plot_umaze_walls()
+            plot_antmaze_umaze_walls()
             plt.scatter(
                 virtual_buffer.obs_buf[:(
                     step+1)*n_rollouts*steps_per_rollout, 0].cpu(),
