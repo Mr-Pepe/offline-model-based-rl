@@ -167,9 +167,9 @@ class EnvironmentModel(nn.Module):
                 patience = patience[0]
 
         n_train_batches = int((data.size * (1-val_split)) // batch_size)
-        n_val_samples = int((data.size * val_split))
+        n_val_batches = int((data.size * val_split) // batch_size)
 
-        if n_train_batches == 0 or n_val_samples == 0:
+        if n_train_batches == 0 or n_val_batches == 0:
             raise ValueError(
                 "Dataset of size {} not big enough to generate a {} % \
                              validation split with batch size {}."
@@ -230,25 +230,30 @@ class EnvironmentModel(nn.Module):
                 print("Train loss: {}".format(
                     avg_train_loss/n_train_batches))
 
-            for i_network in range(self.n_networks):
-                x, y = get_x_y_from_batch(
-                    data.sample_val_batch(n_val_samples,
-                                          val_split),
-                    device)
+            avg_val_losses = torch.zeros((self.n_networks))
 
-                if self.type == 'deterministic':
-                    avg_val_losses[i_network] = deterministic_loss(
-                        x,
-                        y,
-                        self,
-                        i_network).item()
-                else:
-                    avg_val_losses[i_network] = probabilistic_loss(
-                        x,
-                        y,
-                        self,
-                        i_network,
-                        only_mse=True).item()
+            for i_network in range(self.n_networks):
+                for i in range(n_val_batches):
+                    x, y = get_x_y_from_batch(
+                        data.sample_val_batch(batch_size,
+                                              val_split),
+                        device)
+
+                    if self.type == 'deterministic':
+                        avg_val_losses[i_network] += deterministic_loss(
+                            x,
+                            y,
+                            self,
+                            i_network).item()
+                    else:
+                        avg_val_losses[i_network] += probabilistic_loss(
+                            x,
+                            y,
+                            self,
+                            i_network,
+                            only_mse=True).item()
+
+                avg_val_losses[i_network] /= n_val_batches
 
             avg_val_loss = avg_val_losses.mean()
 
