@@ -17,6 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('--random_steps', type=int, default=5000)
     parser.add_argument('--real_buffer_size', type=int, default=int(1e6))
     parser.add_argument('--virtual_buffer_size', type=int, default=int(1e6))
+    parser.add_argument('--n_samples_from_dataset', type=int, default=-1)
 
     parser.add_argument('--hid', type=int, default=200)
     parser.add_argument('--l', type=int, default=4)
@@ -94,6 +95,7 @@ if __name__ == '__main__':
                       continuous_rollouts=args.continuous_rollouts,
                       train_model_every=args.train_model_every,
                       num_test_episodes=args.num_test_episodes,
+                      n_samples_from_dataset=args.n_samples_from_dataset,
                       render=args.render)
 
     trainer.train()
