@@ -27,13 +27,13 @@ def get_maze2d_umaze_walls():
         for j in range(len(MAZE2D_UMAZE_STRUCTURE[0])):
             if MAZE2D_UMAZE_STRUCTURE[i][j] == 1:
                 minx = j * MAZE2D_UMAZE_SCALING - \
-                    MAZE2D_UMAZE_SCALING * 0.5 + MAZE2D_UMAZE_OFFSET[0]
+                    MAZE2D_UMAZE_SCALING*0.5 + MAZE2D_UMAZE_OFFSET[0]
                 maxx = j * MAZE2D_UMAZE_SCALING + \
-                    MAZE2D_UMAZE_SCALING * 0.5 + MAZE2D_UMAZE_OFFSET[0]
+                    MAZE2D_UMAZE_SCALING*0.5 + MAZE2D_UMAZE_OFFSET[0]
                 miny = i * MAZE2D_UMAZE_SCALING - \
-                    MAZE2D_UMAZE_SCALING * 0.5 + MAZE2D_UMAZE_OFFSET[1]
+                    MAZE2D_UMAZE_SCALING*0.5 + MAZE2D_UMAZE_OFFSET[1]
                 maxy = i * MAZE2D_UMAZE_SCALING + \
-                    MAZE2D_UMAZE_SCALING * 0.5 + MAZE2D_UMAZE_OFFSET[1]
+                    MAZE2D_UMAZE_SCALING*0.5 + MAZE2D_UMAZE_OFFSET[1]
 
                 walls.append([minx, maxx, miny, maxy])
 
@@ -92,12 +92,12 @@ def plot_maze2d_umaze(xlim=None, ylim=None, buffer=None):
         plt.colorbar()
 
     if xlim is None:
-        plt.xlim([0, 4])
+        plt.xlim([0, 3.5])
     else:
         plt.xlim(xlim)
 
     if ylim is None:
-        plt.ylim([0, 4])
+        plt.ylim([0, 3.5])
     else:
         plt.ylim(ylim)
 
@@ -126,7 +126,7 @@ MAZE2D_UMAZE_STRUCTURE = [[1, 1, 1, 1, 1],
                           [1, 0, 0, 0, 1],
                           [1, 1, 1, 1, 1]]
 
-MAZE2D_UMAZE_OFFSET = [0, 0]
+MAZE2D_UMAZE_OFFSET = [-0.2, -0.2]
 MAZE2D_UMAZE_SCALING = 1
 
 MAZE2D_UMAZE_WALLS = get_maze2d_umaze_walls()

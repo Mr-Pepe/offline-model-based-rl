@@ -138,7 +138,7 @@ def test_maze2d_umaze_termination_function():
     dones = maze2d_umaze_termination_fn(next_obs=next_obs,
                                         obs=obs).view(-1)
 
-    # plot_maze2d_umaze_walls([-2, 5], [-2, 5])
+    # plot_maze2d_umaze([-2, 5], [-2, 5])
     # for i_network in range(n_networks):
     #     plt.scatter(next_obs[i_network, :, 0],
     #                 next_obs[i_network, :, 1], zorder=1)
