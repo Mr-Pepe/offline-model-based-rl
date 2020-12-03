@@ -42,9 +42,9 @@ def test_hopper_termination_function():
 
     assert dones.sum() > 0
 
-    np.testing.assert_array_equal(torch.stack(3*[dones]),
-                                  hopper_termination_fn(
-                                      torch.stack(3*[next_observations])))
+    np.testing.assert_array_equal(
+        torch.stack(3*[dones]),
+        hopper_termination_fn(next_obs=torch.stack(3*[next_observations])))
 
 
 @pytest.mark.fast
@@ -54,9 +54,10 @@ def test_half_cheetah_termination_function():
     # Halg cheetah does not generate terminal states
     assert dones.sum() == 0
 
-    np.testing.assert_array_equal(torch.stack(3*[dones]),
-                                  half_cheetah_termination_fn(
-                                      torch.stack(3*[next_observations])))
+    np.testing.assert_array_equal(
+        torch.stack(3*[dones]),
+        half_cheetah_termination_fn(
+            next_obs=torch.stack(3*[next_observations])))
 
 
 @pytest.mark.fast
@@ -66,9 +67,10 @@ def test_walker2d_termination_function():
 
     assert dones.sum() > 0
 
-    np.testing.assert_array_equal(torch.stack(3*[dones]),
-                                  walker2d_termination_fn(
-                                      torch.stack(3*[next_observations])))
+    np.testing.assert_array_equal(
+        torch.stack(3*[dones]),
+        walker2d_termination_fn(
+            next_obs=torch.stack(3*[next_observations])))
 
 
 @pytest.mark.medium
@@ -91,7 +93,8 @@ def test_antmaze_umaze_termination_function():
             observations[i_x*i_y, 0] = x
             observations[i_x*i_y, 1] = y
 
-    dones = antmaze_umaze_termination_fn(observations.unsqueeze(0)).view(-1)
+    dones = antmaze_umaze_termination_fn(
+        next_obs=observations.unsqueeze(0)).view(-1)
 
     np.testing.assert_array_equal(torch.stack(3*[dones]).shape,
                                   antmaze_umaze_termination_fn(
@@ -110,30 +113,33 @@ def test_maze2d_umaze_termination_function():
 
     env = gym.make('maze2d-umaze-v1')
 
-    x_points = 200
-    y_points = 200
+    x_points = 50
+    y_points = 50
+    n_networks = 3
 
-    observations = torch.zeros((x_points*y_points,
-                                env.observation_space.shape[0]))
+    next_obs = torch.zeros((n_networks,
+                            x_points*y_points,
+                            env.observation_space.shape[0]))
 
     torch.manual_seed(0)
-    x_random = torch.rand((x_points,))*7-2
-    y_random = torch.rand((y_points,))*7-2
 
-    for i_x, x in enumerate(x_random):
-        for i_y, y in enumerate(y_random):
-            observations[i_x*i_y, 0] = x
-            observations[i_x*i_y, 1] = y
+    for i_network in range(n_networks):
+        x_random = torch.rand((x_points,))*7-2
+        y_random = torch.rand((y_points,))*7-2
 
-    dones = maze2d_umaze_termination_fn(observations.unsqueeze(0)).view(-1)
+        for i_x, x in enumerate(x_random):
+            for i_y, y in enumerate(y_random):
+                next_obs[i_network, i_x*i_y, 0] = x
+                next_obs[i_network, i_x*i_y, 1] = y
 
-    np.testing.assert_array_equal(torch.stack(3*[dones]).shape,
-                                  maze2d_umaze_termination_fn(
-                                      torch.stack(3*[observations])).shape[:2])
+    # Check collision detection
+    obs = torch.ones((next_obs.shape[1], next_obs.shape[2]))
+
+    dones = maze2d_umaze_termination_fn(next_obs=next_obs,
+                                        obs=obs).view(-1)
 
     # plot_maze2d_umaze_walls([-2, 5], [-2, 5])
-    # plt.scatter(observations[dones == False, 0],
-    #             observations[dones == False, 1], zorder=1)
-    # plt.scatter(observations[dones == True, 0],
-    #             observations[dones == True, 1], zorder=2)
+    # for i_network in range(n_networks):
+    #     plt.scatter(next_obs[i_network, :, 0],
+    #                 next_obs[i_network, :, 1], zorder=1)
     # plt.show()

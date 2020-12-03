@@ -2,7 +2,7 @@ from benchmark.utils.mazes import ANTMAZE_UMAZE_WALLS, MAZE2D_UMAZE_WALLS
 import torch
 
 
-def hopper_termination_fn(next_obs):
+def hopper_termination_fn(next_obs=None, **_):
 
     height = next_obs[:, :, 0]
     angle = next_obs[:, :, 1]
@@ -16,13 +16,13 @@ def hopper_termination_fn(next_obs):
     return done
 
 
-def half_cheetah_termination_fn(obs):
+def half_cheetah_termination_fn(next_obs=None, **_):
 
-    done = torch.zeros((obs.shape[0], obs.shape[1], 1))
+    done = torch.zeros((next_obs.shape[0], next_obs.shape[1], 1))
     return done
 
 
-def walker2d_termination_fn(next_obs):
+def walker2d_termination_fn(next_obs=None, **_):
 
     height = next_obs[:, :, 0]
     angle = next_obs[:, :, 1]
@@ -35,7 +35,7 @@ def walker2d_termination_fn(next_obs):
     return done
 
 
-def antmaze_umaze_termination_fn(next_obs):
+def antmaze_umaze_termination_fn(next_obs=None, **_):
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
@@ -57,16 +57,16 @@ def antmaze_umaze_termination_fn(next_obs):
     return done.sum(dim=2).reshape(next_obs.shape[0], -1, 1)
 
 
-def maze2d_umaze_termination_fn(next_obs):
+def maze2d_umaze_termination_fn(next_obs=None, obs=None, **_):
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
     walls = MAZE2D_UMAZE_WALLS.to(x.device)
 
-    done = torch.zeros((next_obs.shape[0], x[0].numel(), len(walls)+1))
+    collision = torch.zeros((next_obs.shape[0], x[0].numel(), len(walls)+1))
 
     for i_wall, wall in enumerate(walls):
-        done[:, :, i_wall] = (wall[0] <= x) * (x <= wall[1]) * \
+        collision[:, :, i_wall] = (wall[0] <= x) * (x <= wall[1]) * \
             (wall[2] <= y) * (y <= wall[3])
 
     x_min = walls[:, 0].min()
@@ -74,9 +74,16 @@ def maze2d_umaze_termination_fn(next_obs):
     y_min = walls[:, 2].min()
     y_max = walls[:, 3].max()
 
-    done[:, :, -1] = (x_max <= x) + (x <= x_min) + (y_max <= y) + (y <= y_min)
+    collision[:, :, -1] = (x_max <= x) + (x <= x_min) + \
+        (y_max <= y) + (y <= y_min)
 
-    return done.sum(dim=2).reshape(next_obs.shape[0], -1, 1)
+    collision = collision.sum(dim=2)
+
+    for i_network in range(next_obs.shape[0]):
+        next_obs[i_network][collision[i_network] > 0] = \
+            obs[collision[i_network] > 0]
+
+    return torch.zeros((next_obs.shape[0], next_obs.shape[1], 1)).to(x.device)
 
 
 termination_functions = {
