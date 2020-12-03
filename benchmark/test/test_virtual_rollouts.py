@@ -191,7 +191,6 @@ def test_use_random_actions_in_virtual_rollout():
         rollouts4['next_obs'].cpu(),)
 
 
-@pytest.mark.current
 @pytest.mark.medium
 def test_continuously_grow_rollouts(plot=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

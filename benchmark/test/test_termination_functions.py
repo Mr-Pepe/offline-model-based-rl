@@ -1,4 +1,6 @@
-from benchmark.utils.mazes import plot_antmaze_umaze_walls
+from benchmark.utils.mazes import \
+    plot_antmaze_umaze_walls, \
+    plot_maze2d_umaze_walls
 import matplotlib.pyplot as plt
 import pytest
 import numpy as np
@@ -6,9 +8,11 @@ import torch
 import gym
 from benchmark.utils.termination_functions import \
     half_cheetah_termination_fn, \
-    hopper_termination_fn, antmaze_umaze_termination_fn, \
+    hopper_termination_fn, \
+    antmaze_umaze_termination_fn, \
+    maze2d_umaze_termination_fn, \
     walker2d_termination_fn
-import d4rl # noqa
+import d4rl  # noqa
 
 
 def run_env(env, n_steps):
@@ -68,7 +72,7 @@ def test_walker2d_termination_function():
 
 
 @pytest.mark.medium
-def test_umaze_termination_function():
+def test_antmaze_umaze_termination_function():
 
     env = gym.make('antmaze-umaze-v0')
 
@@ -94,6 +98,40 @@ def test_umaze_termination_function():
                                       torch.stack(3*[observations])).shape[:2])
 
     # plot_umaze_walls([-20, 20], [-20, 20])
+    # plt.scatter(observations[dones == False, 0],
+    #             observations[dones == False, 1], zorder=1)
+    # plt.scatter(observations[dones == True, 0],
+    #             observations[dones == True, 1], zorder=2)
+    # plt.show()
+
+
+@pytest.mark.medium
+def test_maze2d_umaze_termination_function():
+
+    env = gym.make('maze2d-umaze-v1')
+
+    x_points = 200
+    y_points = 200
+
+    observations = torch.zeros((x_points*y_points,
+                                env.observation_space.shape[0]))
+
+    torch.manual_seed(0)
+    x_random = torch.rand((x_points,))*7-2
+    y_random = torch.rand((y_points,))*7-2
+
+    for i_x, x in enumerate(x_random):
+        for i_y, y in enumerate(y_random):
+            observations[i_x*i_y, 0] = x
+            observations[i_x*i_y, 1] = y
+
+    dones = maze2d_umaze_termination_fn(observations.unsqueeze(0)).view(-1)
+
+    np.testing.assert_array_equal(torch.stack(3*[dones]).shape,
+                                  maze2d_umaze_termination_fn(
+                                      torch.stack(3*[observations])).shape[:2])
+
+    # plot_maze2d_umaze_walls([-2, 5], [-2, 5])
     # plt.scatter(observations[dones == False, 0],
     #             observations[dones == False, 1], zorder=1)
     # plt.scatter(observations[dones == True, 0],
