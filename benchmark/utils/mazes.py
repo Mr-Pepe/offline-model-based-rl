@@ -40,7 +40,7 @@ def get_maze2d_umaze_walls():
     return torch.as_tensor(walls)
 
 
-def plot_antmaze_umaze_walls(xlim=None, ylim=None):
+def plot_antmaze_umaze(xlim=None, ylim=None, buffer=None):
     walls = get_antmaze_umaze_walls()
 
     for wall in walls:
@@ -48,6 +48,18 @@ def plot_antmaze_umaze_walls(xlim=None, ylim=None):
                  [wall[2], wall[3], wall[3], wall[2], wall[2]],
                  color='grey', zorder=-1)
 
+    if buffer:
+        rewards = buffer.rew_buf[:buffer.size].cpu()
+        plt.scatter(
+            buffer.obs_buf[:buffer.size, 0].cpu(),
+            buffer.obs_buf[:buffer.size, 1].cpu(),
+            c=rewards,
+            cmap='cividis',
+            marker='.',
+            s=2
+        )
+        plt.colorbar()
+
     if xlim is None:
         plt.xlim([-3, 12])
     else:
@@ -59,7 +71,7 @@ def plot_antmaze_umaze_walls(xlim=None, ylim=None):
         plt.ylim(ylim)
 
 
-def plot_maze2d_umaze_walls(xlim=None, ylim=None):
+def plot_maze2d_umaze(xlim=None, ylim=None, buffer=None):
     walls = get_maze2d_umaze_walls()
 
     for wall in walls:
@@ -67,15 +79,30 @@ def plot_maze2d_umaze_walls(xlim=None, ylim=None):
                  [wall[2], wall[3], wall[3], wall[2], wall[2]],
                  color='grey', zorder=-1)
 
+    if buffer:
+        rewards = buffer.rew_buf[:buffer.size].cpu()
+        plt.scatter(
+            buffer.obs_buf[:buffer.size, 0].cpu(),
+            buffer.obs_buf[:buffer.size, 1].cpu(),
+            c=rewards,
+            cmap='cividis',
+            marker='.',
+            s=2
+        )
+        plt.colorbar()
+
     if xlim is None:
-        plt.xlim([-3, 12])
+        plt.xlim([0, 4])
     else:
         plt.xlim(xlim)
 
     if ylim is None:
-        plt.ylim([-3, 12])
+        plt.ylim([0, 4])
     else:
         plt.ylim(ylim)
+
+    plt.xticks(ticks=[], labels=[])
+    plt.yticks(ticks=[], labels=[])
 
 
 # From https://github.com/rail-berkeley/d4rl/blob/master/d4rl/locomotion/maze_env.py

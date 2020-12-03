@@ -90,6 +90,7 @@ class Trainer():
         torch.manual_seed(seed)
         np.random.seed(seed)
 
+        logger_kwargs.update({'env_name': env_name})
         self.logger = EpochLogger(**logger_kwargs)
         local_vars = locals()
         self.logger.save_config(

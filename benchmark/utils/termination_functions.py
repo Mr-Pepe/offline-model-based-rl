@@ -94,6 +94,11 @@ termination_functions = {
     'maze2d_umaze': maze2d_umaze_termination_fn,
 }
 
+ANTMAZE_UMAZE_ENVS = ['antmaze-umaze-v0',
+                      'antmaze-umaze-diverse-v0']
+
+MAZE2D_UMAZE_ENVS = ['maze2d-umaze-v1']
+
 function_to_names_mapping = {
     'hopper': ['Hopper-v2',
                'hopper-random-v0',
@@ -114,9 +119,8 @@ function_to_names_mapping = {
                  'walker2d-medium-replay-v0',
                  'walker2d-medium-expert-v0',
                  ],
-    'antmaze_umaze': ['antmaze-umaze-v0',
-                      'antmaze-umaze-diverse-v0'],
-    'maze2d_umaze': ['maze2d-umaze-v1'],
+    'antmaze_umaze': ANTMAZE_UMAZE_ENVS,
+    'maze2d_umaze': MAZE2D_UMAZE_ENVS,
 }
 
 

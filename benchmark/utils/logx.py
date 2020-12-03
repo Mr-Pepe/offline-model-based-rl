@@ -7,7 +7,8 @@ Some simple logging functionality, inspired by rllab's logging.
 Logs to a tab-separated-values file (path/to/output_directory/progress.txt)
 
 """
-from benchmark.utils.mazes import plot_antmaze_umaze_walls
+from benchmark.utils.termination_functions import ANTMAZE_UMAZE_ENVS, MAZE2D_UMAZE_ENVS
+from benchmark.utils.mazes import plot_antmaze_umaze, plot_maze2d_umaze
 import json
 import joblib
 import numpy as np
@@ -61,7 +62,7 @@ class Logger:
     """
 
     def __init__(self, output_dir=None, output_fname='progress.txt',
-                 exp_name=None):
+                 exp_name=None, env_name=''):
         """
         Initialize a Logger.
 
@@ -101,6 +102,7 @@ class Logger:
         self.log_headers = []
         self.log_current_row = {}
         self.exp_name = exp_name
+        self.env_name = env_name
 
         tensorboard_path = os.path.join(self.output_dir, 'tensorboard')
         shutil.rmtree(tensorboard_path, ignore_errors=True)
@@ -376,40 +378,36 @@ class EpochLogger(Logger):
         return mpi_statistics_scalar(vals)
 
     def save_replay_buffer_to_tensorboard(self, epoch, mode=''):
-        if 'replay_buffer' in self.pytorch_saver_elements:
-            buffer = self.pytorch_saver_elements['replay_buffer']
-            if self.tensorboard_writer:
-                f = plt.figure()
+        is_antmaze_umaze = self.env_name in ANTMAZE_UMAZE_ENVS
+        is_maze2d_umaze = self.env_name in MAZE2D_UMAZE_ENVS
+        if is_antmaze_umaze or is_maze2d_umaze:
+            fig_size = (8,8)
 
-                plot_antmaze_umaze_walls()
-                plt.scatter(
-                    buffer.obs_buf[:, 0].cpu(),
-                    buffer.obs_buf[:, 1].cpu(),
-                    marker='.',
-                    s=2
-                )
+            if 'replay_buffer' in self.pytorch_saver_elements:
+                buffer = self.pytorch_saver_elements['replay_buffer']
+                if self.tensorboard_writer:
+                    f = plt.figure(figsize=fig_size)
 
-                self.tensorboard_writer.add_figure(
-                    'ReplayBuffers/RealReplayBuffer',
-                    f,
-                    epoch
-                )
+                    if is_antmaze_umaze:
+                        plot_antmaze_umaze(buffer=buffer)
+                    if is_maze2d_umaze:
+                        plot_maze2d_umaze(buffer=buffer)
 
-        if 'virtual_replay_buffer' in self.pytorch_saver_elements:
-            buffer = self.pytorch_saver_elements['virtual_replay_buffer']
-            if self.tensorboard_writer:
-                f = plt.figure()
-                rewards = buffer.rew_buf[:].cpu()
+                    self.tensorboard_writer.add_figure(
+                        'ReplayBuffers/RealReplayBuffer',
+                        f,
+                        epoch
+                    )
 
-                plot_antmaze_umaze_walls()
-                plt.scatter(
-                    buffer.obs_buf[:, 0].cpu(),
-                    buffer.obs_buf[:, 1].cpu(),
-                    c=rewards,
-                    cmap='cividis',
-                    marker='.',
-                    s=2
-                )
+            if 'virtual_replay_buffer' in self.pytorch_saver_elements:
+                buffer = self.pytorch_saver_elements['virtual_replay_buffer']
+                if self.tensorboard_writer:
+                    f = plt.figure(figsize=fig_size)
 
-                self.tensorboard_writer.add_figure(
-                    'ReplayBuffers/VirtualReplayBuffer', f, epoch)
+                    if is_antmaze_umaze:
+                        plot_antmaze_umaze(buffer=buffer)
+                    if is_maze2d_umaze:
+                        plot_maze2d_umaze(buffer=buffer)
+
+                    self.tensorboard_writer.add_figure(
+                        'ReplayBuffers/VirtualReplayBuffer', f, epoch)

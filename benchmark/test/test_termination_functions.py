@@ -1,6 +1,6 @@
 from benchmark.utils.mazes import \
-    plot_antmaze_umaze_walls, \
-    plot_maze2d_umaze_walls
+    plot_antmaze_umaze, \
+    plot_maze2d_umaze
 import matplotlib.pyplot as plt
 import pytest
 import numpy as np
