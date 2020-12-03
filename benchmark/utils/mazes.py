@@ -21,19 +21,23 @@ def get_antmaze_umaze_walls():
     return torch.as_tensor(walls)
 
 
-# From https://github.com/rail-berkeley/d4rl/blob/master/d4rl/locomotion/maze_env.py
-ANTMAZE_UMAZE_STRUCTURE = [[1, 1, 1, 1, 1],
-                    [1, 0, 0, 0, 1],
-                    [1, 1, 1, 0, 1],
-                    [1, 0, 0, 0, 1],
-                    [1, 1, 1, 1, 1]]
+def get_maze2d_umaze_walls():
+    walls = []
+    for i in range(len(MAZE2D_UMAZE_STRUCTURE)):
+        for j in range(len(MAZE2D_UMAZE_STRUCTURE[0])):
+            if MAZE2D_UMAZE_STRUCTURE[i][j] == 1:
+                minx = j * MAZE2D_UMAZE_SCALING - \
+                    MAZE2D_UMAZE_SCALING * 0.5 + MAZE2D_UMAZE_OFFSET[0]
+                maxx = j * MAZE2D_UMAZE_SCALING + \
+                    MAZE2D_UMAZE_SCALING * 0.5 + MAZE2D_UMAZE_OFFSET[0]
+                miny = i * MAZE2D_UMAZE_SCALING - \
+                    MAZE2D_UMAZE_SCALING * 0.5 + MAZE2D_UMAZE_OFFSET[1]
+                maxy = i * MAZE2D_UMAZE_SCALING + \
+                    MAZE2D_UMAZE_SCALING * 0.5 + MAZE2D_UMAZE_OFFSET[1]
 
+                walls.append([minx, maxx, miny, maxy])
 
-# From https://github.com/rail-berkeley/d4rl/blob/master/d4rl/locomotion/__init__.py
-
-ANTMAZE_UMAZE_SCALING = 4
-ANTMAZE_UMAZE_OFFSET = [-4, -4]
-ANTMAZE_UMAZE_WALLS = get_antmaze_umaze_walls()
+    return torch.as_tensor(walls)
 
 
 def plot_antmaze_umaze_walls(xlim=None, ylim=None):
@@ -53,3 +57,49 @@ def plot_antmaze_umaze_walls(xlim=None, ylim=None):
         plt.ylim([-3, 12])
     else:
         plt.ylim(ylim)
+
+
+def plot_maze2d_umaze_walls(xlim=None, ylim=None):
+    walls = get_maze2d_umaze_walls()
+
+    for wall in walls:
+        plt.fill([wall[0], wall[0], wall[1], wall[1], wall[0]],
+                 [wall[2], wall[3], wall[3], wall[2], wall[2]],
+                 color='grey', zorder=-1)
+
+    if xlim is None:
+        plt.xlim([-3, 12])
+    else:
+        plt.xlim(xlim)
+
+    if ylim is None:
+        plt.ylim([-3, 12])
+    else:
+        plt.ylim(ylim)
+
+
+# From https://github.com/rail-berkeley/d4rl/blob/master/d4rl/locomotion/maze_env.py
+ANTMAZE_UMAZE_STRUCTURE = [[1, 1, 1, 1, 1],
+                           [1, 0, 0, 0, 1],
+                           [1, 1, 1, 0, 1],
+                           [1, 0, 0, 0, 1],
+                           [1, 1, 1, 1, 1]]
+
+
+# From https://github.com/rail-berkeley/d4rl/blob/master/d4rl/locomotion/__init__.py
+
+ANTMAZE_UMAZE_SCALING = 4
+ANTMAZE_UMAZE_OFFSET = [-4, -4]
+ANTMAZE_UMAZE_WALLS = get_antmaze_umaze_walls()
+
+
+MAZE2D_UMAZE_STRUCTURE = [[1, 1, 1, 1, 1],
+                          [1, 0, 1, 0, 1],
+                          [1, 0, 1, 0, 1],
+                          [1, 0, 0, 0, 1],
+                          [1, 1, 1, 1, 1]]
+
+MAZE2D_UMAZE_OFFSET = [0, 0]
+MAZE2D_UMAZE_SCALING = 1
+
+MAZE2D_UMAZE_WALLS = get_maze2d_umaze_walls()
