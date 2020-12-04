@@ -66,8 +66,11 @@ def maze2d_umaze_termination_fn(next_obs=None, obs=None, **_):
     collision = torch.zeros((next_obs.shape[0], x[0].numel(), len(walls)+1))
 
     for i_wall, wall in enumerate(walls):
-        collision[:, :, i_wall] = (wall[0] <= x) * (x <= wall[1]) * \
-            (wall[2] <= y) * (y <= wall[3])
+        collision[:, :, i_wall] = \
+            (wall[0] <= x + MAZE2D_POINT_RADIUS) * \
+            (wall[1] > x - MAZE2D_POINT_RADIUS) * \
+            (wall[2] <= y + MAZE2D_POINT_RADIUS) * \
+            (wall[3] > y - MAZE2D_POINT_RADIUS)
 
     x_min = walls[:, 0].min()
     x_max = walls[:, 1].max()
