@@ -312,8 +312,9 @@ class Trainer():
                                                 self.real_replay_buffer,
                                                 self.logger)
 
-                    agent_update_performed = True
-                    actions_this_step[Actions.UPDATE_AGENT] = 1
+                    if self.agent_updates_per_step > 0:
+                        agent_update_performed = True
+                        actions_this_step[Actions.UPDATE_AGENT] = 1
 
                 action_log.append(actions_this_step)
                 step_total += 1
