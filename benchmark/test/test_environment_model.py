@@ -183,6 +183,10 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
 
     loss = torch.tensor(0)
 
+    x_true = torch.arange(-3*PI, 3*PI, 0.01)
+    y_true = torch.sin(x_true)
+    f = plt.figure()
+
     for i in range(steps):
         optim.zero_grad()
         _, mean, logvar, max_logvar, min_logvar = model(
@@ -192,38 +196,43 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
         mse_loss = (torch.square(mean[:, :, 0] - y) * inv_var[:, :, 0]).mean()
         var_loss = logvar[:, :, 0].mean()
         var_bound_loss = 0.01 * \
-            max_logvar[:, :, 0].sum() - 0.01 * min_logvar[:, :, 0].sum()
+            max_logvar[:, 0].sum() - 0.01 * min_logvar[:, 0].sum()
         loss = mse_loss + var_loss + var_bound_loss
 
         if i % 100 == 0:
             print("Step {}/{} Loss: {:.3f}, MSE: {:.3f}, VAR: {:.3f}, VAR BOUND: {:.3f}"
                   .format(i, steps, loss, mse_loss, var_loss, var_bound_loss))
+
+            if plot:
+                _, mean_plt, logvar_plt, max_logvar_plt, _ = model(torch.reshape(x_true, (-1, 1)))
+                mean_plt = mean_plt[:, :, 0].detach().cpu()
+                logvar_plt = logvar_plt[:, :, 0].detach().cpu()
+                max_std = torch.exp(0.5*max_logvar_plt[:, 0].detach().cpu())
+
+                std = torch.exp(0.5*logvar_plt)
+
+                x_plt = x.cpu()
+                y_plt = y.cpu()
+
+                f.clear()
+
+                plt.fill_between(x_true, (mean_plt+max_std).view(-1), (mean_plt-max_std).view(-1),
+                                 color='grey', zorder=-2)
+                plt.fill_between(x_true, (mean_plt+std).view(-1), (mean_plt-std).view(-1),
+                                 color='lightcoral')
+                plt.scatter(x_plt[800:1200], y_plt[800:1200],
+                            color='green', marker='x')
+                plt.plot(x_true, y_true, color='black')
+                plt.plot(x_true, mean_plt.view(-1), color='red')
+
+                plt.draw()
+                plt.pause(0.001)
+
         loss.backward(retain_graph=True)
         optim.step()
 
     if not plot:
         assert loss.item() < 200
-
-    else:
-        x_true = torch.arange(-3*PI, 3*PI, 0.01)
-        y_true = torch.sin(x_true)
-
-        _, mean, logvar, _, _ = model(torch.reshape(x_true, (-1, 1)))
-        mean = mean[:, :, 0].detach().cpu()
-        logvar = logvar[:, :, 0].detach().cpu()
-
-        std = torch.exp(0.5*logvar)
-
-        x = x.cpu()
-        y = y.cpu()
-
-        plt.fill_between(x_true, (mean+std).view(-1), (mean-std).view(-1),
-                         color='lightcoral')
-        plt.scatter(x[800:1200], y[800:1200], color='green', marker='x')
-        plt.plot(x_true, y_true, color='black')
-        plt.plot(x_true, mean.view(-1), color='red')
-
-        plt.show()
 
 
 @pytest.mark.fast
