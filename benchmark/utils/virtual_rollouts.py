@@ -5,7 +5,7 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
                               n_rollouts=1, term_fn=None,
                               stop_on_terminal=True, pessimism=0,
                               random_action=False, prev_obs=None,
-                              max_rollout_length=-1):
+                              max_rollout_length=-1, exploration_mode='state'):
 
     model_is_training = model.training
     agent_is_training = agent.training
@@ -48,7 +48,7 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
         pred = model.get_prediction(torch.as_tensor(
             torch.cat((observations, actions), dim=1),
             dtype=torch.float32), term_fn=term_fn,
-            pessimism=pessimism)
+            pessimism=pessimism, exploration_mode=exploration_mode)
 
         observations = observations.detach().clone()
         actions = actions.detach().clone()

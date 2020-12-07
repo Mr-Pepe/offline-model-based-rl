@@ -118,7 +118,7 @@ class EnvironmentModel(nn.Module):
             self.min_logvar
 
     def get_prediction(self, x, i_network=-1, term_fn=None,
-                       pessimism=0):
+                       pessimism=0, exploration_mode='state'):
 
         if pessimism == 0:
             i_network = torch.randint(self.n_networks,
@@ -149,9 +149,18 @@ class EnvironmentModel(nn.Module):
                 prediction[:, -2] -= pessimism * \
                     torch.exp(logvars[:, :, -1]).to(device).max(dim=0).values
             else:
-                # Encourage exploration
-                prediction[:, -2] = -pessimism * \
-                    torch.exp(logvars[:, :, -1]).to(device).mean(dim=0)
+                if exploration_mode == 'reward':
+                    prediction[:, -2] = -pessimism * \
+                        torch.exp(logvars[:, :, -1]).to(device).mean(dim=0)
+
+                elif exploration_mode == 'state':
+                    prediction[:, -2] = -pessimism * \
+                        torch.exp(logvars[:, :, :-1]
+                                  ).to(device).mean(dim=2).mean(dim=0)
+
+                else:
+                    raise ValueError(
+                        "Unknown exploration mode: {}".format(exploration_mode))
 
         prediction[:, -1] = prediction[:, -1] > 0.5
         return prediction
