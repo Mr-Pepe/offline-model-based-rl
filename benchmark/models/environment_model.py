@@ -138,7 +138,7 @@ class EnvironmentModel(nn.Module):
             device = next(self.layers.parameters()).device
 
             with torch.no_grad():
-                predictions, _, logvars, _, _ = \
+                predictions, means, logvars, _, _ = \
                     self.forward(x,
                                  term_fn=term_fn)
 
@@ -154,9 +154,11 @@ class EnvironmentModel(nn.Module):
                         torch.exp(logvars[:, :, -1]).to(device).mean(dim=0)
 
                 elif exploration_mode == 'state':
+                    # prediction[:, -2] = -pessimism * \
+                    #     torch.exp(logvars[:, :, :-1]
+                    #               ).to(device).mean(dim=2).mean(dim=0)
                     prediction[:, -2] = -pessimism * \
-                        torch.exp(logvars[:, :, :-1]
-                                  ).to(device).mean(dim=2).mean(dim=0)
+                        means.std(dim=0).sum(dim=1)
 
                 else:
                     raise ValueError(
