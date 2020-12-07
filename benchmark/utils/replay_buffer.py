@@ -25,6 +25,8 @@ class ReplayBuffer:
         self.train_idxs = []
         self.val_idxs = []
 
+        self.obs_dim = obs_dim
+        self.act_dim = act_dim
         self.device = device
 
     def store(self, obs, act, rew, next_obs, done):
@@ -151,3 +153,9 @@ class ReplayBuffer:
                                    self.rew_buf[not_done_idxs])),
                     done=torch.cat((self.done_buf[done_idxs],
                                     self.done_buf[not_done_idxs])))
+
+    def clear(self):
+        self.__init__(self.obs_dim,
+                      self.act_dim,
+                      self.max_size,
+                      device=self.device)

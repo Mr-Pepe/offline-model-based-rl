@@ -203,3 +203,33 @@ def test_store_batch_throws_error_if_buffer_too_small():
                            torch.as_tensor(rewards),
                            torch.as_tensor(next_observations),
                            torch.as_tensor(dones))
+
+
+@pytest.mark.fast
+def test_clear_buffer():
+    buffer = ReplayBuffer(1, 1, 200)
+
+    for step in range(100):
+        buffer.store(torch.as_tensor(1),
+                     torch.as_tensor(1),
+                     torch.as_tensor(1),
+                     torch.as_tensor(1),
+                     False)
+
+    assert buffer.max_size == 200
+    assert buffer.device == 'cpu'
+    assert buffer.act_dim == 1
+    assert buffer.obs_dim == 1
+    assert buffer.ptr == 100
+    assert buffer.size == 100
+    buffer.obs_buf[80] == 1
+
+    buffer.clear()
+
+    assert buffer.max_size == 200
+    assert buffer.device == 'cpu'
+    assert buffer.act_dim == 1
+    assert buffer.obs_dim == 1
+    assert buffer.ptr == 0
+    assert buffer.size == 0
+    buffer.obs_buf[80] == 1
