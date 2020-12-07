@@ -12,9 +12,9 @@ from benchmark.utils.mazes import plot_maze2d_umaze
 def test_probabilistic_model_trains_on_maze2d_umaze(steps=3000, plot=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    n_samples = 100
+    n_samples = 5000
     train_idx = torch.ones((n_samples), dtype=torch.bool)
-    frac = int(0.3*n_samples)
+    frac = int(0.4*n_samples)
     train_idx[frac:-frac] = 0
 
     torch.manual_seed(0)
@@ -26,22 +26,25 @@ def test_probabilistic_model_trains_on_maze2d_umaze(steps=3000, plot=False):
         obs_dim, act_dim,
         hidden=[64, 64, 64], type='probabilistic', device=device)
 
-    lr = 1e-4
+    lr = 1e-3
     optim = Adam(model.parameters(), lr=lr)
 
     loss = torch.tensor(0)
 
     f = plt.figure()
 
+    x = torch.cat((buffer.obs_buf[train_idx],
+                   buffer.act_buf[train_idx]), dim=1)
+
+    next_obs = buffer.obs2_buf[train_idx]
+    next_obs += torch.rand_like(next_obs)*0.2-0.1
+    y = torch.cat((next_obs,
+                   buffer.rew_buf[train_idx].unsqueeze(1)), dim=1)
+
+    x = x.to(device)
+    y = y.to(device)
+
     for i in range(steps):
-
-        x = torch.cat((buffer.obs_buf[train_idx],
-                       buffer.act_buf[train_idx]), dim=1)
-        y = torch.cat((buffer.obs2_buf[train_idx],
-                       buffer.rew_buf[train_idx].unsqueeze(1)), dim=1)
-
-        x = x.to(device)
-        y = y.to(device)
 
         optim.zero_grad()
 
@@ -66,19 +69,20 @@ def test_probabilistic_model_trains_on_maze2d_umaze(steps=3000, plot=False):
 
                 f.clear()
 
-                _, mean_plt, logvar_plt, _, _ = model(torch.cat((buffer.obs_buf,
-                                                                 buffer.act_buf), dim=1))
+                _, mean_plt, logvar_plt, max_logvar_plt, _ = model(torch.cat((buffer.obs_buf,
+                                                                              buffer.act_buf), dim=1))
 
                 mean_plt = mean_plt.detach().cpu()
                 std = torch.exp(0.5*logvar_plt).detach().cpu()
+                max_std = torch.exp(0.5*max_logvar_plt[0, :].detach().cpu())
 
                 plot_maze2d_umaze()
-                plt.scatter(buffer.obs_buf[train_idx, 0].cpu(),
-                            buffer.obs_buf[train_idx, 1].cpu(),
+                plt.scatter(buffer.obs2_buf[train_idx, 0].cpu(),
+                            buffer.obs2_buf[train_idx, 1].cpu(),
                             marker='x',
                             color='blue')
-                plt.scatter(buffer.obs_buf[~train_idx, 0].cpu(),
-                            buffer.obs_buf[~train_idx, 1].cpu(),
+                plt.scatter(buffer.obs2_buf[~train_idx, 0].cpu(),
+                            buffer.obs2_buf[~train_idx, 1].cpu(),
                             marker='.',
                             color='blue',
                             s=5)
@@ -88,13 +92,20 @@ def test_probabilistic_model_trains_on_maze2d_umaze(steps=3000, plot=False):
                             marker='+',
                             color='red')
 
-                for i in range(len(mean_plt[0])):
+                for i in range(0, len(mean_plt[0]), int(len(mean_plt[0])/50)):
                     plt.gca().add_patch(
                         Ellipse((mean_plt[0, i, 0], mean_plt[0, i, 1]),
-                                width=std[0, i, 0],
-                                height=std[0, i, 1],
+                                width=std[0, i, 0].abs(),
+                                height=std[0, i, 1].abs(),
                                 zorder=-1,
                                 color='lightcoral'))
+
+                    plt.gca().add_patch(
+                        Ellipse((mean_plt[0, i, 0], mean_plt[0, i, 1]),
+                                width=max_std[0],
+                                height=max_std[1],
+                                zorder=-10,
+                                color='lightgrey'))
 
                 plt.draw()
                 plt.pause(0.001)
@@ -103,4 +114,4 @@ def test_probabilistic_model_trains_on_maze2d_umaze(steps=3000, plot=False):
         assert loss.item() < 200
 
 
-test_probabilistic_model_trains_on_maze2d_umaze(plot=True, steps=100000)
+test_probabilistic_model_trains_on_maze2d_umaze(plot=True, steps=500000)
