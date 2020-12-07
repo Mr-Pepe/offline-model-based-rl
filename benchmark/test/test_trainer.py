@@ -16,7 +16,8 @@ def test_replay_buffer_is_initially_empty_for_online_training():
 @pytest.mark.medium
 def test_replay_buffer_is_filled_for_offline_training():
     trainer = Trainer('maze2d-open-v0',
-                      pretrain_epochs=1)
+                      pretrain_epochs=1,
+                      n_samples_from_dataset=100)
 
     assert trainer.real_replay_buffer.size > 0
 
@@ -43,9 +44,13 @@ def test_actions_for_online_model_free_training():
 
     np.testing.assert_array_equal(test_performances.shape, (epochs, 2))
 
-    for epoch, performance in enumerate(test_performances):
-        assert performance[0] == epoch+1
-        assert performance[1] != 0
+    # Only the last epoch performs test runs
+    assert test_performances[0][0] == 1
+    assert test_performances[0][1] == 0
+    assert test_performances[1][0] == 2
+    assert test_performances[1][1] == 0
+    assert test_performances[2][0] == 3
+    assert test_performances[2][1] != 0
 
     np.testing.assert_array_equal(action_log.shape,
                                   (total_steps, len(Actions)))
@@ -91,9 +96,17 @@ def test_actions_for_online_model_based_training():
 
     np.testing.assert_array_equal(test_performances.shape, (epochs, 2))
 
-    for epoch, performance in enumerate(test_performances):
-        assert performance[0] == epoch+1
-        assert performance[1] != 0
+    # Only the last two epoch perform test runs
+    assert test_performances[0][0] == 1
+    assert test_performances[0][1] == 0
+    assert test_performances[1][0] == 2
+    assert test_performances[1][1] == 0
+    assert test_performances[2][0] == 3
+    assert test_performances[2][1] == 0
+    assert test_performances[3][0] == 4
+    assert test_performances[3][1] != 0
+    assert test_performances[4][0] == 5
+    assert test_performances[4][1] != 0
 
     np.testing.assert_array_equal(action_log.shape,
                                   (total_steps, len(Actions)))
@@ -122,6 +135,7 @@ def test_actions_for_offline_model_free_training_with_fine_tuning():
     total_steps = epochs*steps_per_epoch + pretrain_epochs*steps_per_epoch
     init_steps = 100
     random_steps = 50
+    n_samples = 500000
 
     trainer = Trainer('maze2d-open-dense-v0',
                       epochs=epochs,
@@ -131,7 +145,8 @@ def test_actions_for_offline_model_free_training_with_fine_tuning():
                       steps_per_epoch=steps_per_epoch,
                       max_ep_len=30,
                       init_steps=init_steps,
-                      random_steps=random_steps
+                      random_steps=random_steps,
+                      n_samples_from_dataset=n_samples
                       )
 
     test_performances, action_log = trainer.train()

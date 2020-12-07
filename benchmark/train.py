@@ -330,7 +330,7 @@ class Trainer():
 
             test_return = 0
 
-            if step_total > self.init_steps or epoch < 1:
+            if step_total > self.init_steps or self.pretrain_epochs > 0:
                 # Test the performance of the deterministic version of the agent.
                 test_return = test_agent(self.test_env,
                                          self.agent,

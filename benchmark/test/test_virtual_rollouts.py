@@ -129,11 +129,11 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
     start_time = time.time()
 
     for i in range(n_runs*n_rollouts):
-        rollout, _ = generate_virtual_rollout(model,
-                                              agent,
-                                              start_observation,
-                                              rollout_length,
-                                              stop_on_terminal=False)
+        rollout = generate_virtual_rollout(model,
+                                           agent,
+                                           start_observation,
+                                           rollout_length,
+                                           stop_on_terminal=False)
 
         for step in rollout:
             sequential_buffer.store(

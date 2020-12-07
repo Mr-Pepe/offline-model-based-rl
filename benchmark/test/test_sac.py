@@ -24,7 +24,7 @@ def test_total_steps_must_be_enough_to_perform_at_least_one_update():
                           epochs=n_epochs,
                           steps_per_epoch=n_steps_per_epoch,
                           init_steps=init_steps,
-                          buffer_size=5)
+                          real_buffer_size=5)
 
         trainer.train()
 
