@@ -1,4 +1,5 @@
-from benchmark.utils.mazes import ANTMAZE_UMAZE_WALLS, MAZE2D_UMAZE_WALLS
+from benchmark.utils.mazes import ANTMAZE_UMAZE_WALLS, MAZE2D_POINT_RADIUS, \
+    MAZE2D_UMAZE_WALLS
 import torch
 
 
