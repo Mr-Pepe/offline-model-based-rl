@@ -144,9 +144,14 @@ class EnvironmentModel(nn.Module):
 
             prediction = predictions.mean(dim=0)
 
-            # Penalize the reward
-            prediction[:, -2] -= pessimism * \
-                torch.exp(logvars[:, :, -1]).to(device).max(dim=0).values
+            if pessimism > 0:
+                # Penalize the reward as in MOPO
+                prediction[:, -2] -= pessimism * \
+                    torch.exp(logvars[:, :, -1]).to(device).max(dim=0).values
+            else:
+                # Encourage exploration
+                prediction[:, -2] = -pessimism * \
+                    torch.exp(logvars[:, :, -1]).to(device).mean(dim=0)
 
         prediction[:, -1] = prediction[:, -1] > 0.5
         return prediction
