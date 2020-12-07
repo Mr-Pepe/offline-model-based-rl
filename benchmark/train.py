@@ -44,6 +44,7 @@ class Trainer():
                  train_model_every=250,
                  real_buffer_size=int(1e6),
                  virtual_buffer_size=int(1e6),
+                 reset_buffer=False,
                  pretrain_epochs=0,
                  logger_kwargs=dict(),
                  save_freq=1,
@@ -173,6 +174,7 @@ class Trainer():
         self.model_pessimism = model_pessimism
         self.exploration_mode = exploration_mode
         self.model_max_n_train_batches = model_max_n_train_batches
+        self.reset_buffer = reset_buffer
 
         self.num_test_episodes = num_test_episodes
         self.save_freq = save_freq
@@ -232,6 +234,9 @@ class Trainer():
                         patience_value=0 if epoch < 1 else 1,
                         max_n_train_batches=-1 if epoch < 1 else self.model_max_n_train_batches,
                         **self.model_kwargs)
+
+                    if self.reset_buffer:
+                        self.virtual_replay_buffer.clear()
 
                     model_val_error = model_val_error.mean()
                     model_trained_at_all = True
