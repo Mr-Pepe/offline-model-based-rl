@@ -85,7 +85,7 @@ def maze2d_umaze_termination_fn(next_obs=None, obs=None, **_):
 
     for i_network in range(next_obs.shape[0]):
         next_obs[i_network][collision[i_network] > 0] = \
-            obs[collision[i_network] > 0]
+            obs[collision[i_network] > 0].detach().clone()
 
     return torch.zeros((next_obs.shape[0], next_obs.shape[1], 1)).to(x.device)
 
