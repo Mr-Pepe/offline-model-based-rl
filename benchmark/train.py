@@ -45,6 +45,7 @@ class Trainer():
                  real_buffer_size=int(1e6),
                  virtual_buffer_size=int(1e6),
                  reset_buffer=False,
+                 reset_maze2d_umaze=False,
                  pretrain_epochs=0,
                  logger_kwargs=dict(),
                  save_freq=1,
@@ -98,6 +99,7 @@ class Trainer():
         self.logger.save_config(
             {key: local_vars[key] for key in local_vars if key != 'self'})
 
+        self.env_name = env_name
         self.env, self.test_env = gym.make(env_name), gym.make(env_name)
         obs_dim = self.env.observation_space.shape
         act_dim = self.env.action_space.shape[0]
@@ -175,6 +177,8 @@ class Trainer():
         self.exploration_mode = exploration_mode
         self.model_max_n_train_batches = model_max_n_train_batches
         self.reset_buffer = reset_buffer
+        self.reset_maze2d_umaze = reset_maze2d_umaze and \
+            "maze2d-umaze" in env_name
 
         self.num_test_episodes = num_test_episodes
         self.save_freq = save_freq
@@ -184,6 +188,13 @@ class Trainer():
 
         start_time = time.time()
         o, ep_ret, ep_len = self.env.reset(), 0, 0
+
+        maze2d_umaze_start_state = np.array([3, 1, 0, 0])
+
+        if self.reset_maze2d_umaze:
+            self.env.set_state(maze2d_umaze_start_state[:2],
+                               maze2d_umaze_start_state[2:])
+            o = maze2d_umaze_start_state
 
         if self.total_steps < self.init_steps:
             raise ValueError(
@@ -279,6 +290,10 @@ class Trainer():
                         episode_finished = True
                         self.logger.store(EpRet=ep_ret, EpLen=ep_len)
                         o, ep_ret, ep_len = self.env.reset(), 0, 0
+                        if self.reset_maze2d_umaze:
+                            self.env.set_state(maze2d_umaze_start_state[:2],
+                                               maze2d_umaze_start_state[2:])
+                            o = maze2d_umaze_start_state
 
                     steps_since_model_training += 1
                     actions_this_step[Actions.INTERACT_WITH_ENV] = 1

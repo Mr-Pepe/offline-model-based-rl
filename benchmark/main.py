@@ -18,6 +18,7 @@ if __name__ == '__main__':
     parser.add_argument('--real_buffer_size', type=int, default=int(1e6))
     parser.add_argument('--virtual_buffer_size', type=int, default=int(1e6))
     parser.add_argument('--n_samples_from_dataset', type=int, default=50000)
+    parser.add_argument('--reset_maze2d_umaze', type=str2bool, default=True)
 
     parser.add_argument('--hid', type=int, default=200)
     parser.add_argument('--l', type=int, default=4)
@@ -103,6 +104,7 @@ if __name__ == '__main__':
                       n_samples_from_dataset=args.n_samples_from_dataset,
                       max_rollout_length=args.max_rollout_length,
                       reset_buffer=args.reset_buffer,
+                      reset_maze2d_umaze=args.reset_maze2d_umaze,
                       render=args.render)
 
     trainer.train()
