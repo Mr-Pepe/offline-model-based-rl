@@ -92,10 +92,8 @@ class EnvironmentModel(nn.Module):
             reward_logvar = reward[:, :, 1].view((self.n_networks, -1, 1))
             logvar = torch.cat((obs_logvar, reward_logvar), dim=2)
 
-            max_logvar = torch.stack(
-                logvar.shape[1] * [self.max_logvar], dim=1)
-            min_logvar = torch.stack(
-                logvar.shape[1] * [self.min_logvar], dim=1)
+            max_logvar = self.max_logvar.unsqueeze(1)
+            min_logvar = self.min_logvar.unsqueeze(1)
             logvar = max_logvar - softplus(max_logvar - logvar)
             logvar = min_logvar + softplus(logvar - min_logvar)
 
@@ -116,8 +114,8 @@ class EnvironmentModel(nn.Module):
         return out, \
             mean, \
             logvar, \
-            max_logvar, \
-            min_logvar
+            self.max_logvar, \
+            self.min_logvar
 
     def get_prediction(self, x, i_network=-1, term_fn=None,
                        pessimism=0):
