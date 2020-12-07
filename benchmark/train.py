@@ -35,6 +35,7 @@ class Trainer():
                  max_ep_len=1000,
                  use_model=False,
                  model_pessimism=0,
+                 exploration_mode='state',
                  model_max_n_train_batches=-1,
                  rollouts_per_step=10,
                  rollout_schedule=[1, 1, 20, 100],
@@ -90,6 +91,7 @@ class Trainer():
         torch.manual_seed(seed)
         np.random.seed(seed)
 
+        logger_kwargs.update({'env_name': env_name})
         self.logger = EpochLogger(**logger_kwargs)
         local_vars = locals()
         self.logger.save_config(
@@ -169,6 +171,7 @@ class Trainer():
         self.train_model_every = train_model_every
         self.continuous_rollouts = continuous_rollouts
         self.model_pessimism = model_pessimism
+        self.exploration_mode = exploration_mode
         self.model_max_n_train_batches = model_max_n_train_batches
 
         self.num_test_episodes = num_test_episodes
@@ -286,6 +289,7 @@ class Trainer():
                             n_rollouts=self.rollouts_per_step,
                             term_fn=self.term_fn,
                             pessimism=self.model_pessimism,
+                            exploration_mode=self.exploration_mode,
                             random_action=take_random_action,
                             prev_obs=prev_obs if self.continuous_rollouts else None,
                             max_rollout_length=self.max_rollout_length
@@ -311,8 +315,9 @@ class Trainer():
                                                 self.real_replay_buffer,
                                                 self.logger)
 
-                    agent_update_performed = True
-                    actions_this_step[Actions.UPDATE_AGENT] = 1
+                    if self.agent_updates_per_step > 0:
+                        agent_update_performed = True
+                        actions_this_step[Actions.UPDATE_AGENT] = 1
 
                 action_log.append(actions_this_step)
                 step_total += 1
@@ -325,7 +330,7 @@ class Trainer():
 
             test_return = 0
 
-            if step_total > self.init_steps or epoch < 1:
+            if step_total > self.init_steps or self.pretrain_epochs > 0:
                 # Test the performance of the deterministic version of the agent.
                 test_return = test_agent(self.test_env,
                                          self.agent,

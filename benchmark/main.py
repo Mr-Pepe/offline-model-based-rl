@@ -37,11 +37,12 @@ if __name__ == '__main__':
     parser.add_argument('--rollouts_per_step', type=int, default=100)
     parser.add_argument('--rollout_schedule', nargs='+',
                         type=int, default=[1, 1, 20, 100])
-    parser.add_argument('--continuous_rollouts', type=str2bool, default=False)
-    parser.add_argument('--max_rollout_length', type=int, default=10000)
-    parser.add_argument('--train_model_every', type=int, default=250)
-    parser.add_argument('--model_max_n_train_batches', type=int, default=2000)
-    parser.add_argument('--model_pessimism', type=int, default=0)
+    parser.add_argument('--continuous_rollouts', type=str2bool, default=True)
+    parser.add_argument('--max_rollout_length', type=int, default=20)
+    parser.add_argument('--train_model_every', type=int, default=1000)
+    parser.add_argument('--model_max_n_train_batches', type=int, default=1300)
+    parser.add_argument('--model_pessimism', type=int, default=-1)
+    parser.add_argument('--exploration_mode', type=str, default='state')
 
     parser.add_argument('--num_test_episodes', type=int, default=10)
     parser.add_argument('--exp_name', type=str, default='sac_offline')
@@ -90,6 +91,7 @@ if __name__ == '__main__':
                       virtual_buffer_size=args.virtual_buffer_size,
                       use_model=args.use_model,
                       model_pessimism=args.model_pessimism,
+                      exploration_mode=args.exploration_mode,
                       model_max_n_train_batches=args.model_max_n_train_batches,
                       agent_updates_per_step=args.agent_updates_per_step,
                       rollouts_per_step=args.rollouts_per_step,

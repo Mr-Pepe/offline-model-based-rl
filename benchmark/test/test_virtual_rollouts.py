@@ -1,5 +1,5 @@
 from benchmark.utils.load_dataset import load_dataset_from_env
-from benchmark.utils.mazes import plot_antmaze_umaze_walls
+from benchmark.utils.mazes import plot_antmaze_umaze
 from benchmark.utils.replay_buffer import ReplayBuffer
 import numpy as np
 import pytest
@@ -75,7 +75,7 @@ def test_generate_rollout_stops_on_terminal():
         buffer,
         10,
         stop_on_terminal=True,
-        term_fn=lambda x: torch.ones((1, 1, 1))
+        term_fn=lambda obs, next_obs: torch.ones((1, 1, 1))
     )
 
     assert len(virtual_rollout['obs']) < 10
@@ -129,11 +129,11 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
     start_time = time.time()
 
     for i in range(n_runs*n_rollouts):
-        rollout, _ = generate_virtual_rollout(model,
-                                              agent,
-                                              start_observation,
-                                              rollout_length,
-                                              stop_on_terminal=False)
+        rollout = generate_virtual_rollout(model,
+                                           agent,
+                                           start_observation,
+                                           rollout_length,
+                                           stop_on_terminal=False)
 
         for step in rollout:
             sequential_buffer.store(
@@ -191,7 +191,6 @@ def test_use_random_actions_in_virtual_rollout():
         rollouts4['next_obs'].cpu(),)
 
 
-@pytest.mark.current
 @pytest.mark.medium
 def test_continuously_grow_rollouts(plot=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -244,7 +243,7 @@ def test_continuously_grow_rollouts(plot=False):
             o = env.reset()
 
     if plot:
-        plot_antmaze_umaze_walls()
+        plot_antmaze_umaze()
         plt.scatter(buffer.obs_buf[:steps, 0].cpu(),
                     buffer.obs_buf[:steps, 1].cpu(),
                     marker='.',
@@ -283,7 +282,7 @@ def test_continuously_grow_rollouts(plot=False):
             assert length > 0 and length <= max_rollout_length
 
         if plot and step % 1 == 0:
-            plot_antmaze_umaze_walls()
+            plot_antmaze_umaze()
             plt.scatter(
                 virtual_buffer.obs_buf[:(
                     step+1)*n_rollouts*steps_per_rollout, 0].cpu(),

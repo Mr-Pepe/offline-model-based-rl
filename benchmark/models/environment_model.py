@@ -1,5 +1,3 @@
-import warnings
-from benchmark.utils.termination_functions import termination_functions
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
     deterministic_loss, probabilistic_loss
@@ -60,7 +58,7 @@ class EnvironmentModel(nn.Module):
         device = next(self.layers.parameters()).device
         obs_act = self.check_device_and_shape(obs_act, device)
 
-        obs, reward = self.layers(obs_act)
+        next_obs, reward = self.layers(obs_act)
 
         out = 0
         mean = 0
@@ -70,31 +68,32 @@ class EnvironmentModel(nn.Module):
 
         # The model only learns a residual, so the input has to be added
         if self.type == 'deterministic':
-            obs = obs[:, :, :self.obs_dim] + obs_act[:, :self.obs_dim]
+            next_obs = next_obs[:, :, :self.obs_dim] + \
+                obs_act[:, :self.obs_dim]
 
             if term_fn:
-                done = term_fn(obs).to(device)
+                done = term_fn(obs=obs_act[:, :self.obs_dim],
+                               next_obs=next_obs).to(device)
             else:
                 done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
                                    device=device)
 
-            out = torch.cat((obs,
+            out = torch.cat((next_obs,
                              reward[:, :, 0].view((self.n_networks, -1, 1)),
                              done), dim=2)
 
         elif self.type == 'probabilistic':
-            obs_mean = obs[:, :, :self.obs_dim] + obs_act[:, :self.obs_dim]
+            obs_mean = next_obs[:, :, :self.obs_dim] + \
+                obs_act[:, :self.obs_dim]
             reward_mean = reward[:, :, 0].view((self.n_networks, -1, 1))
             mean = torch.cat((obs_mean, reward_mean), dim=2)
 
-            obs_logvar = obs[:, :, self.obs_dim:]
+            obs_logvar = next_obs[:, :, self.obs_dim:]
             reward_logvar = reward[:, :, 1].view((self.n_networks, -1, 1))
             logvar = torch.cat((obs_logvar, reward_logvar), dim=2)
 
-            max_logvar = torch.stack(
-                logvar.shape[1] * [self.max_logvar], dim=1)
-            min_logvar = torch.stack(
-                logvar.shape[1] * [self.min_logvar], dim=1)
+            max_logvar = self.max_logvar.unsqueeze(1)
+            min_logvar = self.min_logvar.unsqueeze(1)
             logvar = max_logvar - softplus(max_logvar - logvar)
             logvar = min_logvar + softplus(logvar - min_logvar)
 
@@ -103,15 +102,9 @@ class EnvironmentModel(nn.Module):
             out = torch.normal(mean, std)
 
             if term_fn:
-                done = term_fn(out[:, :, :-1]).to(device)
+                done = term_fn(obs=obs_act[:, :self.obs_dim],
+                               next_obs=out[:, :, :-1]).to(device)
 
-                if torch.any(done > 0) and term_fn == termination_functions['umaze']:
-                    for i_network in range(self.n_networks):
-                        out[i_network, (done[i_network] > 0).view(-1), :-1] = \
-                            obs_act[done[i_network][:, 0] > 0, :self.obs_dim]
-
-                if term_fn(out[:, :, :-1]).to(device).sum() > 0:
-                    warnings.warn("Still terminal states after resetting.")
             else:
                 done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
                                    device=device)
@@ -121,11 +114,11 @@ class EnvironmentModel(nn.Module):
         return out, \
             mean, \
             logvar, \
-            max_logvar, \
-            min_logvar
+            self.max_logvar, \
+            self.min_logvar
 
     def get_prediction(self, x, i_network=-1, term_fn=None,
-                       pessimism=0):
+                       pessimism=0, exploration_mode='state'):
 
         if pessimism == 0:
             i_network = torch.randint(self.n_networks,
@@ -151,9 +144,23 @@ class EnvironmentModel(nn.Module):
 
             prediction = predictions.mean(dim=0)
 
-            # Penalize the reward
-            prediction[:, -2] -= pessimism * \
-                torch.exp(logvars[:, :, -1]).to(device).max(dim=0).values
+            if pessimism > 0:
+                # Penalize the reward as in MOPO
+                prediction[:, -2] -= pessimism * \
+                    torch.exp(logvars[:, :, -1]).to(device).max(dim=0).values
+            else:
+                if exploration_mode == 'reward':
+                    prediction[:, -2] = -pessimism * \
+                        torch.exp(logvars[:, :, -1]).to(device).mean(dim=0)
+
+                elif exploration_mode == 'state':
+                    prediction[:, -2] = -pessimism * \
+                        torch.exp(logvars[:, :, :-1]
+                                  ).to(device).mean(dim=2).mean(dim=0)
+
+                else:
+                    raise ValueError(
+                        "Unknown exploration mode: {}".format(exploration_mode))
 
         prediction[:, -1] = prediction[:, -1] > 0.5
         return prediction

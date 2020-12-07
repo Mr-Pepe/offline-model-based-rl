@@ -31,16 +31,17 @@ def test_buffer_returns_percentage_of_terminal_states():
 
 @pytest.mark.medium
 def test_add_batches_to_buffer():
+    n_samples = 100000
     size_first_batch = 1234
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     env = gym.make('maze2d-open-v0')
     dataset = d4rl.qlearning_dataset(env)
-    observations = dataset['observations']
-    next_observations = dataset['next_observations']
-    actions = dataset['actions']
-    rewards = dataset['rewards']
-    dones = dataset['terminals']
+    observations = dataset['observations'][:n_samples]
+    next_observations = dataset['next_observations'][:n_samples]
+    actions = dataset['actions'][:n_samples]
+    rewards = dataset['rewards'][:n_samples]
+    dones = dataset['terminals'][:n_samples]
 
     buffer = ReplayBuffer(len(observations[0]),
                           len(actions[0]),
@@ -66,13 +67,13 @@ def test_add_batches_to_buffer():
                        torch.as_tensor(next_observations)[size_first_batch:],
                        torch.as_tensor(dones)[size_first_batch:])
 
-    assert buffer.size == 977851
-    assert buffer.ptr == 977851
+    assert buffer.size == n_samples
+    assert buffer.ptr == n_samples
 
     np.testing.assert_array_equal(buffer.obs_buf[0].cpu(), observations[0])
     np.testing.assert_array_equal(buffer.obs_buf[size_first_batch-1].cpu(),
                                   observations[size_first_batch-1])
-    np.testing.assert_array_equal(buffer.obs_buf[977850].cpu(),
+    np.testing.assert_array_equal(buffer.obs_buf[n_samples-1].cpu(),
                                   observations[-1])
 
 

@@ -1,8 +1,9 @@
-from benchmark.utils.mazes import ANTMAZE_UMAZE_WALLS
+from benchmark.utils.mazes import ANTMAZE_UMAZE_WALLS, MAZE2D_POINT_RADIUS, \
+    MAZE2D_UMAZE_WALLS
 import torch
 
 
-def hopper_termination_fn(next_obs):
+def hopper_termination_fn(next_obs=None, **_):
 
     height = next_obs[:, :, 0]
     angle = next_obs[:, :, 1]
@@ -16,13 +17,13 @@ def hopper_termination_fn(next_obs):
     return done
 
 
-def half_cheetah_termination_fn(obs):
+def half_cheetah_termination_fn(next_obs=None, **_):
 
-    done = torch.zeros((obs.shape[0], obs.shape[1], 1))
+    done = torch.zeros((next_obs.shape[0], next_obs.shape[1], 1))
     return done
 
 
-def walker2d_termination_fn(next_obs):
+def walker2d_termination_fn(next_obs=None, **_):
 
     height = next_obs[:, :, 0]
     angle = next_obs[:, :, 1]
@@ -35,7 +36,7 @@ def walker2d_termination_fn(next_obs):
     return done
 
 
-def antmaze_umaze_termination_fn(next_obs):
+def antmaze_umaze_termination_fn(next_obs=None, **_):
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
@@ -57,12 +58,50 @@ def antmaze_umaze_termination_fn(next_obs):
     return done.sum(dim=2).reshape(next_obs.shape[0], -1, 1)
 
 
+def maze2d_umaze_termination_fn(next_obs=None, obs=None, **_):
+    x = next_obs[:, :, 0]
+    y = next_obs[:, :, 1]
+
+    walls = MAZE2D_UMAZE_WALLS.to(x.device)
+
+    collision = torch.zeros((next_obs.shape[0], x[0].numel(), len(walls)+1))
+
+    for i_wall, wall in enumerate(walls):
+        collision[:, :, i_wall] = \
+            (wall[0] <= x + MAZE2D_POINT_RADIUS) * \
+            (wall[1] > x - MAZE2D_POINT_RADIUS) * \
+            (wall[2] <= y + MAZE2D_POINT_RADIUS) * \
+            (wall[3] > y - MAZE2D_POINT_RADIUS)
+
+    x_min = walls[:, 0].min()
+    x_max = walls[:, 1].max()
+    y_min = walls[:, 2].min()
+    y_max = walls[:, 3].max()
+
+    collision[:, :, -1] = (x_max <= x) + (x <= x_min) + \
+        (y_max <= y) + (y <= y_min)
+
+    collision = collision.sum(dim=2)
+
+    for i_network in range(next_obs.shape[0]):
+        next_obs[i_network][collision[i_network] > 0] = \
+            obs[collision[i_network] > 0]
+
+    return torch.zeros((next_obs.shape[0], next_obs.shape[1], 1)).to(x.device)
+
+
 termination_functions = {
     'hopper': hopper_termination_fn,
     'half_cheetah': half_cheetah_termination_fn,
     'walker2d': walker2d_termination_fn,
     'antmaze_umaze': antmaze_umaze_termination_fn,
+    'maze2d_umaze': maze2d_umaze_termination_fn,
 }
+
+ANTMAZE_UMAZE_ENVS = ['antmaze-umaze-v0',
+                      'antmaze-umaze-diverse-v0']
+
+MAZE2D_UMAZE_ENVS = ['maze2d-umaze-v1']
 
 function_to_names_mapping = {
     'hopper': ['Hopper-v2',
@@ -84,8 +123,8 @@ function_to_names_mapping = {
                  'walker2d-medium-replay-v0',
                  'walker2d-medium-expert-v0',
                  ],
-    'antmaze_umaze': ['antmaze-umaze-v0',
-                      'antmaze-umaze-diverse-v0'],
+    'antmaze_umaze': ANTMAZE_UMAZE_ENVS,
+    'maze2d_umaze': MAZE2D_UMAZE_ENVS,
 }
 
 
