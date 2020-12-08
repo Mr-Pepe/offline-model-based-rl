@@ -78,33 +78,46 @@ def test_antmaze_umaze_termination_function():
 
     env = gym.make('antmaze-umaze-v0')
 
-    x_points = 200
-    y_points = 200
+    x_points = 50
+    y_points = 50
+    n_networks = 3
 
-    observations = torch.zeros((x_points*y_points,
-                                env.observation_space.shape[0]))
+    next_obs = torch.zeros((n_networks,
+                            x_points*y_points,
+                            env.observation_space.shape[0]))
 
     torch.manual_seed(0)
-    x_random = torch.rand((x_points,))*30-10
-    y_random = torch.rand((y_points,))*30-10
 
-    for i_x, x in enumerate(x_random):
-        for i_y, y in enumerate(y_random):
-            observations[i_x*i_y, 0] = x
-            observations[i_x*i_y, 1] = y
+    for i_network in range(n_networks):
+        x_random = torch.rand((x_points,))*14-2
+        y_random = torch.rand((y_points,))*14-2
+        z_random = torch.rand((x_points*y_points,))*1.2
 
-    dones = antmaze_umaze_termination_fn(
-        next_obs=observations.unsqueeze(0)).view(-1)
+        for i_x, x in enumerate(x_random):
+            for i_y, y in enumerate(y_random):
+                next_obs[i_network, i_x*i_y, 0] = x
+                next_obs[i_network, i_x*i_y, 1] = y
+                next_obs[i_network, i_x*i_y, 2] = z_random[i_x*i_y]
 
-    np.testing.assert_array_equal(torch.stack(3*[dones]).shape,
-                                  antmaze_umaze_termination_fn(
-                                      torch.stack(3*[observations])).shape[:2])
+    # Check collision detection
+    obs = torch.ones((next_obs.shape[1], next_obs.shape[2]))
 
-    # plot_umaze_walls([-20, 20], [-20, 20])
-    # plt.scatter(observations[dones == False, 0],
-    #             observations[dones == False, 1], zorder=1)
-    # plt.scatter(observations[dones == True, 0],
-    #             observations[dones == True, 1], zorder=2)
+    dones = antmaze_umaze_termination_fn(next_obs=next_obs,
+                                         obs=obs)
+
+    # plot_antmaze_umaze([-20, 20], [-20, 20])
+    # for i_network in range(n_networks):
+    #     plt.scatter(
+    #         next_obs[i_network, (dones[i_network] == False).view(-1), 0],
+    #         next_obs[i_network, (dones[i_network] == False).view(-1), 1],
+    #         zorder=1,
+    #         color='blue')
+    #     plt.scatter(
+    #         next_obs[i_network, (dones[i_network] == True).view(-1), 0],
+    #         next_obs[i_network, (dones[i_network] == True).view(-1), 1],
+    #         zorder=1,
+    #         color='red')
+
     # plt.show()
 
 

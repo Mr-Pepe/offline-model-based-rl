@@ -1,4 +1,4 @@
-from benchmark.utils.mazes import ANTMAZE_UMAZE_WALLS, MAZE2D_POINT_RADIUS, \
+from benchmark.utils.mazes import ANTMAZE_ANT_RADIUS, ANTMAZE_UMAZE_WALLS, MAZE2D_POINT_RADIUS, \
     MAZE2D_UMAZE_WALLS
 import torch
 
@@ -36,26 +36,41 @@ def walker2d_termination_fn(next_obs=None, **_):
     return done
 
 
-def antmaze_umaze_termination_fn(next_obs=None, **_):
+def antmaze_umaze_termination_fn(next_obs=None, obs=None, **_):
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
     walls = ANTMAZE_UMAZE_WALLS.to(x.device)
 
-    done = torch.zeros((next_obs.shape[0], x[0].numel(), len(walls)+1))
+    collision = torch.zeros((next_obs.shape[0], x[0].numel(), len(walls)+1))
 
     for i_wall, wall in enumerate(walls):
-        done[:, :, i_wall] = (wall[0] <= x) * (x <= wall[1]) * \
-            (wall[2] <= y) * (y <= wall[3])
+        collision[:, :, i_wall] = \
+            (wall[0] <= x + ANTMAZE_ANT_RADIUS) * \
+            (wall[1] > x - ANTMAZE_ANT_RADIUS) * \
+            (wall[2] <= y + ANTMAZE_ANT_RADIUS) * \
+            (wall[3] > y - ANTMAZE_ANT_RADIUS)
 
     x_min = walls[:, 0].min()
     x_max = walls[:, 1].max()
     y_min = walls[:, 2].min()
     y_max = walls[:, 3].max()
 
-    done[:, :, -1] = (x_max <= x) + (x <= x_min) + (y_max <= y) + (y <= y_min)
+    collision[:, :, -1] = (x_max <= x) + (x <= x_min) + \
+        (y_max <= y) + (y <= y_min)
 
-    return done.sum(dim=2).reshape(next_obs.shape[0], -1, 1)
+    collision = collision.sum(dim=2)
+
+    for i_network in range(next_obs.shape[0]):
+        next_obs[i_network][collision[i_network] > 0] = \
+            obs[collision[i_network] > 0].detach().clone()
+
+    notdone = torch.stack((torch.isfinite(next_obs).all(dim=2),
+                           next_obs[:, :, 2] >= 0.2,
+                           next_obs[:, :, 2] <= 1.0)).all(dim=0)
+    done = ~notdone
+
+    return done.unsqueeze(-1)
 
 
 def maze2d_umaze_termination_fn(next_obs=None, obs=None, **_):
