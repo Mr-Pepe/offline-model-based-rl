@@ -144,25 +144,17 @@ class EnvironmentModel(nn.Module):
 
             prediction = predictions.mean(dim=0)
 
-            if pessimism > 0:
-                # Penalize the reward as in MOPO
+            if exploration_mode == 'reward':
                 prediction[:, -2] -= pessimism * \
-                    torch.exp(logvars[:, :, -1]).to(device).max(dim=0).values
+                    torch.exp(logvars[:, :, -1]).to(device).mean(dim=0)
+
+            elif exploration_mode == 'state':
+                prediction[:, -2] -= pessimism * \
+                    means.std(dim=0).sum(dim=1)
+
             else:
-                if exploration_mode == 'reward':
-                    prediction[:, -2] = -pessimism * \
-                        torch.exp(logvars[:, :, -1]).to(device).mean(dim=0)
-
-                elif exploration_mode == 'state':
-                    # prediction[:, -2] = -pessimism * \
-                    #     torch.exp(logvars[:, :, :-1]
-                    #               ).to(device).mean(dim=2).mean(dim=0)
-                    prediction[:, -2] = -pessimism * \
-                        means.std(dim=0).sum(dim=1)
-
-                else:
-                    raise ValueError(
-                        "Unknown exploration mode: {}".format(exploration_mode))
+                raise ValueError(
+                    "Unknown exploration mode: {}".format(exploration_mode))
 
         prediction[:, -1] = prediction[:, -1] > 0.5
         return prediction
