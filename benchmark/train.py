@@ -327,7 +327,7 @@ class Trainer():
 
                 # Update agent
                 if step_total >= self.init_steps or self.pretrain_epochs > 0:
-                    if self.use_model:
+                    if self.use_model and self.rollouts_per_step > 0:
                         rollouts, prev_obs = generate_virtual_rollouts(
                             self.env_model,
                             self.agent,
