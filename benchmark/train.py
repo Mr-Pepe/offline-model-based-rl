@@ -122,7 +122,7 @@ class Trainer():
                                           **model_kwargs)
         self.env_model.to(device)
 
-        if pretrain_epochs > 0:
+        if pretrain_epochs > 0 or n_samples_from_dataset > 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
                 self.env,
                 n_samples=n_samples_from_dataset,
