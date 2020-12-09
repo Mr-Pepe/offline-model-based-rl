@@ -45,6 +45,7 @@ class Trainer():
                  real_buffer_size=int(1e6),
                  virtual_buffer_size=int(1e6),
                  reset_buffer=False,
+                 train_model_from_scratch=False,
                  reset_maze2d_umaze=False,
                  pretrain_epochs=0,
                  logger_kwargs=dict(),
@@ -120,7 +121,6 @@ class Trainer():
         self.env_model = EnvironmentModel(obs_dim[0],
                                           act_dim,
                                           **model_kwargs)
-        self.env_model.to(device)
 
         if pretrain_epochs > 0 or n_samples_from_dataset > 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
@@ -179,6 +179,7 @@ class Trainer():
         self.reset_buffer = reset_buffer
         self.reset_maze2d_umaze = reset_maze2d_umaze and \
             "maze2d-umaze" in env_name
+        self.train_model_from_scratch = train_model_from_scratch
 
         self.num_test_episodes = num_test_episodes
         self.save_freq = save_freq
@@ -239,6 +240,12 @@ class Trainer():
                                         steps_since_model_training,
                                         self.train_model_every,
                                         model_trained_at_all):
+
+                    if self.train_model_from_scratch:
+                        self.env_model = EnvironmentModel(
+                            self.env_model.obs_dim,
+                            self.env_model.act_dim,
+                            **self.model_kwargs)
 
                     model_val_error, _ = self.env_model.train_to_convergence(
                         self.real_replay_buffer,

@@ -45,6 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_pessimism', type=int, default=-1)
     parser.add_argument('--exploration_mode', type=str, default='state')
     parser.add_argument('--reset_buffer', type=str2bool, default=True)
+    parser.add_argument('--train_model_from_scratch', type=str2bool, default=True)
 
     parser.add_argument('--num_test_episodes', type=int, default=10)
     parser.add_argument('--exp_name', type=str, default='sac_offline')
@@ -102,6 +103,7 @@ if __name__ == '__main__':
                       train_model_every=args.train_model_every,
                       num_test_episodes=args.num_test_episodes,
                       n_samples_from_dataset=args.n_samples_from_dataset,
+                      train_model_from_scratch=args.train_model_from_scratch,
                       max_rollout_length=args.max_rollout_length,
                       reset_buffer=args.reset_buffer,
                       reset_maze2d_umaze=args.reset_maze2d_umaze,
