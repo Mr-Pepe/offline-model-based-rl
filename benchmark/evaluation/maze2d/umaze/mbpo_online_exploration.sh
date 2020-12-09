@@ -8,7 +8,7 @@ python main.py \
     --steps_per_epoch 1000 \
     --init_steps 2000 \
     --random_steps 3000 \
-    --reset_masze2d_umaze True \
+    --reset_maze2d_umaze True \
     --hid 200 \
     --l 4 \
     --gamma 0.99 \
