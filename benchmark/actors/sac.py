@@ -158,12 +158,14 @@ class SAC(nn.Module):
 
         return loss_q, q_info, loss_pi, pi_info
 
-    def multi_update(self, n_updates, buffer, logger):
+    def multi_update(self, n_updates, buffer, logger=None):
         for _ in range(n_updates):
             batch = buffer.sample_batch(self.batch_size)
             loss_q, q_info, loss_pi, pi_info = self.update(data=batch)
-            logger.store(LossQ=loss_q.item(), **q_info)
-            logger.store(LossPi=loss_pi.item(), **pi_info)
+
+            if logger is not None:
+                logger.store(LossQ=loss_q.item(), **q_info)
+                logger.store(LossPi=loss_pi.item(), **pi_info)
 
     def act(self, o, deterministic=False):
         self.device = next(self.parameters()).device

@@ -1,3 +1,4 @@
+from benchmark.utils.pretrain_agent import pretrain_agent
 from benchmark.utils.termination_functions import get_termination_function
 import gym
 from benchmark.utils.model_needs_training import model_needs_training
@@ -45,6 +46,7 @@ class Trainer():
                  real_buffer_size=int(1e6),
                  virtual_buffer_size=int(1e6),
                  reset_buffer=False,
+                 virtual_pretrain_epochs=0,
                  train_model_from_scratch=False,
                  reset_maze2d_umaze=False,
                  pretrain_epochs=0,
@@ -180,6 +182,7 @@ class Trainer():
         self.reset_maze2d_umaze = reset_maze2d_umaze and \
             "maze2d-umaze" in env_name
         self.train_model_from_scratch = train_model_from_scratch
+        self.virtual_pretrain_epochs = virtual_pretrain_epochs
 
         self.num_test_episodes = num_test_episodes
         self.save_freq = save_freq
@@ -255,6 +258,23 @@ class Trainer():
 
                     if self.reset_buffer:
                         self.virtual_replay_buffer.clear()
+
+                    if self.virtual_pretrain_epochs > 0 and epoch > 0:
+                        self.agent = SAC(self.env.observation_space,
+                                         self.env.action_space,
+                                         **self.sac_kwargs)
+
+                        pretrain_agent(
+                            self.agent,
+                            self.env_model,
+                            self.real_replay_buffer,
+                            n_steps=self.virtual_pretrain_epochs*self.steps_per_epoch,
+                            n_random_actions=self.virtual_pretrain_epochs*self.steps_per_epoch/4,
+                            max_rollout_length=self.max_ep_len,
+                            term_fn=self.term_fn,
+                            pessimism=self.model_pessimism,
+                            exploration_mode=self.exploration_mode,
+                        )
 
                     model_val_error = model_val_error.mean()
                     model_trained_at_all = True
