@@ -17,7 +17,7 @@ class ReplayBuffer:
         self.act_buf = torch.zeros(combined_shape(
             size, act_dim), dtype=torch.float32, device=device)
         self.rew_buf = torch.zeros(size, dtype=torch.float32, device=device)
-        self.done_buf = torch.zeros(size, dtype=torch.float32, device=device)
+        self.done_buf = torch.zeros(size, dtype=torch.bool, device=device)
         self.ptr, self.size, self.max_size = 0, 0, size
 
         self.split_at_size = -1
@@ -127,7 +127,7 @@ class ReplayBuffer:
                                           as_tuple=False).reshape((-1))
 
     def get_terminal_ratio(self):
-        return self.done_buf.sum()/self.size
+        return float(self.done_buf.sum())/self.size
 
     def has_terminal_state(self):
         return self.done_buf.sum() > 0

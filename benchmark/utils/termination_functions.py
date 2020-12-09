@@ -59,16 +59,18 @@ def antmaze_umaze_termination_fn(next_obs=None, obs=None, **_):
     collision[:, :, -1] = (x_max <= x) + (x <= x_min) + \
         (y_max <= y) + (y <= y_min)
 
-    collision = collision.sum(dim=2)
+    collision = collision.sum(dim=2) > 0
 
-    for i_network in range(next_obs.shape[0]):
-        next_obs[i_network][collision[i_network] > 0] = \
-            obs[collision[i_network] > 0].detach().clone()
+    if collision.any():
+        for i_network in range(next_obs.shape[0]):
+            next_obs[i_network][collision[i_network]] = \
+                obs[collision[i_network]].detach().clone()
 
     notdone = torch.stack((torch.isfinite(next_obs).all(dim=2),
                            next_obs[:, :, 2] >= 0.2,
                            next_obs[:, :, 2] <= 1.0)).all(dim=0)
     done = ~notdone
+    done = torch.logical_or(done, collision.to(x.device))
 
     return done.unsqueeze(-1)
 

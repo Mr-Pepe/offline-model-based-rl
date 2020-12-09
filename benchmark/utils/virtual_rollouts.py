@@ -45,10 +45,14 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
             actions = agent.act_randomly(observations)
         else:
             actions = agent.act(observations)
-        pred = model.get_prediction(torch.as_tensor(
-            torch.cat((observations, actions), dim=1),
-            dtype=torch.float32), term_fn=term_fn,
-            pessimism=pessimism, exploration_mode=exploration_mode)
+
+        pred = model.get_prediction(
+            torch.as_tensor(torch.cat((observations,
+                                       actions), dim=1),
+                            dtype=torch.float32),
+            term_fn=term_fn,
+            pessimism=pessimism,
+            exploration_mode=exploration_mode)
 
         observations = observations.detach().clone()
         actions = actions.detach().clone()

@@ -50,10 +50,19 @@ def plot_antmaze_umaze(xlim=None, ylim=None, buffer=None):
 
     if buffer:
         rewards = buffer.rew_buf[:buffer.size].cpu()
+        dones = buffer.done_buf[:buffer.size].cpu()
+        buffer = buffer.obs_buf[:buffer.size].cpu()
         plt.scatter(
-            buffer.obs_buf[:buffer.size, 0].cpu(),
-            buffer.obs_buf[:buffer.size, 1].cpu(),
-            c=rewards,
+            buffer[dones, 0].cpu(),
+            buffer[dones, 1].cpu(),
+            color='red',
+            marker='.',
+            s=5
+        )
+        plt.scatter(
+            buffer[~dones, 0].cpu(),
+            buffer[~dones, 1].cpu(),
+            c=rewards[~dones],
             cmap='cividis',
             marker='.',
             s=2
