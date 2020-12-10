@@ -29,7 +29,8 @@ def test_generate_rollout_of_desired_length():
     buffer = ReplayBuffer(obs_dim=obs_dim, act_dim=act_dim, size=3)
     buffer.store(start_observation, 0, 0, 0, 0)
 
-    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
+    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',
+                             term_fn=termination_functions['half_cheetah'])
     agent = SAC(observation_space, action_space)
 
     virtual_rollout, _ = generate_virtual_rollouts(
@@ -38,8 +39,7 @@ def test_generate_rollout_of_desired_length():
         buffer,
         10,
         n_rollouts=1,
-        stop_on_terminal=False,
-        term_fn=termination_functions['half_cheetah'])
+        stop_on_terminal=False)
 
     assert len(virtual_rollout['obs']) == 10
 
@@ -66,7 +66,9 @@ def test_generate_rollout_stops_on_terminal():
     buffer = ReplayBuffer(obs_dim=obs_dim, act_dim=act_dim, size=3)
     buffer.store(start_observation, 0, 0, 0, 0)
 
-    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
+    model = EnvironmentModel(
+        obs_dim, act_dim, type='probabilistic',
+        term_fn=lambda obs, next_obs, means, logvars: torch.ones((1, 1, 1)))
     agent = SAC(observation_space, action_space)
 
     virtual_rollout, _ = generate_virtual_rollouts(
@@ -75,7 +77,6 @@ def test_generate_rollout_stops_on_terminal():
         buffer,
         10,
         stop_on_terminal=True,
-        term_fn=lambda obs, next_obs, means, logvars: torch.ones((1, 1, 1))
     )
 
     assert len(virtual_rollout['obs']) < 10
@@ -209,7 +210,8 @@ def test_continuously_grow_rollouts(plot=False):
     buffer, _, _ = load_dataset_from_env(env, 10000, buffer_device=device)
 
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',
-                             n_networks=3, device=device)
+                             n_networks=3, device=device,
+                             term_fn=termination_functions['hopper'])
 
     model.train_to_convergence(buffer, patience=1)
 
@@ -268,7 +270,6 @@ def test_continuously_grow_rollouts(plot=False):
             n_rollouts=n_rollouts,
             random_action=True,
             prev_obs=last_observations,
-            term_fn=termination_functions['hopper'],
             stop_on_terminal=True,
             max_rollout_length=max_rollout_length)
 

@@ -1,3 +1,4 @@
+from benchmark.utils.envs import ENV_CATEGORIES
 import torch
 
 
@@ -12,3 +13,36 @@ def preprocess_maze2d_umaze(obs_act):
     obs_act /= std
 
     return obs_act
+
+
+def preprocess_hopper(obs_act):
+    return obs_act
+
+
+def preprocess_half_cheetah(obs_act):
+    return obs_act
+
+
+def preprocess_walker2d(obs_act):
+    return obs_act
+
+
+def preprocess_antmaze_umaze(obs_act):
+    return obs_act
+
+
+preprocessing_functions = {
+    'hopper': preprocess_hopper,
+    'half_cheetah': preprocess_half_cheetah,
+    'walker2d': preprocess_walker2d,
+    'antmaze_umaze': preprocess_antmaze_umaze,
+    'maze2d_umaze': preprocess_maze2d_umaze,
+}
+
+
+def get_preprocessing_function(env_name):
+    for fn_name in ENV_CATEGORIES:
+        if env_name in ENV_CATEGORIES[fn_name]:
+            return preprocessing_functions[fn_name]
+
+    return None

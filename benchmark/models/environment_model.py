@@ -19,6 +19,8 @@ class EnvironmentModel(nn.Module):
                  type='deterministic',
                  n_networks=1,
                  device='cpu',
+                 pre_fn=None,
+                 term_fn=None,
                  **_):
         """
             type (string): deterministic or probabilistic
@@ -34,6 +36,8 @@ class EnvironmentModel(nn.Module):
 
         self.type = type
         self.n_networks = n_networks
+        self.pre_fn = pre_fn
+        self.term_fn = term_fn
 
         if type != 'deterministic' and type != 'probabilistic':
             raise ValueError("Unknown type {}".format(type))
@@ -53,10 +57,13 @@ class EnvironmentModel(nn.Module):
 
         self.to(device)
 
-    def forward(self, obs_act, term_fn=None):
+    def forward(self, obs_act):
 
         device = next(self.layers.parameters()).device
         obs_act = self.check_device_and_shape(obs_act, device)
+
+        if self.pre_fn:
+            obs_act = self.pre_fn(obs_act)
 
         next_obs, reward = self.layers(obs_act)
 
@@ -71,9 +78,9 @@ class EnvironmentModel(nn.Module):
             next_obs = next_obs[:, :, :self.obs_dim] + \
                 obs_act[:, :self.obs_dim]
 
-            if term_fn:
-                done = term_fn(obs=obs_act[:, :self.obs_dim],
-                               next_obs=next_obs).to(device)
+            if self.term_fn:
+                done = self.term_fn(obs=obs_act[:, :self.obs_dim],
+                                    next_obs=next_obs).to(device)
             else:
                 done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
                                    device=device)
@@ -101,11 +108,12 @@ class EnvironmentModel(nn.Module):
 
             out = torch.normal(means, std)
 
-            if term_fn:
-                done = term_fn(obs=obs_act[:, :self.obs_dim].detach().clone(),
-                               next_obs=out[:, :, :-1],
-                               means=means[:, :, :-1],
-                               logvars=logvars[:, :, :-1]).to(device)
+            if self.term_fn:
+                done = self.term_fn(
+                    obs=obs_act[:, :self.obs_dim].detach().clone(),
+                    next_obs=out[:, :, :-1],
+                    means=means[:, :, :-1],
+                    logvars=logvars[:, :, :-1]).to(device)
 
             else:
                 done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
@@ -119,7 +127,7 @@ class EnvironmentModel(nn.Module):
             self.max_logvar, \
             self.min_logvar
 
-    def get_prediction(self, x, i_network=-1, term_fn=None,
+    def get_prediction(self, x, i_network=-1,
                        pessimism=0, exploration_mode='state'):
 
         if pessimism == 0:
@@ -127,8 +135,7 @@ class EnvironmentModel(nn.Module):
                                       (1,)) if i_network == -1 else i_network
 
             with torch.no_grad():
-                predictions, _, _, _, _ = self.forward(x,
-                                                       term_fn=term_fn)
+                predictions, _, _, _, _ = self.forward(x)
 
             prediction = predictions[i_network].view(x.shape[0], -1)
 
@@ -141,8 +148,7 @@ class EnvironmentModel(nn.Module):
 
             with torch.no_grad():
                 predictions, means, logvars, _, _ = \
-                    self.forward(x,
-                                 term_fn=term_fn)
+                    self.forward(x)
 
             prediction = predictions.mean(dim=0)
 
@@ -199,7 +205,7 @@ class EnvironmentModel(nn.Module):
 
         stop_training = False
 
-        while n_bad_losses < patience:
+        while n_bad_losses < patience and n_batches > 0:
 
             avg_loss = 0
 

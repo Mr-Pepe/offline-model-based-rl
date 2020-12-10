@@ -11,8 +11,9 @@ def agent_pretrains_in_virtual_environment():
     env = gym.make('maze2d-umaze-v1')
     buffer, obs_dim, act_dim = load_dataset_from_env(env, n_samples=100000)
     agent = SAC(env.observation_space, env.action_space)
-    model = EnvironmentModel(obs_dim, act_dim)
     term_fn = maze2d_umaze_termination_fn
+    model = EnvironmentModel(obs_dim, act_dim,
+                             term_fn=term_fn)
 
     model.train_to_convergence(buffer,
                                patience=10)
@@ -29,7 +30,6 @@ def agent_pretrains_in_virtual_environment():
                    n_steps=n_steps,
                    n_random_actions=n_random_actions,
                    max_rollout_length=max_rollout_length,
-                   term_fn=term_fn,
                    pessimism=pessimism,
                    exploration_mode=exploration_mode,
                    debug=True)

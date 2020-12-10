@@ -1,3 +1,4 @@
+from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.utils.pretrain_agent import pretrain_agent
 from benchmark.utils.termination_functions import get_termination_function
 import gym
@@ -113,21 +114,11 @@ class Trainer():
         self.test_env.seed(seed)
         self.test_env.action_space.seed(seed)
 
-        # Create SAC and environment model
         sac_kwargs.update({'device': device})
-        model_kwargs.update({'device': device})
         self.sac_kwargs = sac_kwargs
-        self.model_kwargs = model_kwargs
         self.agent = SAC(self.env.observation_space,
                          self.env.action_space,
                          **sac_kwargs)
-
-        if pretrained_model_path != '':
-            self.env_model = torch.load(pretrained_model_path)
-        else:
-            self.env_model = EnvironmentModel(obs_dim[0],
-                                              act_dim,
-                                              **model_kwargs)
 
         if pretrain_epochs > 0 or n_samples_from_dataset > 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
@@ -146,22 +137,37 @@ class Trainer():
                                                   size=virtual_buffer_size,
                                                   device=device)
 
-        self.logger.setup_pytorch_saver({
-            'agent': self.agent,
-            'model': self.env_model,
-            'replay_buffer': self.real_replay_buffer,
-            'virtual_replay_buffer': self.virtual_replay_buffer,
-        }
-        )
-
-        # Get termination for environment, if model should be used
         if use_model:
             self.term_fn = get_termination_function(env_name)
             if not self.term_fn:
                 raise ValueError("Could not find termination function for \
             environment {}".format(env_name))
+            self.pre_fn = get_preprocessing_function(env_name)
+            if not self.pre_fn:
+                raise ValueError("Could not find termination function for \
+            environment {}".format(env_name))
         else:
             self.term_fn = None
+            self.pre_fn = None
+
+        model_kwargs.update({'device': device})
+        model_kwargs.update({'pre_fn': self.pre_fn})
+        model_kwargs.update({'term_fn': self.term_fn})
+        self.model_kwargs = model_kwargs
+
+        if pretrained_model_path != '':
+            self.env_model = torch.load(pretrained_model_path)
+        else:
+            self.env_model = EnvironmentModel(obs_dim[0],
+                                              act_dim,
+                                              **model_kwargs)
+
+        self.logger.setup_pytorch_saver({
+            'agent': self.agent,
+            'model': self.env_model,
+            'replay_buffer': self.real_replay_buffer,
+            'virtual_replay_buffer': self.virtual_replay_buffer,
+        })
 
         self.epochs = epochs
         self.steps_per_epoch = steps_per_epoch
@@ -277,7 +283,6 @@ class Trainer():
                             n_steps=self.virtual_pretrain_epochs*self.steps_per_epoch,
                             n_random_actions=self.virtual_pretrain_epochs*self.steps_per_epoch/4,
                             max_rollout_length=self.max_ep_len,
-                            term_fn=self.term_fn,
                             pessimism=self.model_pessimism,
                             exploration_mode=self.exploration_mode,
                         )
@@ -340,7 +345,6 @@ class Trainer():
                             self.real_replay_buffer,
                             rollout_length,
                             n_rollouts=self.rollouts_per_step,
-                            term_fn=self.term_fn,
                             pessimism=self.model_pessimism,
                             exploration_mode=self.exploration_mode,
                             random_action=take_random_action,

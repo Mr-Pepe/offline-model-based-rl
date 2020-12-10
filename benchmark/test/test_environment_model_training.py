@@ -27,20 +27,6 @@ def test_train_deterministic_environment_model():
         assert val_loss < 0.6
 
 
-@pytest.mark.medium
-def test_raise_error_if_data_not_enough_for_split_at_given_batch_size():
-    env = gym.make('halfcheetah-random-v0')
-    buffer, obs_dim, act_dim = load_dataset_from_env(env, n_samples=100)
-
-    with pytest.raises(ValueError):
-        model = EnvironmentModel(obs_dim, act_dim)
-
-        model.train_to_convergence(buffer,
-                                   val_split=0.2,
-                                   patience=10,
-                                   debug=True)
-
-
 @pytest.mark.slow
 def test_train_probabilistic_model():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

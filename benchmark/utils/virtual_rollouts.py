@@ -2,8 +2,7 @@ import torch
 
 
 def generate_virtual_rollouts(model, agent, buffer, steps,
-                              n_rollouts=1, term_fn=None,
-                              stop_on_terminal=True, pessimism=0,
+                              n_rollouts=1, stop_on_terminal=True, pessimism=0,
                               random_action=False, prev_obs=None,
                               max_rollout_length=-1, exploration_mode='state'):
 
@@ -50,7 +49,6 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
             torch.as_tensor(torch.cat((observations,
                                        actions), dim=1),
                             dtype=torch.float32),
-            term_fn=term_fn,
             pessimism=pessimism,
             exploration_mode=exploration_mode)
 
@@ -100,7 +98,7 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
 
 
 def generate_virtual_rollout(model, agent, start_observation, steps,
-                             term_fn=None, stop_on_terminal=True):
+                             stop_on_terminal=True):
 
     model_is_training = model.training
     agent_is_training = agent.training
@@ -118,7 +116,7 @@ def generate_virtual_rollout(model, agent, start_observation, steps,
         action = agent.act(this_observation)
         pred = model.get_prediction(torch.as_tensor(
             torch.cat((this_observation, action), dim=1),
-            dtype=torch.float32), term_fn=term_fn)
+            dtype=torch.float32))
         next_observation = pred[:, :-2]
         reward = pred[:, -2]
         done = pred[:, -1]

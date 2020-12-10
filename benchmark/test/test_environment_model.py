@@ -373,12 +373,12 @@ def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
     act_dim = 6
     torch.manual_seed(2)
 
-    model = EnvironmentModel(obs_dim, act_dim)
+    model = EnvironmentModel(obs_dim, act_dim,
+                             term_fn=termination_functions['hopper'])
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output = model.get_prediction(input, 0,
-                                  term_fn=termination_functions['hopper'])
+    output = model.get_prediction(input, 0)
 
     for value in output[:, -1]:
         assert (value == 0 or value == 1)
@@ -391,8 +391,9 @@ def test_deterministic_model_does_not_always_output_terminal():
     env = gym.make('hopper-random-v0')
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
         env, n_samples=10000, buffer_device=device)
-    model = EnvironmentModel(obs_dim, act_dim, type='deterministic')
-    model.to(device)
+    model = EnvironmentModel(obs_dim, act_dim, type='deterministic',
+                             term_fn=termination_functions['hopper'],
+                             device=device)
     optim = Adam(model.parameters(), lr=1e-3)
 
     for i in range(500):
@@ -418,8 +419,8 @@ def test_deterministic_model_does_not_always_output_terminal():
             model,
             agent,
             real_buffer,
-            50,
-            term_fn=termination_functions['hopper'])
+            50
+        )
 
         for i in range(len(rollout['obs'])):
             virtual_buffer.store(rollout['obs'][i],
@@ -442,8 +443,9 @@ def test_probabilistic_model_does_not_always_output_terminal():
     env = gym.make('hopper-random-v0')
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
         env, 10000, buffer_device=device)
-    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
-    model.to(device)
+    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',
+                             term_fn=termination_functions['hopper'],
+                             device=device)
     optim = Adam(model.parameters(), lr=1e-3)
 
     for i in range(500):
@@ -470,8 +472,8 @@ def test_probabilistic_model_does_not_always_output_terminal():
             model,
             agent,
             real_buffer,
-            50,
-            term_fn=termination_functions['hopper'])
+            50
+        )
 
         for i in range(len(rollout['obs'])):
             virtual_buffer.store(rollout['obs'][i],
