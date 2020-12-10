@@ -110,9 +110,6 @@ def plot_maze2d_umaze(xlim=None, ylim=None, buffer=None):
     else:
         plt.ylim(ylim)
 
-    plt.xticks(ticks=[], labels=[])
-    plt.yticks(ticks=[], labels=[])
-
 
 # From https://github.com/rail-berkeley/d4rl/blob/master/d4rl/locomotion/maze_env.py
 ANTMAZE_UMAZE_STRUCTURE = [[1, 1, 1, 1, 1],
