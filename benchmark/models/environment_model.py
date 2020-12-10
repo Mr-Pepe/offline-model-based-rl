@@ -57,7 +57,7 @@ class EnvironmentModel(nn.Module):
 
         self.to(device)
 
-    def forward(self, obs_act):
+    def forward(self, obs_act, pessimism=0, exploration_mode='state'):
 
         device = next(self.layers.parameters()).device
         obs_act = self.check_device_and_shape(obs_act, device)
@@ -67,7 +67,7 @@ class EnvironmentModel(nn.Module):
 
         next_obs, reward = self.layers(obs_act)
 
-        out = 0
+        predictions = 0
         means = 0
         logvars = 0
         max_logvar = 0
@@ -85,9 +85,10 @@ class EnvironmentModel(nn.Module):
                 done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
                                    device=device)
 
-            out = torch.cat((next_obs,
-                             reward[:, :, 0].view((self.n_networks, -1, 1)),
-                             done), dim=2)
+            predictions = torch.cat((next_obs,
+                                     reward[:, :, 0].view(
+                                         (self.n_networks, -1, 1)),
+                                     done), dim=2)
 
         elif self.type == 'probabilistic':
             obs_mean = next_obs[:, :, :self.obs_dim] + \
@@ -106,12 +107,12 @@ class EnvironmentModel(nn.Module):
 
             std = torch.exp(0.5*logvars)
 
-            out = torch.normal(means, std)
+            predictions = torch.normal(means, std)
 
             if self.term_fn:
                 done = self.term_fn(
                     obs=obs_act[:, :self.obs_dim].detach().clone(),
-                    next_obs=out[:, :, :-1],
+                    next_obs=predictions[:, :, :-1],
                     means=means[:, :, :-1],
                     logvars=logvars[:, :, :-1]).to(device)
 
@@ -119,9 +120,29 @@ class EnvironmentModel(nn.Module):
                 done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
                                    device=device)
 
-            out = torch.cat((out, done), dim=2)
+            predictions = torch.cat((predictions, done), dim=2)
 
-        return out, \
+            if pessimism != 0:
+                prediction = predictions.mean(dim=0)
+
+                if exploration_mode == 'reward':
+                    prediction[:, -2] -= pessimism * \
+                        torch.exp(logvars[:, :, -1]).to(device).mean(dim=0)
+
+                elif exploration_mode == 'state':
+                    prediction[:, -2] -= pessimism * \
+                        means.std(dim=0).sum(dim=1)
+
+                    prediction[:, -2] = (prediction[:, -2] -
+                                         prediction[:, -2].mean()) / prediction[:, -2].std()
+
+                else:
+                    raise ValueError(
+                        "Unknown exploration mode: {}".format(exploration_mode))
+
+                predictions = prediction.unsqueeze(0)
+
+        return predictions, \
             means, \
             logvars, \
             self.max_logvar, \
@@ -144,25 +165,12 @@ class EnvironmentModel(nn.Module):
                 raise ValueError("Can not predict pessimistically because \
                     model is not probabilistic")
 
-            device = next(self.layers.parameters()).device
-
             with torch.no_grad():
-                predictions, means, logvars, _, _ = \
-                    self.forward(x)
+                predictions, _, _, _, _ = \
+                    self.forward(x, pessimism=pessimism,
+                                 exploration_mode=exploration_mode)
 
-            prediction = predictions.mean(dim=0)
-
-            if exploration_mode == 'reward':
-                prediction[:, -2] -= pessimism * \
-                    torch.exp(logvars[:, :, -1]).to(device).mean(dim=0)
-
-            elif exploration_mode == 'state':
-                prediction[:, -2] -= pessimism * \
-                    means[:, :, :2].std(dim=0).sum(dim=1)
-
-            else:
-                raise ValueError(
-                    "Unknown exploration mode: {}".format(exploration_mode))
+            prediction = predictions[0]
 
         prediction[:, -1] = prediction[:, -1] > 0.5
         return prediction
