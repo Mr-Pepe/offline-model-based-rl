@@ -78,7 +78,7 @@ class EnvironmentModel(nn.Module):
             next_obs = next_obs[:, :, :self.obs_dim] + \
                 obs_act[:, :self.obs_dim]
 
-            if self.term_fn:
+            if self.term_fn and not self.training:
                 done = self.term_fn(obs=obs_act[:, :self.obs_dim],
                                     next_obs=next_obs).to(device)
             else:
@@ -109,7 +109,7 @@ class EnvironmentModel(nn.Module):
 
             predictions = torch.normal(means, std)
 
-            if self.term_fn:
+            if self.term_fn and not self.training:
                 done = self.term_fn(
                     obs=obs_act[:, :self.obs_dim].detach().clone(),
                     next_obs=predictions[:, :, :-1],
@@ -151,6 +151,8 @@ class EnvironmentModel(nn.Module):
     def get_prediction(self, x, i_network=-1,
                        pessimism=0, exploration_mode='state'):
 
+        self.eval()
+
         if pessimism == 0:
             i_network = torch.randint(self.n_networks,
                                       (1,)) if i_network == -1 else i_network
@@ -173,6 +175,8 @@ class EnvironmentModel(nn.Module):
             prediction = predictions[0]
 
         prediction[:, -1] = prediction[:, -1] > 0.5
+
+        self.train()
         return prediction
 
     def check_device_and_shape(self, x, device):

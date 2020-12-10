@@ -111,16 +111,12 @@ def maze2d_umaze_termination_fn(next_obs=None, obs=None, means=None, logvars=Non
 
     if collision.any():
         for i_network in range(next_obs.shape[0]):
-            next_obs[i_network][collision[i_network]] = \
-                obs[collision[i_network]].detach().clone()
-
             # Reset all means and logvars to prevent exploration here
             if means is not None:
-                means[i_network][collision[i_network]] = \
-                    next_obs[i_network][collision[i_network]]
+                means[i_network][collision[i_network]] = 0
 
             if logvars is not None:
-                logvars[i_network][collision[i_network]] = -100
+                logvars[i_network][collision[i_network]] = -20
 
     return collision.unsqueeze(-1).to(x.device)
 
