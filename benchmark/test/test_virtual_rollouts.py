@@ -75,7 +75,7 @@ def test_generate_rollout_stops_on_terminal():
         buffer,
         10,
         stop_on_terminal=True,
-        term_fn=lambda obs, next_obs: torch.ones((1, 1, 1))
+        term_fn=lambda obs, next_obs, means, logvars: torch.ones((1, 1, 1))
     )
 
     assert len(virtual_rollout['obs']) < 10

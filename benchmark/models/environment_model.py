@@ -61,8 +61,8 @@ class EnvironmentModel(nn.Module):
         next_obs, reward = self.layers(obs_act)
 
         out = 0
-        mean = 0
-        logvar = 0
+        means = 0
+        logvars = 0
         max_logvar = 0
         min_logvar = 0
 
@@ -86,24 +86,26 @@ class EnvironmentModel(nn.Module):
             obs_mean = next_obs[:, :, :self.obs_dim] + \
                 obs_act[:, :self.obs_dim]
             reward_mean = reward[:, :, 0].view((self.n_networks, -1, 1))
-            mean = torch.cat((obs_mean, reward_mean), dim=2)
+            means = torch.cat((obs_mean, reward_mean), dim=2)
 
             obs_logvar = next_obs[:, :, self.obs_dim:]
             reward_logvar = reward[:, :, 1].view((self.n_networks, -1, 1))
-            logvar = torch.cat((obs_logvar, reward_logvar), dim=2)
+            logvars = torch.cat((obs_logvar, reward_logvar), dim=2)
 
             max_logvar = self.max_logvar.unsqueeze(1)
             min_logvar = self.min_logvar.unsqueeze(1)
-            logvar = max_logvar - softplus(max_logvar - logvar)
-            logvar = min_logvar + softplus(logvar - min_logvar)
+            logvars = max_logvar - softplus(max_logvar - logvars)
+            logvars = min_logvar + softplus(logvars - min_logvar)
 
-            std = torch.exp(0.5*logvar)
+            std = torch.exp(0.5*logvars)
 
-            out = torch.normal(mean, std)
+            out = torch.normal(means, std)
 
             if term_fn:
-                done = term_fn(obs=obs_act[:, :self.obs_dim],
-                               next_obs=out[:, :, :-1]).to(device)
+                done = term_fn(obs=obs_act[:, :self.obs_dim].detach().clone(),
+                               next_obs=out[:, :, :-1],
+                               means=means[:, :, :-1],
+                               logvars=logvars[:, :, :-1]).to(device)
 
             else:
                 done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
@@ -112,8 +114,8 @@ class EnvironmentModel(nn.Module):
             out = torch.cat((out, done), dim=2)
 
         return out, \
-            mean, \
-            logvar, \
+            means, \
+            logvars, \
             self.max_logvar, \
             self.min_logvar
 
@@ -150,7 +152,7 @@ class EnvironmentModel(nn.Module):
 
             elif exploration_mode == 'state':
                 prediction[:, -2] -= pessimism * \
-                    means.std(dim=0).sum(dim=1)
+                    means[:, :, :2].std(dim=0).sum(dim=1)
 
             else:
                 raise ValueError(
