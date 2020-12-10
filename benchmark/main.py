@@ -28,10 +28,11 @@ if __name__ == '__main__':
     parser.add_argument('--agent_batch_size', type=int, default=256)
     parser.add_argument('--agent_lr', type=float, default=3e-4)
 
-    parser.add_argument('--use_model', type=str2bool, default=False)
-    parser.add_argument('--model_type', type=str, default='deterministic')
-    parser.add_argument('--n_networks', type=int, default=1)
-    parser.add_argument('--model_batch_size', type=int, default=1024)
+    parser.add_argument('--use_model', type=str2bool, default=True)
+    parser.add_argument('--pretrained_model_path', type=str, default='')
+    parser.add_argument('--model_type', type=str, default='probabilistic')
+    parser.add_argument('--n_networks', type=int, default=7)
+    parser.add_argument('--model_batch_size', type=int, default=256)
     parser.add_argument('--model_lr', type=float, default=1e-3)
     parser.add_argument('--model_val_split', type=float, default=0.2)
     parser.add_argument('--model_patience', nargs='+', type=int, default=[20])
@@ -97,6 +98,7 @@ if __name__ == '__main__':
                       model_pessimism=args.model_pessimism,
                       exploration_mode=args.exploration_mode,
                       model_max_n_train_batches=args.model_max_n_train_batches,
+                      pretrained_model_path=args.pretrained_model_path,
                       agent_updates_per_step=args.agent_updates_per_step,
                       rollouts_per_step=args.rollouts_per_step,
                       rollout_schedule=args.rollout_schedule,

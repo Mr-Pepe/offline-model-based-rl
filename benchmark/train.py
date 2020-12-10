@@ -35,6 +35,7 @@ class Trainer():
                  num_test_episodes=10,
                  max_ep_len=1000,
                  use_model=False,
+                 pretrained_model_path='',
                  model_pessimism=0,
                  exploration_mode='state',
                  model_max_n_train_batches=-1,
@@ -120,9 +121,13 @@ class Trainer():
         self.agent = SAC(self.env.observation_space,
                          self.env.action_space,
                          **sac_kwargs)
-        self.env_model = EnvironmentModel(obs_dim[0],
-                                          act_dim,
-                                          **model_kwargs)
+
+        if pretrained_model_path != '':
+            self.env_model = torch.load(pretrained_model_path)
+        else:
+            self.env_model = EnvironmentModel(obs_dim[0],
+                                              act_dim,
+                                              **model_kwargs)
 
         if pretrain_epochs > 0 or n_samples_from_dataset > 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
@@ -170,6 +175,7 @@ class Trainer():
         self.agent_updates_per_step = agent_updates_per_step
 
         self.use_model = use_model
+        self.pretrained_model_path = pretrained_model_path
         self.rollouts_per_step = rollouts_per_step
         self.rollout_schedule = rollout_schedule
         self.max_rollout_length = max_rollout_length
