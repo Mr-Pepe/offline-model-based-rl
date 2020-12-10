@@ -1,3 +1,4 @@
+from benchmark.utils.envs import ANTMAZE_UMAZE_ENVS, ENV_CATEGORIES, HALF_CHEETAH_ENVS, HOPPER_ENVS, MAZE2D_UMAZE_ENVS, WALKER_ENVS
 from benchmark.utils.mazes import ANTMAZE_ANT_RADIUS, ANTMAZE_UMAZE_WALLS, MAZE2D_POINT_RADIUS, \
     MAZE2D_UMAZE_WALLS
 import torch
@@ -132,39 +133,10 @@ termination_functions = {
     'maze2d_umaze': maze2d_umaze_termination_fn,
 }
 
-ANTMAZE_UMAZE_ENVS = ['antmaze-umaze-v0',
-                      'antmaze-umaze-diverse-v0']
-
-MAZE2D_UMAZE_ENVS = ['maze2d-umaze-v1']
-
-function_to_names_mapping = {
-    'hopper': ['Hopper-v2',
-               'hopper-random-v0',
-               'hopper-medium-v0',
-               'hopper-expert-v0',
-               'hopper-medium-replay-v0',
-               'hopper-medium-expert-v0'],
-    'half_cheetah': ['HalfCheetah-v2',
-                     'halfcheetah-random-v0',
-                     'halfcheetah-medium-v0',
-                     'halfcheetah-expert-v0',
-                     'halfcheetah-medium-replay-v0',
-                     'halfcheetah-medium-expert-v0'],
-    'walker2d': ['Walker2d-v2',
-                 'walker2d-random-v0',
-                 'walker2d-medium-v0',
-                 'walker2d-expert-v0',
-                 'walker2d-medium-replay-v0',
-                 'walker2d-medium-expert-v0',
-                 ],
-    'antmaze_umaze': ANTMAZE_UMAZE_ENVS,
-    'maze2d_umaze': MAZE2D_UMAZE_ENVS,
-}
-
 
 def get_termination_function(env_name):
-    for fn_name in function_to_names_mapping:
-        if env_name in function_to_names_mapping[fn_name]:
+    for fn_name in ENV_CATEGORIES:
+        if env_name in ENV_CATEGORIES[fn_name]:
             return termination_functions[fn_name]
 
     return None
