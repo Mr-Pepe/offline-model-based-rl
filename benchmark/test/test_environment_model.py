@@ -173,10 +173,12 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
                                     torch.abs(torch.sin(1.5*x + PI/8)))\
         .to(device)
 
-    model = EnvironmentModel(
-        1, 0, hidden=[64, 64, 64], type='probabilistic')
+    n_networks = 4
 
-    model.to(device)
+    model = EnvironmentModel(
+        1, 0, hidden=[200, 200, 200, 200], type='probabilistic',
+        n_networks=n_networks,
+        device=device)
 
     lr = 1e-4
     optim = Adam(model.parameters(), lr=lr)
@@ -185,7 +187,7 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
 
     x_true = torch.arange(-3*PI, 3*PI, 0.01)
     y_true = torch.sin(x_true)
-    f = plt.figure()
+    f, axs = plt.subplots(n_networks, 1)
 
     for i in range(steps):
         optim.zero_grad()
@@ -193,18 +195,21 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
             torch.reshape(x, (-1, 1)))
         inv_var = torch.exp(-logvar)
 
-        mse_loss = (torch.square(mean[:, :, 0] - y) * inv_var[:, :, 0]).mean()
+        mse_loss = torch.square(mean[:, :, 0] - y).mean()
+        mse_var_loss = (torch.square(
+            mean[:, :, 0] - y) * inv_var[:, :, 0]).mean()
         var_loss = logvar[:, :, 0].mean()
         var_bound_loss = 0.01 * \
             max_logvar[:, 0].sum() - 0.01 * min_logvar[:, 0].sum()
-        loss = mse_loss + var_loss + var_bound_loss
+        loss = mse_var_loss + var_loss + var_bound_loss
 
         if i % 100 == 0:
-            print("Step {}/{} Loss: {:.3f}, MSE: {:.3f}, VAR: {:.3f}, VAR BOUND: {:.3f}"
-                  .format(i, steps, loss, mse_loss, var_loss, var_bound_loss))
+            print("Step {}/{} Loss: {:.3f}, MSE: {:.3f}, MSE + INV VAR: {:.3f} VAR: {:.3f}, VAR BOUND: {:.3f}"
+                  .format(i, steps, loss, mse_loss, mse_var_loss, var_loss, var_bound_loss))
 
             if plot:
-                _, mean_plt, logvar_plt, max_logvar_plt, _ = model(torch.reshape(x_true, (-1, 1)))
+                _, mean_plt, logvar_plt, max_logvar_plt, _ = model(
+                    torch.reshape(x_true, (-1, 1)))
                 mean_plt = mean_plt[:, :, 0].detach().cpu()
                 logvar_plt = logvar_plt[:, :, 0].detach().cpu()
                 max_std = torch.exp(0.5*max_logvar_plt[:, 0].detach().cpu())
@@ -214,16 +219,18 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
                 x_plt = x.cpu()
                 y_plt = y.cpu()
 
-                f.clear()
+                for i_ax, ax in enumerate(axs):
+                    ax.clear()
 
-                plt.fill_between(x_true, (mean_plt+max_std).view(-1), (mean_plt-max_std).view(-1),
-                                 color='grey', zorder=-2)
-                plt.fill_between(x_true, (mean_plt+std).view(-1), (mean_plt-std).view(-1),
-                                 color='lightcoral')
-                plt.scatter(x_plt[800:1200], y_plt[800:1200],
-                            color='green', marker='x')
-                plt.plot(x_true, y_true, color='black')
-                plt.plot(x_true, mean_plt.view(-1), color='red')
+                    ax.fill_between(x_true, (mean_plt[i_ax]+max_std[i_ax]).view(-1),
+                                    (mean_plt[i_ax]-max_std[i_ax]).view(-1),
+                                    color='grey', zorder=-2)
+                    ax.fill_between(x_true, (mean_plt[i_ax]+std[i_ax]).view(-1), (mean_plt[i_ax]-std[i_ax]).view(-1),
+                                    color='lightcoral')
+                    ax.scatter(x_plt[800:1200], y_plt[800:1200],
+                               color='green', marker='x', s=2)
+                    ax.plot(x_true, y_true, color='black')
+                    ax.plot(x_true, mean_plt[i_ax].view(-1), color='red')
 
                 plt.draw()
                 plt.pause(0.001)
