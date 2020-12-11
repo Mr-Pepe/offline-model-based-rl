@@ -15,6 +15,31 @@ def preprocess_maze2d_umaze(obs_act):
     return obs_act
 
 
+def preprocess_antmaze_umaze(obs_act):
+    mean = torch.as_tensor([
+        5.1114e+00,  3.2357e+00,  5.4443e-01,  8.2719e-01, -1.6899e-04,
+        -5.4980e-04,  6.3538e-02, -4.3353e-03,  8.6055e-01, -2.9642e-03,
+        -8.6039e-01,  1.7215e-03, -8.6124e-01,  3.6168e-03,  8.6043e-01,
+        7.4084e-04, -1.0363e-03,  5.6322e-03,  1.0253e-04,  2.0915e-04,
+        4.2020e-03,  9.1933e-04, -3.7982e-03, -4.7156e-04,  1.4381e-03,
+        -1.4222e-03,  5.6210e-04, -1.3198e-04, -3.3764e-03,
+        0.0024,  0.0019, -0.0029,  0.0007, -0.0024, -0.0014, -0.0012, -0.0009],
+        device=obs_act.device)
+
+    std = torch.as_tensor([
+        2.9919, 3.5018, 0.0576, 0.2624, 0.0533, 0.0529, 0.4871, 0.3972, 0.2740,
+        0.3973, 0.2745, 0.3988, 0.2740, 0.3980, 0.2739, 0.4040, 0.4024, 0.4286,
+        0.7133, 0.7098, 0.7995, 1.8461, 1.6154, 1.8532, 1.6198, 1.8498, 1.6218,
+        1.8604, 1.6244,
+        0.5766, 0.5775, 0.5788, 0.5769, 0.5787, 0.5779, 0.5760, 0.5778],
+        device=obs_act.device)
+
+    obs_act -= mean
+    obs_act /= std
+
+    return obs_act
+
+
 def preprocess_hopper(obs_act):
     return obs_act
 
@@ -24,10 +49,6 @@ def preprocess_half_cheetah(obs_act):
 
 
 def preprocess_walker2d(obs_act):
-    return obs_act
-
-
-def preprocess_antmaze_umaze(obs_act):
     return obs_act
 
 
