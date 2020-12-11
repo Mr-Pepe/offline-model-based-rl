@@ -48,7 +48,8 @@ def pretrain_agent(agent,
                                    rollouts['next_obs'],
                                    rollouts['done'])
 
-        agent.multi_update(1, virtual_buffer)
+        if step > 2000:
+            agent.multi_update(2, virtual_buffer)
 
         if debug and (step + 1) % 500 == 0:
             f.clear()
