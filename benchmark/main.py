@@ -15,6 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('--steps_per_epoch', type=int, default=1000)
     parser.add_argument('--init_steps', type=int, default=3000)
     parser.add_argument('--random_steps', type=int, default=5000)
+    parser.add_argument('--env_steps_per_step', type=int, default=1)
     parser.add_argument('--real_buffer_size', type=int, default=int(1e6))
     parser.add_argument('--virtual_buffer_size', type=int, default=int(1e6))
     parser.add_argument('--n_samples_from_dataset', type=int, default=50000)
@@ -92,6 +93,7 @@ if __name__ == '__main__':
                       random_steps=args.random_steps,
                       logger_kwargs=logger_kwargs,
                       device=device,
+                      env_steps_per_step=args.env_steps_per_step,
                       real_buffer_size=args.real_buffer_size,
                       virtual_buffer_size=args.virtual_buffer_size,
                       use_model=args.use_model,

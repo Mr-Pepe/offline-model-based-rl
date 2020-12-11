@@ -31,6 +31,7 @@ class Trainer():
                  steps_per_epoch=4000,
                  random_steps=10000,
                  init_steps=1000,
+                 env_steps_per_step=1,
                  n_samples_from_dataset=-1,
                  agent_updates_per_step=1,
                  num_test_episodes=10,
@@ -177,6 +178,7 @@ class Trainer():
             steps_per_epoch * pretrain_epochs
         self.max_ep_len = min(max_ep_len, self.total_steps)
         self.pretrain_epochs = pretrain_epochs
+        self.env_steps_per_step = env_steps_per_step
 
         self.agent_updates_per_step = agent_updates_per_step
 
@@ -301,37 +303,39 @@ class Trainer():
                       end='\r')
 
                 if epoch > 0:
-                    if take_random_action:
-                        a = self.env.action_space.sample()
-                        actions_this_step[Actions.RANDOM_ACTION] = 1
-                    else:
-                        a = self.agent.act(o).cpu().numpy()
 
-                    o2, r, d, _ = self.env.step(a)
-                    ep_ret += r
-                    ep_len += 1
+                    for _ in range(self.env_steps_per_step):
+                        if take_random_action:
+                            a = self.env.action_space.sample()
+                            actions_this_step[Actions.RANDOM_ACTION] = 1
+                        else:
+                            a = self.agent.act(o).cpu().numpy()
 
-                    # Ignore the "done" signal if it comes from hitting the time
-                    # horizon (that is, when it's an artificial terminal signal
-                    # that isn't based on the agent's state)
-                    d = False if ep_len == self.max_ep_len else d
+                        o2, r, d, _ = self.env.step(a)
+                        ep_ret += r
+                        ep_len += 1
 
-                    self.real_replay_buffer.store(torch.as_tensor(o),
-                                                  torch.as_tensor(a),
-                                                  torch.as_tensor(r),
-                                                  torch.as_tensor(o2),
-                                                  torch.as_tensor(d))
-                    o = o2
+                        # Ignore the "done" signal if it comes from hitting the time
+                        # horizon (that is, when it's an artificial terminal signal
+                        # that isn't based on the agent's state)
+                        d = False if ep_len == self.max_ep_len else d
 
-                    # End of trajectory handling
-                    if d or (ep_len == self.max_ep_len):
-                        episode_finished = True
-                        self.logger.store(EpRet=ep_ret, EpLen=ep_len)
-                        o, ep_ret, ep_len = self.env.reset(), 0, 0
-                        if self.reset_maze2d_umaze:
-                            self.env.set_state(maze2d_umaze_start_state[:2],
-                                               maze2d_umaze_start_state[2:])
-                            o = maze2d_umaze_start_state
+                        self.real_replay_buffer.store(torch.as_tensor(o),
+                                                      torch.as_tensor(a),
+                                                      torch.as_tensor(r),
+                                                      torch.as_tensor(o2),
+                                                      torch.as_tensor(d))
+                        o = o2
+
+                        # End of trajectory handling
+                        if d or (ep_len == self.max_ep_len):
+                            episode_finished = True
+                            self.logger.store(EpRet=ep_ret, EpLen=ep_len)
+                            o, ep_ret, ep_len = self.env.reset(), 0, 0
+                            if self.reset_maze2d_umaze:
+                                self.env.set_state(maze2d_umaze_start_state[:2],
+                                                   maze2d_umaze_start_state[2:])
+                                o = maze2d_umaze_start_state
 
                     steps_since_model_training += 1
                     actions_this_step[Actions.INTERACT_WITH_ENV] = 1
