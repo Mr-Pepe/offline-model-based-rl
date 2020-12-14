@@ -138,9 +138,6 @@ class EnvironmentModel(nn.Module):
                     prediction[:, -2] -= pessimism * \
                         means.std(dim=0).sum(dim=1)
 
-                    prediction[:, -2] = (prediction[:, -2] -
-                                         prediction[:, -2].mean()) / prediction[:, -2].std()
-
                 else:
                     raise ValueError(
                         "Unknown exploration mode: {}".format(exploration_mode))
