@@ -85,7 +85,7 @@ def run_policy(env, get_action, max_ep_len=None, num_episodes=100, render=True):
             env.render()
             time.sleep(1e-3)
 
-        a = get_action(o)
+        a = get_action(o).cpu().numpy()
         o, r, d, _ = env.step(a)
         ep_ret += r
         ep_len += 1
