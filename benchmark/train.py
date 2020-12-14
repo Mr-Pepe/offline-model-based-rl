@@ -138,13 +138,14 @@ class Trainer():
             if not self.term_fn:
                 raise ValueError("Could not find termination function for \
             environment {}".format(env_name))
-            self.pre_fn = get_preprocessing_function(env_name)
             if not self.pre_fn:
                 raise ValueError("Could not find preprocessing function for \
             environment {}".format(env_name))
         else:
             self.term_fn = None
             self.pre_fn = None
+
+        self.pre_fn = get_preprocessing_function(env_name)
 
         sac_kwargs.update({'device': device})
         sac_kwargs.update({'pre_fn': self.pre_fn})
