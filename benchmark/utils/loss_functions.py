@@ -27,10 +27,7 @@ def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False):
         mse_loss = torch.square(mean - y)
         mse_inv_var_loss = (mse_loss * inv_var).mean()
         var_loss = logvar.mean()
-        var_bound_loss = torch.clamp(
-            0.01 * max_logvar.sum() - 0.01 * min_logvar.sum(),
-            0,
-            1e10)
+        var_bound_loss = 0.01 * max_logvar.mean() - 0.01 * min_logvar.mean()
 
         if debug:
             print("MSE: {:.5f}, MSE + INV VAR: {:.5f} VAR: {:.5f}, BOUNDS: {:.5f}, MAX LOGVAR: {:.5f}, MIN LOGVAR: {:.5f}".format(
