@@ -57,6 +57,8 @@ class EnvironmentModel(nn.Module):
 
         self.to(device)
 
+        self.optim = None
+
     def forward(self, obs_act, pessimism=0, exploration_mode='state'):
 
         device = next(self.layers.parameters()).device
@@ -197,44 +199,59 @@ class EnvironmentModel(nn.Module):
             else:
                 patience = patience[0]
 
-        n_batches = data.size // batch_size
+        n_train_batches = int((data.size * (1-val_split)) // batch_size)
+        n_val_batches = int((data.size * val_split) // batch_size)
+
+        if n_train_batches == 0 or n_val_batches == 0:
+            raise ValueError(
+                "Dataset of size {} not big enough to generate a {} % \
+                             validation split with batch size {}."
+                .format(data.size,
+                        val_split*100,
+                        batch_size))
 
         print('')
         print("Buffer size: {} Train batches per epoch: {} Stopping after {} batches".format(
             data.size,
-            n_batches,
+            n_train_batches,
             max_n_train_batches
         ))
 
         device = next(self.parameters()).device
-        optim = Adam(self.parameters(), lr=lr)
 
-        n_bad_losses = 0
-        avg_loss = 0
-        min_loss = 1e10
+        if self.optim is None:
+            self.optim = Adam(self.parameters(), lr=lr, weight_decay=1e-5)
+
+        min_val_loss = 1e10
+        n_bad_val_losses = 0
+        avg_val_loss = 0
+        avg_train_loss = 0
 
         batches_trained = 0
 
         stop_training = False
 
-        while n_bad_losses < patience and n_batches > 0:
+        avg_val_losses = torch.zeros((self.n_networks))
 
-            avg_loss = 0
+        while n_bad_val_losses < patience:
 
-            for i in range(n_batches):
+            avg_train_loss = 0
+
+            for i in range(n_train_batches):
                 x, y = get_x_y_from_batch(
-                    data.sample_batch(batch_size),
+                    data.sample_train_batch(batch_size,
+                                            val_split),
                     device)
 
-                optim.zero_grad()
+                self.optim.zero_grad()
                 if self.type == 'deterministic':
                     loss = deterministic_loss(x, y, self)
                 else:
-                    loss = probabilistic_loss(x, y, self)
+                    loss = probabilistic_loss(x, y, self, debug=debug)
 
-                avg_loss += loss.item()
+                avg_train_loss += loss.item()
                 loss.backward(retain_graph=True)
-                optim.step()
+                self.optim.step()
 
                 if max_n_train_batches != -1 and \
                         max_n_train_batches <= batches_trained:
@@ -243,21 +260,54 @@ class EnvironmentModel(nn.Module):
 
                 batches_trained += 1
 
-            avg_loss /= n_batches
+            if debug:
+                print('')
+                print("Train loss: {}".format(
+                    avg_train_loss/n_train_batches))
 
-            if avg_loss < min_loss - min_loss*0.01:
-                n_bad_losses = 0
-                min_loss = avg_loss
+            avg_val_losses = torch.zeros((self.n_networks))
+
+            for i_network in range(self.n_networks):
+                for i in range(n_val_batches):
+                    x, y = get_x_y_from_batch(
+                        data.sample_val_batch(batch_size,
+                                              val_split),
+                        device)
+
+                    if self.type == 'deterministic':
+                        avg_val_losses[i_network] += deterministic_loss(
+                            x,
+                            y,
+                            self,
+                            i_network).item()
+                    else:
+                        avg_val_losses[i_network] += probabilistic_loss(
+                            x,
+                            y,
+                            self,
+                            i_network,
+                            only_mse=True).item()
+
+                avg_val_losses[i_network] /= n_val_batches
+
+            avg_val_loss = avg_val_losses.mean()
+
+            if avg_val_loss < min_val_loss:
+                n_bad_val_losses = 0
+                min_val_loss = avg_val_loss
             else:
-                n_bad_losses += 1
+                n_bad_val_losses += 1
 
             if stop_training:
                 break
 
-            print("Train batches: {} Patience: {}/{} Loss: {}".format(
+            print("Train batches: {} Patience: {}/{} Val losses: {}".format(
                 batches_trained,
-                n_bad_losses,
+                n_bad_val_losses,
                 patience,
-                avg_loss), end='\r')
+                avg_val_losses.tolist()), end='\r')
 
-        return avg_loss, batches_trained
+            if debug:
+                print('')
+
+        return avg_val_losses, batches_trained
