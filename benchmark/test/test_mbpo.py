@@ -5,13 +5,14 @@ import pytest
 
 
 @pytest.mark.slow
-def test_mbpo_with_single_deterministic_model_converges():
+def test_mbpo_online():
     logger_kwargs = setup_logger_kwargs('test_mbpo')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     trainer = Trainer('Hopper-v2',
                       steps_per_epoch=1000,
-                      model_kwargs=dict(batch_size=256),
+                      model_kwargs=dict(
+                          batch_size=256, type='probabilistic', n_networks=3),
                       init_steps=1300,
                       random_steps=1000,
                       epochs=20,
