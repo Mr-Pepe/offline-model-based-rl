@@ -12,7 +12,8 @@ def model_needs_training(step,
                 if not model_trained:
                     return True
             else:
-                if steps_since_model_training >= train_model_every:
+                if steps_since_model_training >= train_model_every and \
+                        train_model_every > 0:
                     if model_trained:
                         # Ignore init_steps if pretraining happened
                         return True
