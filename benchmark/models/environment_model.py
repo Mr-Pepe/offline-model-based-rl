@@ -62,10 +62,12 @@ class EnvironmentModel(nn.Module):
     def forward(self, obs_act, pessimism=0, exploration_mode='state'):
 
         device = next(self.layers.parameters()).device
-        obs_act = self.check_device_and_shape(obs_act, device)
+        raw_obs_act = self.check_device_and_shape(obs_act, device)
 
         if self.pre_fn:
-            obs_act = self.pre_fn(obs_act)
+            obs_act = self.pre_fn(raw_obs_act.detach().clone())
+        else:
+            obs_act = raw_obs_act.detach().clone()
 
         next_obs, reward = self.layers(obs_act)
 
@@ -78,11 +80,10 @@ class EnvironmentModel(nn.Module):
         # The model only learns a residual, so the input has to be added
         if self.type == 'deterministic':
             next_obs = next_obs[:, :, :self.obs_dim] + \
-                obs_act[:, :self.obs_dim]
+                raw_obs_act[:, :self.obs_dim]
 
             if self.term_fn and not self.training:
-                done = self.term_fn(obs=obs_act[:, :self.obs_dim],
-                                    next_obs=next_obs).to(device)
+                done = self.term_fn(next_obs=next_obs).to(device)
             else:
                 done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
                                    device=device)
@@ -94,7 +95,7 @@ class EnvironmentModel(nn.Module):
 
         elif self.type == 'probabilistic':
             obs_mean = next_obs[:, :, :self.obs_dim] + \
-                obs_act[:, :self.obs_dim]
+                raw_obs_act[:, :self.obs_dim]
             reward_mean = reward[:, :, 0].view((self.n_networks, -1, 1))
             means = torch.cat((obs_mean, reward_mean), dim=2)
 
@@ -113,7 +114,6 @@ class EnvironmentModel(nn.Module):
 
             if self.term_fn and not self.training:
                 done = self.term_fn(
-                    obs=obs_act[:, :self.obs_dim].detach().clone(),
                     next_obs=predictions[:, :, :-1],
                     means=means[:, :, :-1],
                     logvars=logvars[:, :, :-1]).to(device)
