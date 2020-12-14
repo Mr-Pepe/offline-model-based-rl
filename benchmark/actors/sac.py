@@ -14,8 +14,8 @@ class SAC(nn.Module):
 
     def __init__(self, observation_space, action_space, hidden=(256, 256),
                  activation=nn.ReLU, pi_lr=3e-4, q_lr=3e-4, gamma=0.99,
-                 alpha=0.2,
-                 polyak=0.995, batch_size=100, device='cpu'):
+                 alpha=0.2, polyak=0.995, batch_size=100, 
+                 pre_fn=None, device='cpu'):
         '''
             gamma (float): Discount factor. (Always between 0 and 1.)
 
@@ -42,6 +42,7 @@ class SAC(nn.Module):
         self.alpha = alpha
         self.polyak = polyak
         self.batch_size = batch_size
+        self.pre_fn = pre_fn
         self.device = device
 
         obs_dim = observation_space.shape[0]
@@ -79,6 +80,10 @@ class SAC(nn.Module):
         o, a, r, o2, d = data['obs'], data['act'], \
             data['rew'], data['obs2'], data['done']
 
+        if self.pre_fn:
+            o = self.pre_fn(o)
+            o2 = self.pre_fn(o2)
+
         q1 = self.q1(o, a)
         q2 = self.q2(o, a)
 
@@ -107,6 +112,10 @@ class SAC(nn.Module):
 
     def compute_loss_pi(self, data):
         o = data['obs']
+
+        if self.pre_fn:
+            o = self.pre_fn(o)
+
         pi, logp_pi = self.pi(o)
         q1_pi = self.q1(o, pi)
         q2_pi = self.q2(o, pi)
@@ -173,6 +182,10 @@ class SAC(nn.Module):
         obs = torch.as_tensor(o,
                               dtype=torch.float32,
                               device=self.device)
+
+        if self.pre_fn:
+            obs = self.pre_fn(obs)
+
         with torch.no_grad():
             a, _ = self.pi(obs, deterministic, False)
             return a

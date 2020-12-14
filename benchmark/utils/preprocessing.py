@@ -16,6 +16,8 @@ def preprocess_maze2d_umaze(obs_act):
 
 
 def preprocess_antmaze_umaze(obs_act):
+    obs_act = obs_act.detach().clone()
+
     mean = torch.as_tensor([
         5.1114e+00,  3.2357e+00,  5.4443e-01,  8.2719e-01, -1.6899e-04,
         -5.4980e-04,  6.3538e-02, -4.3353e-03,  8.6055e-01, -2.9642e-03,
@@ -34,8 +36,11 @@ def preprocess_antmaze_umaze(obs_act):
         0.5766, 0.5775, 0.5788, 0.5769, 0.5787, 0.5779, 0.5760, 0.5778],
         device=obs_act.device)
 
-    obs_act -= mean
-    obs_act /= std
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
 
     return obs_act
 
