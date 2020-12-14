@@ -1,5 +1,5 @@
 from benchmark.utils.envs import ANTMAZE_UMAZE_ENVS, ENV_CATEGORIES, HALF_CHEETAH_ENVS, HOPPER_ENVS, MAZE2D_UMAZE_ENVS, WALKER_ENVS
-from benchmark.utils.mazes import ANTMAZE_ANT_RADIUS, ANTMAZE_UMAZE_WALLS, MAZE2D_POINT_RADIUS, \
+from benchmark.utils.mazes import ANTMAZE_ANT_RADIUS, ANTMAZE_UMAZE_GOAL_BLOCK, ANTMAZE_UMAZE_WALLS, MAZE2D_POINT_RADIUS, \
     MAZE2D_UMAZE_WALLS
 import torch
 
@@ -37,7 +37,8 @@ def walker2d_termination_fn(next_obs=None, **_):
     return done
 
 
-def antmaze_umaze_termination_fn(next_obs=None, means=None, logvars=None, **_):
+def antmaze_umaze_termination_fn(next_obs=None, means=None, logvars=None,
+                                 rewards=None, **_):
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
@@ -76,6 +77,13 @@ def antmaze_umaze_termination_fn(next_obs=None, means=None, logvars=None, **_):
 
             if logvars is not None:
                 logvars[i_network][done[i_network]] = -20
+
+    if rewards is not None:
+        rewards = 1 * \
+            (ANTMAZE_UMAZE_GOAL_BLOCK[0] <= x + ANTMAZE_ANT_RADIUS) * \
+            (ANTMAZE_UMAZE_GOAL_BLOCK[1] > x - ANTMAZE_ANT_RADIUS) * \
+            (ANTMAZE_UMAZE_GOAL_BLOCK[2] <= y + ANTMAZE_ANT_RADIUS) * \
+            (ANTMAZE_UMAZE_GOAL_BLOCK[3] > y - ANTMAZE_ANT_RADIUS)
 
     return done.unsqueeze(-1)
 

@@ -115,8 +115,9 @@ class EnvironmentModel(nn.Module):
             if self.term_fn and not self.training:
                 done = self.term_fn(
                     next_obs=predictions[:, :, :-1],
-                    means=means[:, :, :-1],
-                    logvars=logvars[:, :, :-1]).to(device)
+                    rewards=predictions[:, :, -1],
+                    means=means,
+                    logvars=logvars).to(device)
 
             else:
                 done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
