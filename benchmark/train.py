@@ -158,6 +158,7 @@ class Trainer():
 
         if pretrained_model_path != '':
             self.env_model = torch.load(pretrained_model_path)
+            self.env_model.to(device)
         else:
             self.env_model = EnvironmentModel(obs_dim[0],
                                               act_dim,
