@@ -37,7 +37,7 @@ def walker2d_termination_fn(next_obs=None, **_):
     return done
 
 
-def antmaze_umaze_termination_fn(next_obs=None, obs=None, means=None, logvars=None, **_):
+def antmaze_umaze_termination_fn(next_obs=None, means=None, logvars=None, **_):
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
@@ -62,29 +62,25 @@ def antmaze_umaze_termination_fn(next_obs=None, obs=None, means=None, logvars=No
 
     collision = collision.sum(dim=2) > 0
 
-    if collision.any():
-        for i_network in range(next_obs.shape[0]):
-            next_obs[i_network][collision[i_network]] = \
-                obs[collision[i_network]].detach().clone()
-
-            # Reset all means and logvars to prevent exploration here
-            if means is not None:
-                means[i_network][collision[i_network]] = \
-                    next_obs[i_network][collision[i_network]]
-
-            if logvars is not None:
-                logvars[i_network][collision[i_network]] = -100
-
     notdone = torch.stack((torch.isfinite(next_obs).all(dim=2),
                            next_obs[:, :, 2] >= 0.2,
                            next_obs[:, :, 2] <= 1.0)).all(dim=0)
     done = ~notdone
     done = torch.logical_or(done, collision.to(x.device))
 
+    if done.any():
+        for i_network in range(next_obs.shape[0]):
+            # Reset all means and logvars to prevent exploration here
+            if means is not None:
+                means[i_network][done[i_network]] = 0
+
+            if logvars is not None:
+                logvars[i_network][done[i_network]] = -20
+
     return done.unsqueeze(-1)
 
 
-def maze2d_umaze_termination_fn(next_obs=None, obs=None, means=None, logvars=None, **_):
+def maze2d_umaze_termination_fn(next_obs=None, means=None, logvars=None, **_):
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
