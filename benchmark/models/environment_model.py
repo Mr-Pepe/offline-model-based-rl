@@ -133,6 +133,8 @@ class EnvironmentModel(nn.Module):
                         torch.exp(logvars[:, :, -1]).to(device).mean(dim=0)
 
                 elif exploration_mode == 'state':
+                    prediction[:, -2] *= 100
+
                     prediction[:, -2] -= pessimism * \
                         means.std(dim=0).sum(dim=1)
 
