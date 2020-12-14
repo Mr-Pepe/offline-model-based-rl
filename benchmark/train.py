@@ -115,12 +115,6 @@ class Trainer():
         self.test_env.seed(seed)
         self.test_env.action_space.seed(seed)
 
-        sac_kwargs.update({'device': device})
-        self.sac_kwargs = sac_kwargs
-        self.agent = SAC(self.env.observation_space,
-                         self.env.action_space,
-                         **sac_kwargs)
-
         if pretrain_epochs > 0 or n_samples_from_dataset > 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
                 self.env,
@@ -145,11 +139,18 @@ class Trainer():
             environment {}".format(env_name))
             self.pre_fn = get_preprocessing_function(env_name)
             if not self.pre_fn:
-                raise ValueError("Could not find termination function for \
+                raise ValueError("Could not find preprocessing function for \
             environment {}".format(env_name))
         else:
             self.term_fn = None
             self.pre_fn = None
+
+        sac_kwargs.update({'device': device})
+        sac_kwargs.update({'pre_fn': self.pre_fn})
+        self.sac_kwargs = sac_kwargs
+        self.agent = SAC(self.env.observation_space,
+                         self.env.action_space,
+                         **sac_kwargs)
 
         model_kwargs.update({'device': device})
         model_kwargs.update({'pre_fn': self.pre_fn})
