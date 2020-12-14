@@ -3,6 +3,8 @@ import torch
 
 
 def preprocess_maze2d_umaze(obs_act):
+    obs_act = obs_act.detach().clone()
+
     mean = torch.as_tensor([1.8653e+00,  2.0270e+00, -5.9192e-02, -6.7519e-02,
                             5.5773e-04, -2.4673e-04], device=obs_act.device)
 
