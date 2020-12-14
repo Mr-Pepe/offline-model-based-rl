@@ -48,6 +48,24 @@ def preprocess_antmaze_umaze(obs_act):
 
 
 def preprocess_hopper(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor(
+        [0.4982,  0.0009, -0.0892, -0.1062,  0.0413,  0.6030, -0.0670, -0.1053,
+         -0.1612, -0.1475,  0.0463,  0.0133,  0.0145, -0.0380],
+        device=obs_act.device)
+
+    std = torch.as_tensor(
+        [0.6143, 0.0488, 0.1826, 0.2178, 0.3215, 1.1208, 0.7118, 0.7581, 1.2504,
+         1.6932, 3.1109, 0.3190, 0.3701, 0.4193],
+        device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
     return obs_act
 
 
