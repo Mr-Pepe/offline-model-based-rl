@@ -37,6 +37,7 @@ class Trainer():
                  num_test_episodes=10,
                  max_ep_len=1000,
                  use_model=False,
+                 pretrained_agent_path='',
                  pretrained_model_path='',
                  model_pessimism=0,
                  exploration_mode='state',
@@ -148,9 +149,14 @@ class Trainer():
         sac_kwargs.update({'device': device})
         sac_kwargs.update({'pre_fn': self.pre_fn})
         self.sac_kwargs = sac_kwargs
-        self.agent = SAC(self.env.observation_space,
-                         self.env.action_space,
-                         **sac_kwargs)
+
+        if pretrained_agent_path != '':
+            self.agent = torch.load(pretrained_agent_path)
+            self.agent.to(device)
+        else:
+            self.agent = SAC(self.env.observation_space,
+                             self.env.action_space,
+                             **sac_kwargs)
 
         model_kwargs.update({'device': device})
         model_kwargs.update({'pre_fn': self.pre_fn})
@@ -276,9 +282,6 @@ class Trainer():
                         self.virtual_replay_buffer.clear()
 
                     if self.virtual_pretrain_epochs > 0 and epoch > 0:
-                        self.agent = SAC(self.env.observation_space,
-                                         self.env.action_space,
-                                         **self.sac_kwargs)
 
                         pretrain_agent(
                             self.agent,

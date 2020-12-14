@@ -24,6 +24,7 @@ if __name__ == '__main__':
     parser.add_argument('--hid', type=int, default=200)
     parser.add_argument('--l', type=int, default=4)
 
+    parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--agent_updates_per_step', type=int, default=1)
     parser.add_argument('--agent_batch_size', type=int, default=256)
@@ -90,6 +91,7 @@ if __name__ == '__main__':
                       pretrain_epochs=args.pretrain_epochs,
                       steps_per_epoch=args.steps_per_epoch,
                       init_steps=args.init_steps,
+                      pretrained_agent_path=args.pretrained_agent_path,
                       random_steps=args.random_steps,
                       logger_kwargs=logger_kwargs,
                       device=device,
