@@ -126,7 +126,7 @@ class EnvironmentModel(nn.Module):
             predictions = torch.cat((predictions, done), dim=2)
 
             if pessimism != 0:
-                prediction = predictions.mean(dim=0)
+                prediction = predictions[torch.randint(0, len(predictions), (1,))][0]
 
                 if exploration_mode == 'reward':
                     prediction[:, -2] -= pessimism * \
