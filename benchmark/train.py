@@ -138,7 +138,7 @@ class Trainer():
         if use_model:
             self.post_fn = get_postprocessing_function(env_name)
             if not self.post_fn:
-                raise ValueError("Could not find termination function for \
+                raise ValueError("Could not find postprocessing function for \
             environment {}".format(env_name))
             if not self.pre_fn:
                 raise ValueError("Could not find preprocessing function for \

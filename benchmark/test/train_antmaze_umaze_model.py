@@ -1,4 +1,4 @@
-from benchmark.utils.termination_functions import get_termination_function
+from benchmark.utils.postprocessing import get_postprocessing_function
 from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.load_dataset import load_dataset_from_env
@@ -18,7 +18,7 @@ model = EnvironmentModel(obs_dim=obs_dim,
                          n_networks=7,
                          device=device,
                          pre_fn=get_preprocessing_function('antmaze-umaze-v0'),
-                         term_fn=get_termination_function('antmaze-umaze-v0'),
+                         term_fn=get_postprocessing_function('antmaze-umaze-v0'),
                          )
 
 max_n_train_batches = -1

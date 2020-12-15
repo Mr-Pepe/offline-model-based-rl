@@ -232,7 +232,7 @@ def test_actions_for_offline_model_based_training_with_fine_tuning():
 
 
 @pytest.mark.medium
-def test_throws_error_if_using_model_but_no_termination_fn_available():
+def test_throws_error_if_using_model_but_no_postprocessing_fn_available():
     with pytest.raises(ValueError):
         Trainer('maze2d-open-dense-v0', use_model=True)
 
