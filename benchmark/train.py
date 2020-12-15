@@ -162,7 +162,8 @@ class Trainer():
                              **sac_kwargs)
 
         if use_custom_reward:
-            model_kwargs.update({'rew_fn': get_reward_function(env_name)})
+            self.rew_fn = get_reward_function(env_name)
+            model_kwargs.update({'rew_fn': self.rew_fn})
 
         model_kwargs.update({'device': device})
         model_kwargs.update({'pre_fn': self.pre_fn})
@@ -172,6 +173,9 @@ class Trainer():
         if pretrained_model_path != '':
             self.env_model = torch.load(pretrained_model_path)
             self.env_model.to(device)
+            self.env_model.pre_fn = self.pre_fn
+            self.env_model.post_fn = self.post_fn
+            self.env_model.rew_fn = self.rew_fn
         else:
             self.env_model = EnvironmentModel(obs_dim[0],
                                               act_dim,
