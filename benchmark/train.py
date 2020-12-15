@@ -1,6 +1,6 @@
 from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.utils.pretrain_agent import pretrain_agent
-from benchmark.utils.termination_functions import get_termination_function
+from benchmark.utils.postprocessing import get_postprocessing_function
 import gym
 from benchmark.utils.model_needs_training import model_needs_training
 from benchmark.utils.actions import Actions
@@ -136,7 +136,7 @@ class Trainer():
         self.pre_fn = get_preprocessing_function(env_name)
 
         if use_model:
-            self.post_fn = get_termination_function(env_name)
+            self.post_fn = get_postprocessing_function(env_name)
             if not self.post_fn:
                 raise ValueError("Could not find termination function for \
             environment {}".format(env_name))

@@ -8,7 +8,7 @@ from benchmark.utils.load_dataset import load_dataset_from_env
 import pytest
 import matplotlib.pyplot as plt
 from benchmark.models.environment_model import EnvironmentModel
-from benchmark.utils.termination_functions import termination_functions
+from benchmark.utils.postprocessing import postprocessing_functions
 import torch.nn as nn
 import torch
 from torch.optim.adam import Adam
@@ -374,7 +374,7 @@ def test_deterministic_model_returns_binary_done_signal_when_post_fn_used():
     torch.manual_seed(2)
 
     model = EnvironmentModel(obs_dim, act_dim,
-                             post_fn=termination_functions['hopper'])
+                             post_fn=postprocessing_functions['hopper'])
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
@@ -392,7 +392,7 @@ def test_deterministic_model_does_not_always_output_terminal():
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
         env, n_samples=10000, buffer_device=device)
     model = EnvironmentModel(obs_dim, act_dim, type='deterministic',
-                             post_fn=termination_functions['hopper'],
+                             post_fn=postprocessing_functions['hopper'],
                              device=device)
     optim = Adam(model.parameters(), lr=1e-3)
 
@@ -444,7 +444,7 @@ def test_probabilistic_model_does_not_always_output_terminal():
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
         env, 10000, buffer_device=device)
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',
-                             post_fn=termination_functions['hopper'],
+                             post_fn=postprocessing_functions['hopper'],
                              device=device)
     optim = Adam(model.parameters(), lr=1e-3)
 

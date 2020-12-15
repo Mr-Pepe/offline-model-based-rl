@@ -4,7 +4,7 @@ from benchmark.utils.mazes import ANTMAZE_ANT_RADIUS, ANTMAZE_UMAZE_GOAL_BLOCK, 
 import torch
 
 
-def hopper_termination_fn(next_obs=None, **_):
+def postprocess_hopper(next_obs=None, **_):
 
     height = next_obs[:, :, 0]
     angle = next_obs[:, :, 1]
@@ -18,13 +18,13 @@ def hopper_termination_fn(next_obs=None, **_):
     return done
 
 
-def half_cheetah_termination_fn(next_obs=None, **_):
+def postprocess_half_cheetah(next_obs=None, **_):
 
     done = torch.zeros((next_obs.shape[0], next_obs.shape[1], 1))
     return done
 
 
-def walker2d_termination_fn(next_obs=None, **_):
+def postprocess_walker2d(next_obs=None, **_):
 
     height = next_obs[:, :, 0]
     angle = next_obs[:, :, 1]
@@ -37,7 +37,7 @@ def walker2d_termination_fn(next_obs=None, **_):
     return done
 
 
-def antmaze_umaze_termination_fn(next_obs=None, means=None, logvars=None,
+def postprocess_antmaze_umaze(next_obs=None, means=None, logvars=None,
                                  rewards=None, **_):
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
@@ -88,7 +88,7 @@ def antmaze_umaze_termination_fn(next_obs=None, means=None, logvars=None,
     return done.unsqueeze(-1)
 
 
-def maze2d_umaze_termination_fn(next_obs=None, means=None, logvars=None, **_):
+def postprocess_maze2d_umaze(next_obs=None, means=None, logvars=None, **_):
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
@@ -125,18 +125,18 @@ def maze2d_umaze_termination_fn(next_obs=None, means=None, logvars=None, **_):
     return collision.unsqueeze(-1).to(x.device)
 
 
-termination_functions = {
-    'hopper': hopper_termination_fn,
-    'half_cheetah': half_cheetah_termination_fn,
-    'walker2d': walker2d_termination_fn,
-    'antmaze_umaze': antmaze_umaze_termination_fn,
-    'maze2d_umaze': maze2d_umaze_termination_fn,
+postprocessing_functions = {
+    'hopper': postprocess_hopper,
+    'half_cheetah': postprocess_half_cheetah,
+    'walker2d': postprocess_walker2d,
+    'antmaze_umaze': postprocess_antmaze_umaze,
+    'maze2d_umaze': postprocess_maze2d_umaze,
 }
 
 
-def get_termination_function(env_name):
+def get_postprocessing_function(env_name):
     for fn_name in ENV_CATEGORIES:
         if env_name in ENV_CATEGORIES[fn_name]:
-            return termination_functions[fn_name]
+            return postprocessing_functions[fn_name]
 
     return None

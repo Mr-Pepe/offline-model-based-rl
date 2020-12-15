@@ -6,12 +6,12 @@ import pytest
 import numpy as np
 import torch
 import gym
-from benchmark.utils.termination_functions import \
-    half_cheetah_termination_fn, \
-    hopper_termination_fn, \
-    antmaze_umaze_termination_fn, \
-    maze2d_umaze_termination_fn, \
-    walker2d_termination_fn
+from benchmark.utils.postprocessing import \
+    postprocess_half_cheetah, \
+    postprocess_hopper, \
+    postprocess_antmaze_umaze, \
+    postprocess_maze2d_umaze, \
+    postprocess_walker2d
 import d4rl  # noqa
 
 
@@ -37,18 +37,18 @@ def run_env(env, n_steps):
 
 
 @pytest.mark.fast
-def test_hopper_termination_function():
+def test_hopper_postprocessing():
     next_observations, dones = run_env(gym.make('Hopper-v2'), 100)
 
     assert dones.sum() > 0
 
     np.testing.assert_array_equal(
         torch.stack(3*[dones]),
-        hopper_termination_fn(next_obs=torch.stack(3*[next_observations])))
+        postprocess_hopper(next_obs=torch.stack(3*[next_observations])))
 
 
 @pytest.mark.fast
-def test_half_cheetah_termination_function():
+def test_half_cheetah_postprocessing():
     next_observations, dones = run_env(gym.make('HalfCheetah-v2'), 100)
 
     # Halg cheetah does not generate terminal states
@@ -56,12 +56,12 @@ def test_half_cheetah_termination_function():
 
     np.testing.assert_array_equal(
         torch.stack(3*[dones]),
-        half_cheetah_termination_fn(
+        postprocess_half_cheetah(
             next_obs=torch.stack(3*[next_observations])))
 
 
 @pytest.mark.fast
-def test_walker2d_termination_function():
+def test_walker2d_postprocessing():
 
     next_observations, dones = run_env(gym.make('Walker2d-v2'), 100)
 
@@ -69,12 +69,12 @@ def test_walker2d_termination_function():
 
     np.testing.assert_array_equal(
         torch.stack(3*[dones]),
-        walker2d_termination_fn(
+        postprocess_walker2d(
             next_obs=torch.stack(3*[next_observations])))
 
 
 @pytest.mark.medium
-def test_antmaze_umaze_termination_function():
+def test_antmaze_umaze_postprocessing():
 
     env = gym.make('antmaze-umaze-v0')
 
@@ -102,8 +102,8 @@ def test_antmaze_umaze_termination_function():
     # Check collision detection
     obs = torch.ones((next_obs.shape[1], next_obs.shape[2]))
 
-    dones = antmaze_umaze_termination_fn(next_obs=next_obs,
-                                         obs=obs)
+    dones = postprocess_antmaze_umaze(next_obs=next_obs,
+                                      obs=obs)
 
     # plot_antmaze_umaze([-20, 20], [-20, 20])
     # for i_network in range(n_networks):
@@ -122,7 +122,7 @@ def test_antmaze_umaze_termination_function():
 
 
 @pytest.mark.medium
-def test_maze2d_umaze_termination_function():
+def test_maze2d_umaze_postprocessing():
 
     env = gym.make('maze2d-umaze-v1')
 
@@ -148,8 +148,8 @@ def test_maze2d_umaze_termination_function():
     # Check collision detection
     obs = torch.ones((next_obs.shape[1], next_obs.shape[2]))
 
-    dones = maze2d_umaze_termination_fn(next_obs=next_obs,
-                                        obs=obs).view(-1)
+    dones = postprocess_maze2d_umaze(next_obs=next_obs,
+                                     obs=obs).view(-1)
 
     # plot_maze2d_umaze([-2, 5], [-2, 5])
     # for i_network in range(n_networks):

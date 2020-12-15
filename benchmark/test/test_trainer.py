@@ -3,7 +3,7 @@ from benchmark.train import Trainer
 import pytest
 import d4rl  # noqa
 import numpy as np
-from benchmark.utils.termination_functions import termination_functions
+from benchmark.utils.postprocessing import postprocessing_functions
 
 
 @pytest.mark.medium
@@ -237,18 +237,18 @@ def test_throws_error_if_using_model_but_no_termination_fn_available():
 
 
 @pytest.mark.medium
-def test_trainer_picks_correct_termination_functions():
+def test_trainer_picks_correct_postprocessing_functions():
     trainer = Trainer('Hopper-v2', use_model=True)
 
-    assert trainer.post_fn == termination_functions['hopper']
+    assert trainer.post_fn == postprocessing_functions['hopper']
 
     trainer = Trainer('HalfCheetah-v2', use_model=True)
 
-    assert trainer.post_fn == termination_functions['half_cheetah']
+    assert trainer.post_fn == postprocessing_functions['half_cheetah']
 
     trainer = Trainer('Walker2d-v2', use_model=True)
 
-    assert trainer.post_fn == termination_functions['walker2d']
+    assert trainer.post_fn == postprocessing_functions['walker2d']
 
 
 @pytest.mark.slow

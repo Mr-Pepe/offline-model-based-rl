@@ -9,7 +9,8 @@ from benchmark.utils.virtual_rollouts import generate_virtual_rollout, \
 from benchmark.actors.sac import SAC
 from benchmark.models.environment_model import EnvironmentModel
 import gym
-from benchmark.utils.termination_functions import termination_functions
+from benchmark.utils.postprocessing import \
+    get_postprocessing_function, postprocessing_functions
 import time
 import matplotlib.pyplot as plt
 
@@ -30,7 +31,7 @@ def test_generate_rollout_of_desired_length():
     buffer.store(start_observation, 0, 0, 0, 0)
 
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',
-                             post_fn=termination_functions['half_cheetah'])
+                             post_fn=postprocessing_functions['half_cheetah'])
     agent = SAC(observation_space, action_space)
 
     virtual_rollout, _ = generate_virtual_rollouts(
@@ -85,7 +86,7 @@ def test_generate_rollout_stops_on_terminal():
 @pytest.mark.medium
 def test_generating_and_saving_rollouts_in_parallel_is_faster():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    env = gym.make('maze2d-open-dense-v0')
+    env = gym.make('maze2d-umaze-v1')
     observation_space = env.observation_space
     action_space = env.action_space
 
@@ -104,7 +105,9 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
         obs_dim=obs_dim, act_dim=act_dim, size=int(1e6), device=device)
     sequential_buffer.store(start_observation, 0, 0, 0, 0)
 
-    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
+    model = EnvironmentModel(
+        obs_dim, act_dim, type='probabilistic',
+        post_fn=get_postprocessing_function('maze2d-umaze-v1'))
     model.to(device)
     agent = SAC(observation_space, action_space, device=device)
 
@@ -154,7 +157,7 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
 @pytest.mark.medium
 def test_use_random_actions_in_virtual_rollout():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    env = gym.make('maze2d-open-dense-v0')
+    env = gym.make('maze2d-umaze-v1')
     observation_space = env.observation_space
     action_space = env.action_space
 
@@ -169,7 +172,9 @@ def test_use_random_actions_in_virtual_rollout():
         obs_dim=obs_dim, act_dim=act_dim, size=int(1e6), device=device)
     buffer.store(start_observation, 0, 0, 0, 0)
 
-    model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
+    model = EnvironmentModel(
+        obs_dim, act_dim, type='probabilistic',
+        post_fn=get_postprocessing_function('maze2d-umaze-v1'))
     model.to(device)
     agent = SAC(observation_space, action_space, device=device)
 
@@ -211,7 +216,7 @@ def test_continuously_grow_rollouts(plot=False):
 
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',
                              n_networks=3, device=device,
-                             post_fn=termination_functions['hopper'])
+                             post_fn=postprocessing_functions['hopper'])
 
     model.train_to_convergence(buffer, patience=1)
 

@@ -7,7 +7,7 @@ Some simple logging functionality, inspired by rllab's logging.
 Logs to a tab-separated-values file (path/to/output_directory/progress.txt)
 
 """
-from benchmark.utils.termination_functions import ANTMAZE_UMAZE_ENVS, MAZE2D_UMAZE_ENVS
+from benchmark.utils.envs import ANTMAZE_UMAZE_ENVS, MAZE2D_UMAZE_ENVS
 from benchmark.utils.mazes import plot_antmaze_umaze, plot_maze2d_umaze
 import json
 import joblib

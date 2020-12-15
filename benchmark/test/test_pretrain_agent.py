@@ -1,4 +1,4 @@
-from benchmark.utils.termination_functions import maze2d_umaze_termination_fn
+from benchmark.utils.postprocessing import postprocess_maze2d_umaze
 from benchmark.utils.pretrain_agent import pretrain_agent
 import gym
 import d4rl  # noqa
@@ -11,7 +11,7 @@ def agent_pretrains_in_virtual_environment():
     env = gym.make('maze2d-umaze-v1')
     buffer, obs_dim, act_dim = load_dataset_from_env(env, n_samples=100000)
     agent = SAC(env.observation_space, env.action_space)
-    post_fn = maze2d_umaze_termination_fn
+    post_fn = postprocess_maze2d_umaze
     model = EnvironmentModel(obs_dim, act_dim,
                              post_fn=post_fn)
 
