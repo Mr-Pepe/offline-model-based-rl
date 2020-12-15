@@ -50,6 +50,7 @@ if __name__ == '__main__':
     parser.add_argument('--reset_buffer', type=str2bool, default=False)
     parser.add_argument('--train_model_from_scratch', type=str2bool, default=False)
     parser.add_argument('--virtual_pretrain_epochs', type=int, default=0)
+    parser.add_argument('--use_custom_reward', type=str2bool, default=False)
 
     parser.add_argument('--num_test_episodes', type=int, default=3)
     parser.add_argument('--exp_name', type=str, default='antmaze_umaze_mopo')
@@ -106,6 +107,7 @@ if __name__ == '__main__':
                       agent_updates_per_step=args.agent_updates_per_step,
                       rollouts_per_step=args.rollouts_per_step,
                       rollout_schedule=args.rollout_schedule,
+                      use_custom_reward=args.use_custom_reward,
                       continuous_rollouts=args.continuous_rollouts,
                       train_model_every=args.train_model_every,
                       num_test_episodes=args.num_test_episodes,

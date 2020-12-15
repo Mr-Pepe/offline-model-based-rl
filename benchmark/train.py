@@ -1,3 +1,4 @@
+from benchmark.utils.reward_functions import get_reward_function
 from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.utils.pretrain_agent import pretrain_agent
 from benchmark.utils.postprocessing import get_postprocessing_function
@@ -47,6 +48,7 @@ class Trainer():
                  max_rollout_length=999999,
                  continuous_rollouts=False,
                  train_model_every=250,
+                 use_custom_reward=False,
                  real_buffer_size=int(1e6),
                  virtual_buffer_size=int(1e6),
                  reset_buffer=False,
@@ -158,6 +160,9 @@ class Trainer():
             self.agent = SAC(self.env.observation_space,
                              self.env.action_space,
                              **sac_kwargs)
+
+        if use_custom_reward:
+            model_kwargs.update({'rew_fn': get_reward_function(env_name)})
 
         model_kwargs.update({'device': device})
         model_kwargs.update({'pre_fn': self.pre_fn})
