@@ -199,6 +199,7 @@ def test_actions_for_offline_model_based_training_with_fine_tuning():
                       init_steps=init_steps,
                       random_steps=random_steps,
                       rollouts_per_step=1,
+                      n_samples_from_dataset=-1
                       )
 
     test_performances, action_log = trainer.train()
