@@ -1,3 +1,4 @@
+from benchmark.utils.replay_buffer import ReplayBuffer
 import torch
 from torch.optim.adam import Adam
 from benchmark.models.environment_model import EnvironmentModel
@@ -20,11 +21,32 @@ def test_probabilistic_model_trains_on_maze2d_umaze(steps=3000, plot=False):
     torch.manual_seed(0)
 
     env = gym.make('maze2d-umaze-v1')
-    buffer, obs_dim, act_dim = load_dataset_from_env(env, n_samples=n_samples,
-                                                     buffer_device=device)
+    obs_dim = env.observation_space.shape[0]
+    act_dim = env.action_space.shape[0]
+    buffer = ReplayBuffer(obs_dim,
+                          act_dim,
+                          n_samples,
+                          device=device)
+
+    o = env.reset()
+
+    for i in range(n_samples):
+        a = env.action_space.sample()
+        o2, r, d, _ = env.step(a)
+        buffer.store(torch.as_tensor(o),
+                     torch.as_tensor(a),
+                     torch.as_tensor(r),
+                     torch.as_tensor(o2),
+                     torch.as_tensor(d))
+
+        if d:
+            o = env.reset()
+        else:
+            o = o2
+
     model = EnvironmentModel(
         obs_dim, act_dim,
-        hidden=[64, 64, 64], type='probabilistic', device=device)
+        hidden=[200, 200, 200], type='probabilistic', device=device)
 
     lr = 1e-3
     optim = Adam(model.parameters(), lr=lr)
@@ -37,7 +59,7 @@ def test_probabilistic_model_trains_on_maze2d_umaze(steps=3000, plot=False):
                    buffer.act_buf[train_idx]), dim=1)
 
     next_obs = buffer.obs2_buf[train_idx]
-    next_obs += torch.rand_like(next_obs)*0.2-0.1
+    next_obs += torch.rand_like(next_obs)*0.1-0.05
     y = torch.cat((next_obs,
                    buffer.rew_buf[train_idx].unsqueeze(1)), dim=1)
 
@@ -80,7 +102,8 @@ def test_probabilistic_model_trains_on_maze2d_umaze(steps=3000, plot=False):
                 plt.scatter(buffer.obs2_buf[train_idx, 0].cpu(),
                             buffer.obs2_buf[train_idx, 1].cpu(),
                             marker='x',
-                            color='blue')
+                            color='blue',
+                            s=10)
                 plt.scatter(buffer.obs2_buf[~train_idx, 0].cpu(),
                             buffer.obs2_buf[~train_idx, 1].cpu(),
                             marker='.',
@@ -90,9 +113,10 @@ def test_probabilistic_model_trains_on_maze2d_umaze(steps=3000, plot=False):
                 plt.scatter(mean_plt[0, :, 0],
                             mean_plt[0, :, 1],
                             marker='+',
-                            color='red')
+                            color='red',
+                            s=10)
 
-                for i in range(0, len(mean_plt[0]), int(len(mean_plt[0])/50)):
+                for i in range(frac-int(frac*0.2), n_samples-frac+int(frac*0.2), int(n_samples/50)):
                     plt.gca().add_patch(
                         Ellipse((mean_plt[0, i, 0], mean_plt[0, i, 1]),
                                 width=std[0, i, 0].abs(),

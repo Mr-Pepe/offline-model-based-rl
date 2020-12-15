@@ -9,30 +9,45 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-class GoUpAndRightAgent():
-    def __init__(self):
+class GoCircleAgent():
+    def __init__(self, length):
         self.training = False
+        self.steps = 0
+        self.length = length
 
     def eval(self):
         pass
 
     def get_action(self, o=0):
-        # Always goes up and right
-        return torch.tensor([1, 1]).reshape((1, -1))
+        self.steps += 1
+        progress = self.steps / self.length
+        sections = 4
+        if progress < 1/sections:
+            return torch.tensor([1, 1]).reshape((1, -1))
+        elif progress < 2/sections:
+            return torch.tensor([-1, 0]).reshape((1, -1))
+        elif progress < 3/sections:
+            return torch.tensor([0, -1]).reshape((1, -1))
+        else:
+            return torch.tensor([0, 0]).reshape((1, -1))
+
+        # if self.steps < 0.5 * self.length:
+        #     return torch.tensor([1, 0]).reshape((1, -1))
+        # else:
+        #     return torch.tensor([0, 1]).reshape((1, -1))
 
 
 env = gym.make('maze2d-open-v0')
 observation_space = env.observation_space
 action_space = env.action_space
 buffer, obs_dim, act_dim = load_dataset_from_env(env)
-agent = GoUpAndRightAgent()
+rollout_length = 100
+agent = GoCircleAgent(rollout_length)
 
 env.reset()
 start_observation = torch.tensor([0.6, 1, 0, 0]).reshape((1, -1))
 
 env.set_state(start_observation[0][:2], start_observation[0][2:])
-
-rollout_length = 50
 
 
 # Generate a rollout with the actual environment to get the ground truth
@@ -44,31 +59,51 @@ for i in range(rollout_length):
     rollout.append(o)
 
 rollout = np.array(rollout)
-plt.plot(rollout[:, 0], rollout[:, 1], color='blue')
+plt.plot(rollout[:, 0], rollout[:, 1], color='blue', label="Ground truth")
 
+
+# Train different models and generate rollouts with them
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+patience = 20
+n_hidden = 256
+n_layers = 3
+hidden = [n_hidden] * n_layers
 
-model = EnvironmentModel(obs_dim, act_dim, type='probabilistic')
-# model = EnvironmentModel(obs_dim, act_dim, type='deterministic')
+models = [EnvironmentModel(obs_dim, act_dim, hidden, type='probabilistic'),
+          EnvironmentModel(obs_dim, act_dim, hidden, type='probabilistic',
+                           n_networks=3),
+          EnvironmentModel(obs_dim, act_dim, hidden, type='deterministic'),
+          EnvironmentModel(obs_dim, act_dim, hidden, type='deterministic',
+                           n_networks=3)]
 
-model.to(device)
+names = ['Probabilistic single',
+         'Probabilistic ensemble',
+         'Deterministic single',
+         'Deterministic ensemble']
 
-train_environment_model(model, buffer, patience=2, debug=True, lr=1e-3)
+colors = ['red', 'lightcoral', 'black', 'grey']
 
-virtual_rollout = generate_virtual_rollout(model,
-                                           agent,
-                                           start_observation,
-                                           rollout_length)
+for i_model, model in enumerate(models):
+    print("Training {}".format(names[i_model]))
+    model.to(device)
 
-virtual_rollout = np.array([list(virtual_rollout[i]['o'][0][:2])
-                            for i in range(rollout_length)])
+    train_environment_model(
+        model, buffer, patience=patience, debug=True, lr=1e-3)
+    model.cpu()
 
-plt.plot(virtual_rollout[:, 0], virtual_rollout[:, 1], color='red')
+    virtual_rollout = generate_virtual_rollout(model,
+                                               agent,
+                                               start_observation,
+                                               rollout_length,
+                                               stop_on_terminal=False)
+
+    virtual_rollout = np.array([list(virtual_rollout[i]['o'][0][:2])
+                                for i in range(rollout_length)])
+
+    plt.plot(virtual_rollout[:, 0],
+             virtual_rollout[:, 1],
+             color=colors[i_model],
+             label=names[i_model])
+
+plt.legend()
 plt.show()
-
-# Render virtual rollout
-# for i in range(rollout_length):
-#     env.set_state(virtual_rollout[i]['o'][0][:2],
-#                   virtual_rollout[i]['o'][0][2:])
-#     env.render()
-#     sleep(0.25)
