@@ -75,7 +75,7 @@ def test_sac_offline():
 
     final_return, _ = trainer.train()
 
-    assert final_return[-1, -1] > 360
+    assert final_return[-1, -1] > 400
 
 
 def sac_trains_faster_on_gpu_on_filled_buffer():

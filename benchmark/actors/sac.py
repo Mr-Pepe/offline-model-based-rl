@@ -69,10 +69,6 @@ class SAC(nn.Module):
 
         self.to(device)
 
-        self.use_amp = 'cuda' in device
-        self.pi_scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp)
-        self.q_scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp)
-
         self.target = deepcopy(self)
 
         # Freeze target networks with respect to optimizers (only update via
@@ -88,26 +84,25 @@ class SAC(nn.Module):
             o = self.pre_fn(o)
             o2 = self.pre_fn(o2)
 
-        with torch.cuda.amp.autocast(enabled=self.use_amp):
+        q1 = self.q1(o, a)
+        q2 = self.q2(o, a)
+
+        # Bellman backup for Q functions
+        with torch.no_grad():
             # Target actions come from *current* policy
-            q1 = self.q1(o, a)
-            q2 = self.q2(o, a)
+            a2, logp_a2 = self.pi(o2)
 
-            # Bellman backup for Q functions
-            with torch.no_grad():
-                a2, logp_a2 = self.pi(o2)
+            # Target Q-values
+            q1_pi_targ = self.target.q1(o2, a2)
+            q2_pi_targ = self.target.q2(o2, a2)
+            q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
+            backup = r + self.gamma * \
+                ~d * (q_pi_targ - self.alpha * logp_a2)
 
-                # Target Q-values
-                q1_pi_targ = self.target.q1(o2, a2)
-                q2_pi_targ = self.target.q2(o2, a2)
-                q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
-                backup = r + self.gamma * \
-                    ~d * (q_pi_targ - self.alpha * logp_a2)
-
-            # MSE loss against Bellman backup
-            loss_q1 = ((q1 - backup)**2).mean()
-            loss_q2 = ((q2 - backup)**2).mean()
-            loss_q = loss_q1 + loss_q2
+        # MSE loss against Bellman backup
+        loss_q1 = ((q1 - backup)**2).mean()
+        loss_q2 = ((q2 - backup)**2).mean()
+        loss_q = loss_q1 + loss_q2
 
         # Useful info for logging
         q_info = dict(Q1Vals=q1.cpu().detach().numpy(),
@@ -121,14 +116,13 @@ class SAC(nn.Module):
         if self.pre_fn:
             o = self.pre_fn(o)
 
-        with torch.cuda.amp.autocast(enabled=self.use_amp):
-            pi, logp_pi = self.pi(o)
-            q1_pi = self.q1(o, pi)
-            q2_pi = self.q2(o, pi)
-            q_pi = torch.min(q1_pi, q2_pi)
+        pi, logp_pi = self.pi(o)
+        q1_pi = self.q1(o, pi)
+        q2_pi = self.q2(o, pi)
+        q_pi = torch.min(q1_pi, q2_pi)
 
-            # Entropy-regularized policy loss
-            loss_pi = (self.alpha * logp_pi - q_pi).mean()
+        # Entropy-regularized policy loss
+        loss_pi = (self.alpha * logp_pi - q_pi).mean()
 
         # Useful info for logging
         pi_info = dict(LogPi=logp_pi.cpu().detach().numpy())
@@ -144,9 +138,8 @@ class SAC(nn.Module):
         # First run one gradient descent step for Q1 and Q2
         self.q_optimizer.zero_grad()
         loss_q, q_info = self.compute_loss_q(data)
-        self.q_scaler.scale(loss_q).backward()
-        self.q_scaler.step(self.q_optimizer)
-        self.q_scaler.update()
+        loss_q.backward()
+        self.q_optimizer.step()
 
         # Freeze Q-networks so you don't waste computational effort
         # computing gradients for them during the policy learning step.
@@ -156,9 +149,8 @@ class SAC(nn.Module):
         # Next run one gradient descent step for pi.
         self.pi_optimizer.zero_grad()
         loss_pi, pi_info = self.compute_loss_pi(data)
-        self.pi_scaler.scale(loss_pi).backward()
-        self.pi_scaler.step(self.pi_optimizer)
-        self.pi_scaler.update()
+        loss_pi.backward()
+        self.pi_optimizer.step()
 
         # Unfreeze Q-networks so you can optimize it at next DDPG step.
         for p in self.q_params:
@@ -195,8 +187,7 @@ class SAC(nn.Module):
             obs = self.pre_fn(obs)
 
         with torch.no_grad():
-            with torch.cuda.amp.autocast(enabled=self.use_amp):
-                a, _ = self.pi(obs, deterministic, False)
+            a, _ = self.pi(obs, deterministic, False)
             return a
 
     def act_randomly(self, o, deterministic=False):
