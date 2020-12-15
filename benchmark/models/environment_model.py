@@ -21,6 +21,7 @@ class EnvironmentModel(nn.Module):
                  device='cpu',
                  pre_fn=None,
                  post_fn=None,
+                 rew_fn=None,
                  **_):
         """
             type (string): deterministic or probabilistic
@@ -38,6 +39,7 @@ class EnvironmentModel(nn.Module):
         self.n_networks = n_networks
         self.pre_fn = pre_fn
         self.post_fn = post_fn
+        self.rew_fn = rew_fn
 
         if type != 'deterministic' and type != 'probabilistic':
             raise ValueError("Unknown type {}".format(type))
@@ -65,7 +67,7 @@ class EnvironmentModel(nn.Module):
         raw_obs_act = self.check_device_and_shape(obs_act, device)
 
         if self.pre_fn:
-            obs_act = self.pre_fn(raw_obs_act.detach().clone())
+            obs_act = self.pre_fn(raw_obs_act)
         else:
             obs_act = raw_obs_act.detach().clone()
 
@@ -82,16 +84,31 @@ class EnvironmentModel(nn.Module):
             next_obs = next_obs[:, :, :self.obs_dim] + \
                 raw_obs_act[:, :self.obs_dim]
 
+            dones = None
             if self.post_fn and not self.training:
-                done = self.post_fn(next_obs=next_obs).to(device)
-            else:
-                done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
-                                   device=device)
+                post = self.post_fn(
+                    obs=raw_obs_act[:, :self.obs_dim],
+                    act=raw_obs_act[:, self.obs_dim:],
+                    next_obs=next_obs,
+                )
+
+                if 'dones' in post:
+                    dones = post['dones'].to(device)
+
+            if dones is None:
+                dones = torch.zeros((self.n_networks, obs_act.shape[0], 1),
+                                    device=device)
+
+            if self.rew_fn and not self.training:
+                reward = self.rew_fn(
+                    obs=raw_obs_act[:, :self.obs_dim],
+                    act=raw_obs_act[:, self.obs_dim:],
+                    next_obs=next_obs)
 
             predictions = torch.cat((next_obs,
                                      reward[:, :, 0].view(
                                          (self.n_networks, -1, 1)),
-                                     done), dim=2)
+                                     dones), dim=2)
 
         elif self.type == 'probabilistic':
             obs_mean = next_obs[:, :, :self.obs_dim] + \
@@ -111,22 +128,38 @@ class EnvironmentModel(nn.Module):
             std = torch.exp(0.5*logvars)
 
             predictions = torch.normal(means, std)
+            next_obs = predictions[:, :, :-1]
+            rewards = predictions[:, :, -1].unsqueeze(-1)
 
+            dones = None
             if self.post_fn and not self.training:
-                done = self.post_fn(
-                    next_obs=predictions[:, :, :-1],
-                    rewards=predictions[:, :, -1],
+                post = self.post_fn(
+                    next_obs=next_obs,
                     means=means,
-                    logvars=logvars).to(device)
+                    logvars=logvars)
 
-            else:
-                done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
-                                   device=device)
+                if 'dones' in post:
+                    dones = post['dones'].to(device)
+                if 'means' in post:
+                    means = post['means'].to(device)
+                if 'logvars' in post:
+                    logvars = post['logvars'].to(device)
 
-            predictions = torch.cat((predictions, done), dim=2)
+            if dones is None:
+                dones = torch.zeros((self.n_networks, obs_act.shape[0], 1),
+                                    device=device)
+
+            if self.rew_fn and not self.training:
+                rewards = self.rew_fn(
+                    obs=raw_obs_act[:, :self.obs_dim],
+                    act=raw_obs_act[:, self.obs_dim:],
+                    next_obs=next_obs)
+
+            predictions = torch.cat((next_obs, rewards, dones), dim=2)
 
             if pessimism != 0:
-                prediction = predictions[torch.randint(0, len(predictions), (1,))][0]
+                prediction = predictions[torch.randint(
+                    0, len(predictions), (1,))][0]
 
                 if exploration_mode == 'reward':
                     prediction[:, -2] -= pessimism * \

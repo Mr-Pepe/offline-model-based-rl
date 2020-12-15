@@ -5,6 +5,7 @@ import torch
 
 
 def postprocess_hopper(next_obs=None, **_):
+    next_obs = next_obs.detach().clone()
 
     height = next_obs[:, :, 0]
     angle = next_obs[:, :, 1]
@@ -15,17 +16,17 @@ def postprocess_hopper(next_obs=None, **_):
 
     done = ~not_done
     done = done[:, :, None]
-    return done
+    return {'dones': done}
 
 
 def postprocess_half_cheetah(next_obs=None, **_):
-
+    next_obs = next_obs.detach().clone()
     done = torch.zeros((next_obs.shape[0], next_obs.shape[1], 1))
-    return done
+    return {'dones': done}
 
 
 def postprocess_walker2d(next_obs=None, **_):
-
+    next_obs = next_obs.detach().clone()
     height = next_obs[:, :, 0]
     angle = next_obs[:, :, 1]
     not_done = (height > 0.8) \
@@ -34,11 +35,16 @@ def postprocess_walker2d(next_obs=None, **_):
         * (angle < 1.0)
     done = ~not_done
     done = done[:, :, None]
-    return done
+    return {'dones': done}
 
 
-def postprocess_antmaze_umaze(next_obs=None, means=None, logvars=None,
-                                 rewards=None, **_):
+def postprocess_antmaze_umaze(next_obs=None, means=None, logvars=None, **_):
+    next_obs = next_obs.detach().clone()
+    if means is not None:
+        means = means.detach().clone()
+    if logvars is not None:
+        logvars = logvars.detach().clone()
+
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
@@ -78,17 +84,18 @@ def postprocess_antmaze_umaze(next_obs=None, means=None, logvars=None,
             if logvars is not None:
                 logvars[i_network][done[i_network]] = -20
 
-    if rewards is not None:
-        rewards = 1 * \
-            (ANTMAZE_UMAZE_GOAL_BLOCK[0] <= x + ANTMAZE_ANT_RADIUS) * \
-            (ANTMAZE_UMAZE_GOAL_BLOCK[1] > x - ANTMAZE_ANT_RADIUS) * \
-            (ANTMAZE_UMAZE_GOAL_BLOCK[2] <= y + ANTMAZE_ANT_RADIUS) * \
-            (ANTMAZE_UMAZE_GOAL_BLOCK[3] > y - ANTMAZE_ANT_RADIUS)
-
-    return done.unsqueeze(-1)
+    return {'dones': done.unsqueeze(-1),
+            'means': means,
+            'logvars': logvars}
 
 
 def postprocess_maze2d_umaze(next_obs=None, means=None, logvars=None, **_):
+    next_obs = next_obs.detach().clone()
+    if means is not None:
+        means = means.detach().clone()
+    if logvars is not None:
+        logvars = logvars.detach().clone()
+
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
@@ -122,7 +129,9 @@ def postprocess_maze2d_umaze(next_obs=None, means=None, logvars=None, **_):
             if logvars is not None:
                 logvars[i_network][collision[i_network]] = -20
 
-    return collision.unsqueeze(-1).to(x.device)
+    return {'dones': collision.unsqueeze(-1).to(x.device),
+            'means': means,
+            'logvars': logvars}
 
 
 postprocessing_functions = {

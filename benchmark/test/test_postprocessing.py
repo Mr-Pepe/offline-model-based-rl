@@ -44,7 +44,7 @@ def test_hopper_postprocessing():
 
     np.testing.assert_array_equal(
         torch.stack(3*[dones]),
-        postprocess_hopper(next_obs=torch.stack(3*[next_observations])))
+        postprocess_hopper(next_obs=torch.stack(3*[next_observations]))['dones'])
 
 
 @pytest.mark.fast
@@ -57,7 +57,7 @@ def test_half_cheetah_postprocessing():
     np.testing.assert_array_equal(
         torch.stack(3*[dones]),
         postprocess_half_cheetah(
-            next_obs=torch.stack(3*[next_observations])))
+            next_obs=torch.stack(3*[next_observations]))['dones'])
 
 
 @pytest.mark.fast
@@ -70,7 +70,7 @@ def test_walker2d_postprocessing():
     np.testing.assert_array_equal(
         torch.stack(3*[dones]),
         postprocess_walker2d(
-            next_obs=torch.stack(3*[next_observations])))
+            next_obs=torch.stack(3*[next_observations]))['dones'])
 
 
 @pytest.mark.medium
@@ -149,7 +149,7 @@ def test_maze2d_umaze_postprocessing():
     obs = torch.ones((next_obs.shape[1], next_obs.shape[2]))
 
     dones = postprocess_maze2d_umaze(next_obs=next_obs,
-                                     obs=obs).view(-1)
+                                     obs=obs)['dones'].view(-1)
 
     # plot_maze2d_umaze([-2, 5], [-2, 5])
     # for i_network in range(n_networks):

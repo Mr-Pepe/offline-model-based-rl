@@ -69,7 +69,7 @@ def test_generate_rollout_stops_on_terminal():
 
     model = EnvironmentModel(
         obs_dim, act_dim, type='probabilistic',
-        post_fn=lambda next_obs, **_: torch.randint(2, (1, 1, 1)))
+        post_fn=lambda next_obs, **_: {'dones': torch.randint(2, (1, 1, 1))})
     agent = SAC(observation_space, action_space)
 
     virtual_rollout, _ = generate_virtual_rollouts(

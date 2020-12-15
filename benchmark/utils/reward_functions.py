@@ -2,9 +2,9 @@ from benchmark.utils.mazes import ANTMAZE_ANT_RADIUS, ANTMAZE_UMAZE_GOAL_BLOCK
 from benchmark.utils.envs import ENV_CATEGORIES
 
 
-def antmaze_umaze_rew_fn(obs, **_):
-    x = obs[:, :, 0]
-    y = obs[:, :, 1]
+def antmaze_umaze_rew_fn(next_obs, **_):
+    x = next_obs[:, :, 0]
+    y = next_obs[:, :, 1]
 
     rewards = 1 * \
         (ANTMAZE_UMAZE_GOAL_BLOCK[0] <= x + ANTMAZE_ANT_RADIUS) * \

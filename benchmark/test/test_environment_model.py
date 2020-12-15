@@ -431,7 +431,7 @@ def test_deterministic_model_does_not_always_output_terminal():
 
     terminal_ratio = virtual_buffer.get_terminal_ratio()
 
-    print(terminal_ratio)
+    print("Terminal ratio: {}".format(terminal_ratio))
     assert terminal_ratio < 1
     assert terminal_ratio > 0
 
