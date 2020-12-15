@@ -20,7 +20,7 @@ def test_train_deterministic_environment_model():
 
     val_losses, _ = model.train_to_convergence(buffer,
                                                val_split=0.2,
-                                               patience=5,
+                                               patience=3,
                                                debug=True)
 
     for val_loss in val_losses:
