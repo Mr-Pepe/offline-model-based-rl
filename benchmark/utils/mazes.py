@@ -51,7 +51,7 @@ def plot_antmaze_umaze(xlim=None, ylim=None, buffer=None):
     if buffer:
         rewards = buffer.rew_buf[:buffer.size].cpu()
         dones = buffer.done_buf[:buffer.size].cpu()
-        buffer = buffer.obs_buf[:buffer.size].cpu()
+        buffer = buffer.obs2_buf[:buffer.size].cpu()
         plt.scatter(
             buffer[dones, 0].cpu(),
             buffer[dones, 1].cpu(),
@@ -91,8 +91,8 @@ def plot_maze2d_umaze(xlim=None, ylim=None, buffer=None):
     if buffer:
         rewards = buffer.rew_buf[:buffer.size].cpu()
         plt.scatter(
-            buffer.obs_buf[:buffer.size, 0].cpu(),
-            buffer.obs_buf[:buffer.size, 1].cpu(),
+            buffer.obs2_buf[:buffer.size, 0].cpu(),
+            buffer.obs2_buf[:buffer.size, 1].cpu(),
             c=rewards,
             cmap='cividis',
             marker='.',
