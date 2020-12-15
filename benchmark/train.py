@@ -164,6 +164,8 @@ class Trainer():
         if use_custom_reward:
             self.rew_fn = get_reward_function(env_name)
             model_kwargs.update({'rew_fn': self.rew_fn})
+        else:
+            self.rew_fn = None
 
         model_kwargs.update({'device': device})
         model_kwargs.update({'pre_fn': self.pre_fn})
@@ -175,7 +177,8 @@ class Trainer():
             self.env_model.to(device)
             self.env_model.pre_fn = self.pre_fn
             self.env_model.post_fn = self.post_fn
-            self.env_model.rew_fn = self.rew_fn
+            if self.rew_fn:
+                self.env_model.rew_fn = self.rew_fn
         else:
             self.env_model = EnvironmentModel(obs_dim[0],
                                               act_dim,
