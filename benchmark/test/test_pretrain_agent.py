@@ -11,9 +11,9 @@ def agent_pretrains_in_virtual_environment():
     env = gym.make('maze2d-umaze-v1')
     buffer, obs_dim, act_dim = load_dataset_from_env(env, n_samples=100000)
     agent = SAC(env.observation_space, env.action_space)
-    term_fn = maze2d_umaze_termination_fn
+    post_fn = maze2d_umaze_termination_fn
     model = EnvironmentModel(obs_dim, act_dim,
-                             term_fn=term_fn)
+                             post_fn=post_fn)
 
     model.train_to_convergence(buffer,
                                patience=10)

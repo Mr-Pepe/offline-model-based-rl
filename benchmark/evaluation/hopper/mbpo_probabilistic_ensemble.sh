@@ -2,7 +2,7 @@
 
 python main.py \
     --env Hopper-v2 \
-    --term_fn hopper \
+    --post_fn hopper \
     --hid 200 \
     --l 4 \
     --gamma 0.99 \
@@ -25,5 +25,5 @@ python main.py \
     --model_patience 20 \
     --agent_updates 20 \
     --num_test_episodes 10 \
-    --exp_name hopper_mbpo_probabilistic_ensemble_use_term_fn \
+    --exp_name hopper_mbpo_probabilistic_ensemble_use_post_fn \
     --device cuda

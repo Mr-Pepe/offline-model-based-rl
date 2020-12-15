@@ -136,15 +136,15 @@ class Trainer():
         self.pre_fn = get_preprocessing_function(env_name)
 
         if use_model:
-            self.term_fn = get_termination_function(env_name)
-            if not self.term_fn:
+            self.post_fn = get_termination_function(env_name)
+            if not self.post_fn:
                 raise ValueError("Could not find termination function for \
             environment {}".format(env_name))
             if not self.pre_fn:
                 raise ValueError("Could not find preprocessing function for \
             environment {}".format(env_name))
         else:
-            self.term_fn = None
+            self.post_fn = None
             self.pre_fn = None
 
         sac_kwargs.update({'device': device})
@@ -161,7 +161,7 @@ class Trainer():
 
         model_kwargs.update({'device': device})
         model_kwargs.update({'pre_fn': self.pre_fn})
-        model_kwargs.update({'term_fn': self.term_fn})
+        model_kwargs.update({'post_fn': self.post_fn})
         self.model_kwargs = model_kwargs
 
         if pretrained_model_path != '':

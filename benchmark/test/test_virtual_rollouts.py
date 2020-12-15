@@ -30,7 +30,7 @@ def test_generate_rollout_of_desired_length():
     buffer.store(start_observation, 0, 0, 0, 0)
 
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',
-                             term_fn=termination_functions['half_cheetah'])
+                             post_fn=termination_functions['half_cheetah'])
     agent = SAC(observation_space, action_space)
 
     virtual_rollout, _ = generate_virtual_rollouts(
@@ -68,7 +68,7 @@ def test_generate_rollout_stops_on_terminal():
 
     model = EnvironmentModel(
         obs_dim, act_dim, type='probabilistic',
-        term_fn=lambda next_obs, **_: torch.randint(2, (1, 1, 1)))
+        post_fn=lambda next_obs, **_: torch.randint(2, (1, 1, 1)))
     agent = SAC(observation_space, action_space)
 
     virtual_rollout, _ = generate_virtual_rollouts(
@@ -211,7 +211,7 @@ def test_continuously_grow_rollouts(plot=False):
 
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',
                              n_networks=3, device=device,
-                             term_fn=termination_functions['hopper'])
+                             post_fn=termination_functions['hopper'])
 
     model.train_to_convergence(buffer, patience=1)
 

@@ -20,7 +20,7 @@ class EnvironmentModel(nn.Module):
                  n_networks=1,
                  device='cpu',
                  pre_fn=None,
-                 term_fn=None,
+                 post_fn=None,
                  **_):
         """
             type (string): deterministic or probabilistic
@@ -37,7 +37,7 @@ class EnvironmentModel(nn.Module):
         self.type = type
         self.n_networks = n_networks
         self.pre_fn = pre_fn
-        self.term_fn = term_fn
+        self.post_fn = post_fn
 
         if type != 'deterministic' and type != 'probabilistic':
             raise ValueError("Unknown type {}".format(type))
@@ -82,8 +82,8 @@ class EnvironmentModel(nn.Module):
             next_obs = next_obs[:, :, :self.obs_dim] + \
                 raw_obs_act[:, :self.obs_dim]
 
-            if self.term_fn and not self.training:
-                done = self.term_fn(next_obs=next_obs).to(device)
+            if self.post_fn and not self.training:
+                done = self.post_fn(next_obs=next_obs).to(device)
             else:
                 done = torch.zeros((self.n_networks, obs_act.shape[0], 1),
                                    device=device)
@@ -112,8 +112,8 @@ class EnvironmentModel(nn.Module):
 
             predictions = torch.normal(means, std)
 
-            if self.term_fn and not self.training:
-                done = self.term_fn(
+            if self.post_fn and not self.training:
+                done = self.post_fn(
                     next_obs=predictions[:, :, :-1],
                     rewards=predictions[:, :, -1],
                     means=means,

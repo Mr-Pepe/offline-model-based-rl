@@ -368,13 +368,13 @@ def test_probabilistic_model_returns_binary_done_signal():
 
 
 @pytest.mark.fast
-def test_deterministic_model_returns_binary_done_signal_when_term_fn_used():
+def test_deterministic_model_returns_binary_done_signal_when_post_fn_used():
     obs_dim = 5
     act_dim = 6
     torch.manual_seed(2)
 
     model = EnvironmentModel(obs_dim, act_dim,
-                             term_fn=termination_functions['hopper'])
+                             post_fn=termination_functions['hopper'])
 
     tensor_size = (100, obs_dim+act_dim)
     input = torch.rand(tensor_size)
@@ -392,7 +392,7 @@ def test_deterministic_model_does_not_always_output_terminal():
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
         env, n_samples=10000, buffer_device=device)
     model = EnvironmentModel(obs_dim, act_dim, type='deterministic',
-                             term_fn=termination_functions['hopper'],
+                             post_fn=termination_functions['hopper'],
                              device=device)
     optim = Adam(model.parameters(), lr=1e-3)
 
@@ -444,7 +444,7 @@ def test_probabilistic_model_does_not_always_output_terminal():
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
         env, 10000, buffer_device=device)
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',
-                             term_fn=termination_functions['hopper'],
+                             post_fn=termination_functions['hopper'],
                              device=device)
     optim = Adam(model.parameters(), lr=1e-3)
 

@@ -240,15 +240,15 @@ def test_throws_error_if_using_model_but_no_termination_fn_available():
 def test_trainer_picks_correct_termination_functions():
     trainer = Trainer('Hopper-v2', use_model=True)
 
-    assert trainer.term_fn == termination_functions['hopper']
+    assert trainer.post_fn == termination_functions['hopper']
 
     trainer = Trainer('HalfCheetah-v2', use_model=True)
 
-    assert trainer.term_fn == termination_functions['half_cheetah']
+    assert trainer.post_fn == termination_functions['half_cheetah']
 
     trainer = Trainer('Walker2d-v2', use_model=True)
 
-    assert trainer.term_fn == termination_functions['walker2d']
+    assert trainer.post_fn == termination_functions['walker2d']
 
 
 @pytest.mark.slow
