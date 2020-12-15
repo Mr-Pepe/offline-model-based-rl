@@ -11,8 +11,11 @@ def preprocess_maze2d_umaze(obs_act):
     std = torch.as_tensor([0.9751, 0.9118, 0.8677, 0.9782, 0.5770, 0.5776],
                           device=obs_act.device)
 
-    obs_act -= mean
-    obs_act /= std
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
 
     return obs_act
 
@@ -70,11 +73,11 @@ def preprocess_hopper(obs_act):
 
 
 def preprocess_half_cheetah(obs_act):
-    return obs_act
+    return obs_act.detach().clone()
 
 
 def preprocess_walker2d(obs_act):
-    return obs_act
+    return obs_act.detach().clone()
 
 
 preprocessing_functions = {
