@@ -32,7 +32,7 @@ class Trainer():
                  random_steps=10000,
                  init_steps=1000,
                  env_steps_per_step=1,
-                 n_samples_from_dataset=-1,
+                 n_samples_from_dataset=0,
                  agent_updates_per_step=1,
                  num_test_episodes=10,
                  max_ep_len=1000,
@@ -116,7 +116,7 @@ class Trainer():
         self.test_env.seed(seed)
         self.test_env.action_space.seed(seed)
 
-        if pretrain_epochs > 0 or n_samples_from_dataset != 0:
+        if n_samples_from_dataset != 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
                 self.env,
                 n_samples=n_samples_from_dataset,
