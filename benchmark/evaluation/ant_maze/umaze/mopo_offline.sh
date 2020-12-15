@@ -1,4 +1,4 @@
-for seed in 0
+for seed in 1 2 3
 do
 python main.py \
     --env antmaze-umaze-v0 \
@@ -16,7 +16,7 @@ python main.py \
     --l 4 \
     --pretrained_agent_path "" \
     --gamma 0.99 \
-    --agent_updates_per_step 5 \
+    --agent_updates_per_step 3 \
     --agent_batch_size 256 \
     --agent_lr 3e-4 \
     --use_model True \
@@ -33,11 +33,12 @@ python main.py \
     --max_rollout_length 5 \
     --train_model_every 0 \
     --model_max_n_train_batches 1300 \
-    --model_pessimism 1 \
+    --model_pessimism 0.1 \
     --exploration_mode state \
     --reset_buffer False \
     --train_model_from_scratch False \
     --virtual_pretrain_epochs 0 \
+    --use_custom_reward False \
     --num_test_episodes 10 \
     --exp_name ant_maze_umaze_mopo \
     --datestamp False \
