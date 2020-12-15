@@ -45,7 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_rollout_length', type=int, default=5)
     parser.add_argument('--train_model_every', type=int, default=0)
     parser.add_argument('--model_max_n_train_batches', type=int, default=5000)
-    parser.add_argument('--model_pessimism', type=int, default=1)
+    parser.add_argument('--model_pessimism', type=float, default=1)
     parser.add_argument('--exploration_mode', type=str, default='state')
     parser.add_argument('--reset_buffer', type=str2bool, default=False)
     parser.add_argument('--train_model_from_scratch', type=str2bool, default=False)
