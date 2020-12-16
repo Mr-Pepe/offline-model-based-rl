@@ -158,8 +158,7 @@ class EnvironmentModel(nn.Module):
                 rewards = self.rew_fn(
                     obs=raw_obs_act[:, :self.obs_dim],
                     act=raw_obs_act[:, self.obs_dim:],
-                    next_obs=next_obs,
-                    rewards=rewards)
+                    next_obs=next_obs)
 
             predictions = torch.cat((next_obs, rewards, dones), dim=2)
 
@@ -170,7 +169,7 @@ class EnvironmentModel(nn.Module):
                 if exploration_mode == 'reward':
                     if uncertainty == 'epistemic':
                         prediction[:, -2] -= pessimism * \
-                            reward_mean.std(dim=0).mean(dim=1)
+                            means[:, :, -1].std(dim=0).mean(dim=1)
                     elif uncertainty == 'aleatoric':
                         prediction[:, -2] -= pessimism * \
                             torch.exp(
@@ -179,7 +178,7 @@ class EnvironmentModel(nn.Module):
                 elif exploration_mode == 'state':
                     if uncertainty == 'epistemic':
                         prediction[:, -2] -= pessimism * \
-                            obs_mean.std(dim=0).mean(dim=1)
+                            means[:, :, :-1].std(dim=0).mean(dim=1)
                     elif uncertainty == 'aleatoric':
                         prediction[:, -2] -= pessimism * \
                             torch.exp(
