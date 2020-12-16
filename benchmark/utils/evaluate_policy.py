@@ -102,15 +102,25 @@ def run_policy(env, get_action, max_ep_len=None, num_episodes=100, render=True):
 
 
 def test_agent(test_env, agent, max_ep_len, num_test_episodes, logger,
-               render=False):
+               render=False, buffer=None):
     sum_ep_ret = 0
     for j in range(num_test_episodes):
         o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
         while not(d or (ep_len == max_ep_len)):
             # Take deterministic actions at test time
-            o, r, d, _ = test_env.step(agent.act(o, True).cpu().numpy())
+            a = agent.act(o, True).cpu().numpy()
+            o2, r, d, _ = test_env.step(a)
             if render:
                 test_env.render()
+
+            if buffer is not None:
+                buffer.store(torch.as_tensor(o),
+                             torch.as_tensor(a),
+                             torch.as_tensor(r),
+                             torch.as_tensor(o2),
+                             torch.as_tensor(d))
+
+            o = o2
 
             ep_ret += r
             ep_len += 1
