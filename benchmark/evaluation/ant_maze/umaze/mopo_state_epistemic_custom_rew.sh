@@ -33,14 +33,15 @@ python main.py \
     --max_rollout_length 5 \
     --train_model_every 0 \
     --model_max_n_train_batches 1300 \
-    --model_pessimism 0.1 \
+    --model_pessimism 200 \
     --exploration_mode state \
+    --uncertainty epistemic \
     --reset_buffer False \
     --train_model_from_scratch False \
     --virtual_pretrain_epochs 0 \
-    --use_custom_reward False \
+    --use_custom_reward True \
     --num_test_episodes 10 \
-    --exp_name ant_maze_umaze_mopo \
+    --exp_name antmaze_umaze_mopo_state_epistemic_custom_rew \
     --datestamp False \
     --log_dir "" \
     --device cuda \
