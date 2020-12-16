@@ -205,6 +205,9 @@ class Logger:
         """
         self.pytorch_saver_elements = what_to_save
 
+    def add_to_pytorch_saver(self, what_to_save):
+        self.pytorch_saver_elements.update(what_to_save)
+
     def _pytorch_simple_save(self, itr=None):
         """
         Saves the PyTorch model (or models).
@@ -381,7 +384,7 @@ class EpochLogger(Logger):
         is_antmaze_umaze = self.env_name in ANTMAZE_UMAZE_ENVS
         is_maze2d_umaze = self.env_name in MAZE2D_UMAZE_ENVS
         if is_antmaze_umaze or is_maze2d_umaze:
-            fig_size = (8,8)
+            fig_size = (6, 6)
 
             if 'replay_buffer' in self.pytorch_saver_elements:
                 buffer = self.pytorch_saver_elements['replay_buffer']
@@ -394,7 +397,7 @@ class EpochLogger(Logger):
                         plot_maze2d_umaze(buffer=buffer)
 
                     self.tensorboard_writer.add_figure(
-                        'ReplayBuffers/RealReplayBuffer',
+                        'ReplayBuffers/0RealReplayBuffer',
                         f,
                         epoch
                     )
@@ -410,4 +413,19 @@ class EpochLogger(Logger):
                         plot_maze2d_umaze(buffer=buffer)
 
                     self.tensorboard_writer.add_figure(
-                        'ReplayBuffers/VirtualReplayBuffer', f, epoch)
+                        'ReplayBuffers/1VirtualReplayBuffer', f, epoch)
+
+            if 'eval_buffer' in self.pytorch_saver_elements:
+                buffer = self.pytorch_saver_elements['eval_buffer']
+                if self.tensorboard_writer:
+                    f = plt.figure(figsize=fig_size)
+
+                    if is_antmaze_umaze:
+                        plot_antmaze_umaze(buffer=buffer)
+                    if is_maze2d_umaze:
+                        plot_maze2d_umaze(buffer=buffer)
+
+                    self.tensorboard_writer.add_figure(
+                        'ReplayBuffers/2TestEpisodesReplayBuffer', f, epoch)
+
+                self.pytorch_saver_elements.pop('eval_buffer')

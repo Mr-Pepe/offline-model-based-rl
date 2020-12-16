@@ -110,8 +110,8 @@ class Trainer():
 
         self.env_name = env_name
         self.env, self.test_env = gym.make(env_name), gym.make(env_name)
-        obs_dim = self.env.observation_space.shape
-        act_dim = self.env.action_space.shape[0]
+        self.obs_dim = self.env.observation_space.shape
+        self.act_dim = self.env.action_space.shape[0]
 
         self.env.seed(seed)
         self.env.action_space.seed(seed)
@@ -125,13 +125,13 @@ class Trainer():
                 buffer_size=real_buffer_size,
                 buffer_device=device)
         else:
-            self.real_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
-                                                   act_dim=act_dim,
+            self.real_replay_buffer = ReplayBuffer(obs_dim=self.obs_dim,
+                                                   act_dim=self.act_dim,
                                                    size=real_buffer_size,
                                                    device=device)
 
-        self.virtual_replay_buffer = ReplayBuffer(obs_dim=obs_dim,
-                                                  act_dim=act_dim,
+        self.virtual_replay_buffer = ReplayBuffer(obs_dim=self.obs_dim,
+                                                  act_dim=self.act_dim,
                                                   size=virtual_buffer_size,
                                                   device=device)
 
@@ -180,8 +180,8 @@ class Trainer():
             if self.rew_fn:
                 self.env_model.rew_fn = self.rew_fn
         else:
-            self.env_model = EnvironmentModel(obs_dim[0],
-                                              act_dim,
+            self.env_model = EnvironmentModel(self.obs_dim[0],
+                                              self.act_dim,
                                               **model_kwargs)
 
         self.logger.setup_pytorch_saver({
@@ -410,6 +410,11 @@ class Trainer():
             test_return = 0
 
             if step_total > self.init_steps or self.pretrain_epochs > 0:
+                eval_buffer = ReplayBuffer(
+                    self.obs_dim,
+                    self.act_dim,
+                    self.num_test_episodes*self.max_ep_len)
+
                 # Test the performance of the deterministic version of the agent.
                 test_return = test_agent(self.test_env,
                                          self.agent,
@@ -417,9 +422,11 @@ class Trainer():
                                          self.num_test_episodes,
                                          self.logger,
                                          self.render and
-                                         step_total > self.init_steps)
+                                         step_total > self.init_steps,
+                                         buffer=eval_buffer)
 
                 tested_agent = True
+                self.logger.add_to_pytorch_saver({'eval_buffer': eval_buffer})
 
             test_performances.append([epoch, test_return])
 
