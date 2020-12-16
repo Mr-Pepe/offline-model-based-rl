@@ -61,7 +61,12 @@ class EnvironmentModel(nn.Module):
 
         self.optim = None
 
-    def forward(self, obs_act, pessimism=0, exploration_mode='state'):
+    def forward(self, obs_act, pessimism=0, exploration_mode='state',
+                uncertainty='epistemic'):
+
+        if not (uncertainty == 'epistemic' or uncertainty == 'aleatoric'):
+            raise ValueError(
+                "Unknown uncertainty measure: {}".format(uncertainty))
 
         device = next(self.layers.parameters()).device
         raw_obs_act = self.check_device_and_shape(obs_act, device)
@@ -163,12 +168,22 @@ class EnvironmentModel(nn.Module):
                     0, len(predictions), (1,))][0]
 
                 if exploration_mode == 'reward':
-                    prediction[:, -2] -= pessimism * \
-                        torch.exp(logvars[:, :, -1]).to(device).mean(dim=0)
+                    if uncertainty == 'epistemic':
+                        prediction[:, -2] -= pessimism * \
+                            reward_mean.std(dim=0).mean(dim=1)
+                    elif uncertainty == 'aleatoric':
+                        prediction[:, -2] -= pessimism * \
+                            torch.exp(
+                                logvars[:, :, -1]).max(dim=0).values.to(device)
 
                 elif exploration_mode == 'state':
-                    prediction[:, -2] -= pessimism * \
-                        means.std(dim=0).sum(dim=1)
+                    if uncertainty == 'epistemic':
+                        prediction[:, -2] -= pessimism * \
+                            obs_mean.std(dim=0).mean(dim=1)
+                    elif uncertainty == 'aleatoric':
+                        prediction[:, -2] -= pessimism * \
+                            torch.exp(
+                                logvars[:, :, :-1]).mean(dim=2).max(dim=0).values.to(device)
 
                 else:
                     raise ValueError(
@@ -183,7 +198,8 @@ class EnvironmentModel(nn.Module):
             self.min_logvar
 
     def get_prediction(self, x, i_network=-1,
-                       pessimism=0, exploration_mode='state'):
+                       pessimism=0, exploration_mode='state',
+                       uncertainty='epistemic'):
 
         self.eval()
 
@@ -204,7 +220,8 @@ class EnvironmentModel(nn.Module):
             with torch.no_grad():
                 predictions, _, _, _, _ = \
                     self.forward(x, pessimism=pessimism,
-                                 exploration_mode=exploration_mode)
+                                 exploration_mode=exploration_mode,
+                                 uncertainty=uncertainty)
 
             prediction = predictions[0]
 

@@ -42,6 +42,7 @@ class Trainer():
                  pretrained_model_path='',
                  model_pessimism=0,
                  exploration_mode='state',
+                 uncertainty='epistemic',
                  model_max_n_train_batches=-1,
                  rollouts_per_step=10,
                  rollout_schedule=[1, 1, 20, 100],
@@ -211,6 +212,7 @@ class Trainer():
         self.train_model_every = train_model_every
         self.continuous_rollouts = continuous_rollouts
         self.model_pessimism = model_pessimism
+        self.uncertainty = uncertainty
         self.exploration_mode = exploration_mode
         self.model_max_n_train_batches = model_max_n_train_batches
         self.reset_buffer = reset_buffer
@@ -369,6 +371,7 @@ class Trainer():
                             n_rollouts=self.rollouts_per_step,
                             pessimism=self.model_pessimism,
                             exploration_mode=self.exploration_mode,
+                            uncertainty=self.uncertainty,
                             random_action=take_random_action,
                             prev_obs=prev_obs if self.continuous_rollouts else None,
                             max_rollout_length=self.max_rollout_length

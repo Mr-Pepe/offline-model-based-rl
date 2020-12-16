@@ -4,7 +4,8 @@ import torch
 def generate_virtual_rollouts(model, agent, buffer, steps,
                               n_rollouts=1, stop_on_terminal=True, pessimism=0,
                               random_action=False, prev_obs=None,
-                              max_rollout_length=-1, exploration_mode='state'):
+                              max_rollout_length=-1, exploration_mode='state',
+                              uncertainty='epistemic'):
 
     model_is_training = model.training
     agent_is_training = agent.training
@@ -57,7 +58,8 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
                                        actions), dim=1),
                             dtype=torch.float32),
             pessimism=pessimism,
-            exploration_mode=exploration_mode)
+            exploration_mode=exploration_mode,
+            uncertainty=uncertainty)
 
         observations = observations.detach().clone()
         actions = actions.detach().clone()
