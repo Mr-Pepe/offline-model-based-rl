@@ -33,7 +33,7 @@ python main.py \
     --max_rollout_length 5 \
     --train_model_every 0 \
     --model_max_n_train_batches 1300 \
-    --model_pessimism 200 \
+    --model_pessimism 5 \
     --exploration_mode state \
     --uncertainty epistemic \
     --reset_buffer False \
