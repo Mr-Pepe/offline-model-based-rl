@@ -153,7 +153,8 @@ class EnvironmentModel(nn.Module):
                 rewards = self.rew_fn(
                     obs=raw_obs_act[:, :self.obs_dim],
                     act=raw_obs_act[:, self.obs_dim:],
-                    next_obs=next_obs)
+                    next_obs=next_obs,
+                    rewards=rewards)
 
             predictions = torch.cat((next_obs, rewards, dones), dim=2)
 
