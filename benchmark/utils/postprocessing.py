@@ -1,5 +1,5 @@
 from benchmark.utils.envs import ANTMAZE_UMAZE_ENVS, ENV_CATEGORIES, HALF_CHEETAH_ENVS, HOPPER_ENVS, MAZE2D_UMAZE_ENVS, WALKER_ENVS
-from benchmark.utils.mazes import ANTMAZE_ANT_RADIUS, ANTMAZE_UMAZE_GOAL_BLOCK, ANTMAZE_UMAZE_WALLS, MAZE2D_POINT_RADIUS, \
+from benchmark.utils.mazes import ANTMAZE_ANT_RADIUS, ANTMAZE_UMAZE_GOAL_BLOCK, ANTMAZE_UMAZE_WALLS, ANTMAZE_UMAZE_WALLS_CUDA, MAZE2D_POINT_RADIUS, \
     MAZE2D_UMAZE_WALLS
 import torch
 
@@ -39,18 +39,22 @@ def postprocess_walker2d(next_obs=None, **_):
 
 
 def postprocess_antmaze_umaze(next_obs=None, means=None, logvars=None, **_):
-    next_obs = next_obs.detach().clone()
-    if means is not None:
-        means = means.detach().clone()
-    if logvars is not None:
-        logvars = logvars.detach().clone()
+    # next_obs = next_obs.detach().clone()
+    # if means is not None:
+    #     means = means.detach().clone()
+    # if logvars is not None:
+    #     logvars = logvars.detach().clone()
 
     x = next_obs[:, :, 0]
     y = next_obs[:, :, 1]
 
-    walls = ANTMAZE_UMAZE_WALLS.to(x.device)
+    if x.device.type == 'cpu':
+        walls = ANTMAZE_UMAZE_WALLS
+    else:
+        walls = ANTMAZE_UMAZE_WALLS_CUDA
 
-    collision = torch.zeros((next_obs.shape[0], x[0].numel(), len(walls)+1))
+    collision = torch.zeros(
+        (next_obs.shape[0], x[0].numel(), len(walls)+1), device=x.device)
 
     for i_wall, wall in enumerate(walls):
         collision[:, :, i_wall] = \
@@ -73,7 +77,7 @@ def postprocess_antmaze_umaze(next_obs=None, means=None, logvars=None, **_):
                            next_obs[:, :, 2] >= 0.2,
                            next_obs[:, :, 2] <= 1.0)).all(dim=0)
     done = ~notdone
-    done = torch.logical_or(done, collision.to(x.device))
+    done = torch.logical_or(done, collision)
 
     if done.any():
         for i_network in range(next_obs.shape[0]):

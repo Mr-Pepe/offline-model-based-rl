@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import torch
 
 
-def get_antmaze_umaze_walls():
+def get_antmaze_umaze_walls(device='cpu'):
     walls = []
     for i in range(len(ANTMAZE_UMAZE_STRUCTURE)):
         for j in range(len(ANTMAZE_UMAZE_STRUCTURE[0])):
@@ -18,7 +18,9 @@ def get_antmaze_umaze_walls():
 
                 walls.append([minx, maxx, miny, maxy])
 
-    return torch.as_tensor(walls)
+    device = 'cuda' if torch.cuda.is_available() and device == 'cuda' else 'cpu'
+
+    return torch.as_tensor(walls, device=device)
 
 
 def get_maze2d_umaze_walls():
@@ -124,6 +126,7 @@ ANTMAZE_UMAZE_STRUCTURE = [[1, 1, 1, 1, 1],
 ANTMAZE_UMAZE_SCALING = 4
 ANTMAZE_UMAZE_OFFSET = [-4, -4]
 ANTMAZE_UMAZE_WALLS = get_antmaze_umaze_walls()
+ANTMAZE_UMAZE_WALLS_CUDA = get_antmaze_umaze_walls(device='cuda')
 ANTMAZE_UMAZE_GOAL_BLOCK = [-2, 2, 8, 10]
 ANTMAZE_ANT_RADIUS = 0.4
 
