@@ -51,19 +51,25 @@ def plot_antmaze_umaze(xlim=None, ylim=None, buffer=None):
                  color='grey', zorder=-1)
 
     if buffer:
-        rewards = buffer.rew_buf[:buffer.size].cpu()
-        dones = buffer.done_buf[:buffer.size].cpu()
-        buffer = buffer.obs2_buf[:buffer.size].cpu()
+        if buffer.size > 10000:
+            idx = torch.randint(0, buffer.size, (10000,))
+        else:
+            idx = torch.arange(buffer.size)
+
+        rewards = buffer.rew_buf[:buffer.size].cpu()[idx]
+        dones = buffer.done_buf[:buffer.size].cpu()[idx]
+        next_obs = buffer.obs2_buf[:buffer.size].cpu()[idx]
+
         plt.scatter(
-            buffer[dones, 0].cpu(),
-            buffer[dones, 1].cpu(),
+            next_obs[dones, 0].cpu(),
+            next_obs[dones, 1].cpu(),
             color='red',
             marker='.',
             s=5
         )
         plt.scatter(
-            buffer[~dones, 0].cpu(),
-            buffer[~dones, 1].cpu(),
+            next_obs[~dones, 0].cpu(),
+            next_obs[~dones, 1].cpu(),
             c=rewards[~dones],
             cmap='cividis',
             marker='.',
