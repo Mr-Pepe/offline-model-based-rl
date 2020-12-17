@@ -83,8 +83,14 @@ class ReplayBuffer:
         self.ptr += remaining_batch_size
         self.size = min(self.size+remaining_batch_size, self.max_size)
 
-    def sample_batch(self, batch_size=32):
-        idxs = torch.randint(0, self.size, (batch_size,))
+    def sample_batch(self, batch_size=32, non_terminals_only=False):
+        if non_terminals_only and self.done_buf.sum() < self.size:
+            idxs = torch.nonzero((self.done_buf == 0), as_tuple=False)
+        else:
+            idxs = torch.arange(self.size)
+
+        idxs = idxs[torch.randint(0, idxs.numel(), (batch_size,))].flatten()
+
         return dict(obs=self.obs_buf[idxs],
                     obs2=self.obs2_buf[idxs],
                     act=self.act_buf[idxs],

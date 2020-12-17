@@ -22,28 +22,21 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
     out_dones = None
 
     if prev_obs is None:
-        batch = buffer.sample_batch(n_rollouts)
-        dones = model.post_fn(next_obs=batch['obs'].unsqueeze(0))['dones'].view(-1)
-        observations = batch['obs'][dones == 0]
-        lengths = torch.zeros(len(observations)).to(observations.device)
+        observations = buffer.sample_batch(n_rollouts, True)['obs']
+        lengths = torch.zeros((n_rollouts)).to(observations.device)
     else:
         observations = prev_obs['obs']
         lengths = prev_obs['lengths']
 
-    while len(observations) < n_rollouts:
         n_new_rollouts = n_rollouts-len(observations)
 
-        batch = buffer.sample_batch(n_new_rollouts)
-        dones = model.post_fn(next_obs=batch['obs'].unsqueeze(0))['dones'].view(-1)
-        new_obs = batch['obs'][dones == 0]
+        if len(observations) < n_rollouts:
+            observations = torch.cat((
+                observations,
+                buffer.sample_batch(n_new_rollouts, True)['obs']))
 
-        observations = torch.cat((
-            observations,
-            new_obs
-        ))
-
-        lengths = torch.cat(
-            (lengths, torch.zeros(len(new_obs)).to(lengths.device)))
+            lengths = torch.cat(
+                (lengths, torch.zeros(n_new_rollouts).to(lengths.device)))
 
     step = 0
 
