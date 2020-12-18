@@ -1,5 +1,5 @@
 from benchmark.utils.envs import ANTMAZE_UMAZE_ENVS, ENV_CATEGORIES, HALF_CHEETAH_ENVS, HOPPER_ENVS, MAZE2D_UMAZE_ENVS, WALKER_ENVS
-from benchmark.utils.mazes import ANTMAZE_ANT_RADIUS, ANTMAZE_MEDIUM_WALLS, ANTMAZE_MEDIUM_WALLS_CUDA, ANTMAZE_UMAZE_GOAL_BLOCK, ANTMAZE_UMAZE_WALLS, ANTMAZE_UMAZE_WALLS_CUDA, MAZE2D_POINT_RADIUS, \
+from benchmark.utils.mazes import ANTMAZE_ANT_RADIUS, ANTMAZE_MEDIUM_MAX, ANTMAZE_MEDIUM_MIN, ANTMAZE_MEDIUM_WALLS, ANTMAZE_MEDIUM_WALLS_CUDA, ANTMAZE_MEDIUM_WALLS_WITHOUT_OUTSIDE, ANTMAZE_MEDIUM_WALLS_WITHOUT_OUTSIDE_CUDA, ANTMAZE_UMAZE_GOAL_BLOCK, ANTMAZE_UMAZE_WALLS, ANTMAZE_UMAZE_WALLS_CUDA, MAZE2D_POINT_RADIUS, \
     MAZE2D_UMAZE_WALLS
 import torch
 
@@ -43,9 +43,9 @@ def postprocess_antmaze_umaze(next_obs=None, means=None, logvars=None, **_):
     y = next_obs[:, :, 1]
 
     if x.device.type == 'cpu':
-        walls = ANTMAZE_UMAZE_WALLS
+        walls = ANTMAZE_MEDIUM_WALLS_WITHOUT_OUTSIDE
     else:
-        walls = ANTMAZE_UMAZE_WALLS_CUDA
+        walls = ANTMAZE_MEDIUM_WALLS_WITHOUT_OUTSIDE_CUDA
 
     collision = torch.zeros(
         (next_obs.shape[0], x[0].numel(), len(walls)+1), device=x.device)
@@ -57,13 +57,11 @@ def postprocess_antmaze_umaze(next_obs=None, means=None, logvars=None, **_):
             (wall[2] <= y + ANTMAZE_ANT_RADIUS) * \
             (wall[3] > y - ANTMAZE_ANT_RADIUS)
 
-    x_min = walls[:, 0].min()
-    x_max = walls[:, 1].max()
-    y_min = walls[:, 2].min()
-    y_max = walls[:, 3].max()
+    maze_min = ANTMAZE_MEDIUM_MIN + ANTMAZE_ANT_RADIUS
+    maze_max = ANTMAZE_MEDIUM_MAX - ANTMAZE_ANT_RADIUS
 
-    collision[:, :, -1] = (x_max <= x) + (x <= x_min) + \
-        (y_max <= y) + (y <= y_min)
+    collision[:, :, -1] = (maze_max <= x) + (x <= maze_min) + \
+        (maze_max <= y) + (y <= maze_min)
 
     collision = collision.sum(dim=2) > 0
 
