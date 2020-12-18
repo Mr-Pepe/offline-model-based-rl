@@ -185,6 +185,7 @@ postprocessing_functions = {
     'walker2d': postprocess_walker2d,
     'antmaze_umaze': postprocess_antmaze_umaze,
     'maze2d_umaze': postprocess_maze2d_umaze,
+    'antmaze_medium': postprocess_antmaze_medium
 }
 
 

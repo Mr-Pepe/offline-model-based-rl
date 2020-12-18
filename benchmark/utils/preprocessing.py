@@ -50,6 +50,37 @@ def preprocess_antmaze_umaze(obs_act):
     return obs_act
 
 
+def preprocess_antmaze_medium(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([
+        1.2001e+01,  1.2906e+01,  4.8439e-01,  5.4019e-01,  1.9542e-02,
+        3.1740e-02,  9.0824e-02, -2.7411e-02,  6.8376e-01,  1.0748e-01,
+        -7.0496e-01, -4.8868e-02, -7.8523e-01,  1.4361e-02,  6.9033e-01,
+        2.8084e-02,  3.3337e-02,  3.3885e-04,  2.2274e-03,  6.7202e-05,
+        2.1963e-03, -2.6155e-04,  1.1806e-02,  1.7435e-04, -1.1992e-02,
+        -3.7501e-03, -1.2402e-02,  4.5720e-03,  1.2490e-02, -7.9297e-03,
+        -4.1525e-01, -4.1696e-02, -4.4633e-01,  1.6400e-01,  3.8667e-01,
+        -9.3123e-02,  1.9887e-01],
+        device=obs_act.device)
+
+    std = torch.as_tensor([
+        7.1495, 6.1200, 0.1536, 0.4086, 0.3447, 0.3440, 0.5430, 0.4392, 0.2634,
+        0.4359, 0.2782, 0.4418, 0.3088, 0.4478, 0.2639, 0.6737, 0.6929, 0.6414,
+        0.9810, 1.0182, 1.0752, 2.3651, 1.7416, 2.5640, 1.5952, 2.5276, 1.7366,
+        2.3933, 1.6385, 0.8066, 0.6985, 0.8100, 0.6990, 0.8050, 0.7353, 0.8060,
+        0.8004],
+        device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
 def preprocess_hopper(obs_act):
     obs_act = obs_act.detach().clone()
 
@@ -86,6 +117,7 @@ preprocessing_functions = {
     'walker2d': preprocess_walker2d,
     'antmaze_umaze': preprocess_antmaze_umaze,
     'maze2d_umaze': preprocess_maze2d_umaze,
+    'antmaze_medium': preprocess_antmaze_medium
 }
 
 
