@@ -1,5 +1,5 @@
 from benchmark.utils.mazes import \
-    plot_antmaze_umaze, \
+    plot_antmaze_medium, plot_antmaze_umaze, \
     plot_maze2d_umaze
 import matplotlib.pyplot as plt
 import pytest
@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import gym
 from benchmark.utils.postprocessing import \
-    postprocess_half_cheetah, \
+    postprocess_antmaze_medium, postprocess_half_cheetah, \
     postprocess_hopper, \
     postprocess_antmaze_umaze, \
     postprocess_maze2d_umaze, \
@@ -95,6 +95,55 @@ def test_antmaze_umaze_postprocessing():
 
         for i_x, x in enumerate(x_random):
             for i_y, y in enumerate(y_random):
+                # next_obs[i_network, i_x*i_y, 0] = x
+                # next_obs[i_network, i_x*i_y, 1] = y
+                next_obs[i_network, i_x*i_y, 2] = z_random[i_x*i_y]
+
+    # Check collision detection
+    obs = torch.ones((next_obs.shape[1], next_obs.shape[2]))
+
+    dones = postprocess_antmaze_umaze(next_obs=next_obs,
+                                      obs=obs)['dones']
+
+    # plot_antmaze_umaze([-20, 20], [-20, 20])
+    # for i_network in range(n_networks):
+    #     plt.scatter(
+    #         next_obs[i_network, (dones[i_network] == False).view(-1), 0],
+    #         next_obs[i_network, (dones[i_network] == False).view(-1), 1],
+    #         zorder=1,
+    #         color='blue')
+    #     plt.scatter(
+    #         next_obs[i_network, (dones[i_network] == True).view(-1), 0],
+    #         next_obs[i_network, (dones[i_network] == True).view(-1), 1],
+    #         zorder=1,
+    #         color='red')
+
+    # plt.show()
+
+
+# @pytest.mark.current
+@pytest.mark.medium
+def test_antmaze_medium_postprocessing():
+
+    env = gym.make('antmaze-medium-diverse-v0')
+
+    x_points = 100
+    y_points = 100
+    n_networks = 3
+
+    next_obs = torch.zeros((n_networks,
+                            x_points*y_points,
+                            env.observation_space.shape[0]))
+
+    torch.manual_seed(0)
+
+    for i_network in range(n_networks):
+        x_random = torch.rand((x_points,))*35-7
+        y_random = torch.rand((y_points,))*35-7
+        z_random = torch.rand((x_points*y_points,))*0.3 + 0.3
+
+        for i_x, x in enumerate(x_random):
+            for i_y, y in enumerate(y_random):
                 next_obs[i_network, i_x*i_y, 0] = x
                 next_obs[i_network, i_x*i_y, 1] = y
                 next_obs[i_network, i_x*i_y, 2] = z_random[i_x*i_y]
@@ -102,10 +151,10 @@ def test_antmaze_umaze_postprocessing():
     # Check collision detection
     obs = torch.ones((next_obs.shape[1], next_obs.shape[2]))
 
-    dones = postprocess_antmaze_umaze(next_obs=next_obs,
-                                      obs=obs)
+    dones = postprocess_antmaze_medium(next_obs=next_obs,
+                                       obs=obs)['dones']
 
-    # plot_antmaze_umaze([-20, 20], [-20, 20])
+    # plot_antmaze_medium([-10, 30], [-10, 30])
     # for i_network in range(n_networks):
     #     plt.scatter(
     #         next_obs[i_network, (dones[i_network] == False).view(-1), 0],
