@@ -2,10 +2,17 @@ import matplotlib.pyplot as plt
 import torch
 
 
-def get_antmaze_umaze_walls(device='cpu'):
+def get_antmaze_umaze_walls(device='cpu', no_outside=False):
+    if no_outside:
+        rows = range(1, len(ANTMAZE_UMAZE_STRUCTURE)-1)
+        cols = range(1, len(ANTMAZE_UMAZE_STRUCTURE[0])-1)
+    else:
+        rows = range(len(ANTMAZE_UMAZE_STRUCTURE))
+        cols = range(len(ANTMAZE_UMAZE_STRUCTURE[0]))
+
     walls = []
-    for i in range(len(ANTMAZE_UMAZE_STRUCTURE)):
-        for j in range(len(ANTMAZE_UMAZE_STRUCTURE[0])):
+    for i in rows:
+        for j in cols:
             if ANTMAZE_UMAZE_STRUCTURE[i][j] == 1:
                 minx = j * ANTMAZE_UMAZE_SCALING - \
                     ANTMAZE_UMAZE_SCALING * 0.5 + ANTMAZE_UMAZE_OFFSET[0]
@@ -219,7 +226,13 @@ ANTMAZE_UMAZE_SCALING = 4
 ANTMAZE_UMAZE_OFFSET = [-4, -4]
 ANTMAZE_UMAZE_WALLS = get_antmaze_umaze_walls()
 ANTMAZE_UMAZE_WALLS_CUDA = get_antmaze_umaze_walls(device='cuda')
+ANTMAZE_UMAZE_WALLS_WITHOUT_OUTSIDE = get_antmaze_umaze_walls(
+    no_outside=True)
+ANTMAZE_UMAZE_WALLS_WITHOUT_OUTSIDE_CUDA = get_antmaze_umaze_walls(
+    device='cuda', no_outside=True)
 ANTMAZE_UMAZE_GOAL_BLOCK = [-2, 2, 8, 10]
+ANTMAZE_UMAZE_MIN = -2
+ANTMAZE_UMAZE_MAX = 10
 
 ANTMAZE_MEDIUM_SCALING = 4
 ANTMAZE_MEDIUM_OFFSET = [-4, -4]
@@ -229,8 +242,8 @@ ANTMAZE_MEDIUM_WALLS_WITHOUT_OUTSIDE = get_antmaze_medium_walls(
     no_outside=True)
 ANTMAZE_MEDIUM_WALLS_WITHOUT_OUTSIDE_CUDA = get_antmaze_medium_walls(
     device='cuda', no_outside=True)
-ANTMAZE_MEDIUM_MIN = -5
-ANTMAZE_MEDIUM_MAX = 25
+ANTMAZE_MEDIUM_MIN = -2
+ANTMAZE_MEDIUM_MAX = 22
 ANTMAZE_MEDIUM_GOAL_BLOCK = [20, 22, 20, 22]
 
 ANTMAZE_ANT_RADIUS = 0.4

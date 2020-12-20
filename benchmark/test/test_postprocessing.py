@@ -95,8 +95,8 @@ def test_antmaze_umaze_postprocessing():
 
         for i_x, x in enumerate(x_random):
             for i_y, y in enumerate(y_random):
-                # next_obs[i_network, i_x*i_y, 0] = x
-                # next_obs[i_network, i_x*i_y, 1] = y
+                next_obs[i_network, i_x*i_y, 0] = x
+                next_obs[i_network, i_x*i_y, 1] = y
                 next_obs[i_network, i_x*i_y, 2] = z_random[i_x*i_y]
 
     # Check collision detection
@@ -121,7 +121,6 @@ def test_antmaze_umaze_postprocessing():
     # plt.show()
 
 
-# @pytest.mark.current
 @pytest.mark.medium
 def test_antmaze_medium_postprocessing():
 
