@@ -7,8 +7,8 @@ Some simple logging functionality, inspired by rllab's logging.
 Logs to a tab-separated-values file (path/to/output_directory/progress.txt)
 
 """
-from benchmark.utils.envs import ANTMAZE_UMAZE_ENVS, MAZE2D_UMAZE_ENVS
-from benchmark.utils.mazes import plot_antmaze_umaze, plot_maze2d_umaze
+from benchmark.utils.envs import ANTMAZE_MEDIUM_ENVS, ANTMAZE_UMAZE_ENVS, MAZE2D_UMAZE_ENVS
+from benchmark.utils.mazes import plot_antmaze_medium, plot_antmaze_umaze, plot_maze2d_umaze
 import json
 import joblib
 import numpy as np
@@ -383,7 +383,8 @@ class EpochLogger(Logger):
     def save_replay_buffer_to_tensorboard(self, epoch, mode=''):
         is_antmaze_umaze = self.env_name in ANTMAZE_UMAZE_ENVS
         is_maze2d_umaze = self.env_name in MAZE2D_UMAZE_ENVS
-        if is_antmaze_umaze or is_maze2d_umaze:
+        is_antmaze_medium = self.env_name in ANTMAZE_MEDIUM_ENVS
+        if is_antmaze_umaze or is_maze2d_umaze or is_antmaze_medium:
             fig_size = (6, 6)
 
             if 'replay_buffer' in self.pytorch_saver_elements:
@@ -395,6 +396,8 @@ class EpochLogger(Logger):
                         plot_antmaze_umaze(buffer=buffer)
                     if is_maze2d_umaze:
                         plot_maze2d_umaze(buffer=buffer)
+                    if is_antmaze_medium:
+                        plot_antmaze_medium(buffer=buffer, n_samples=100000)
 
                     self.tensorboard_writer.add_figure(
                         'ReplayBuffers/0RealReplayBuffer',
@@ -411,6 +414,8 @@ class EpochLogger(Logger):
                         plot_antmaze_umaze(buffer=buffer)
                     if is_maze2d_umaze:
                         plot_maze2d_umaze(buffer=buffer)
+                    if is_antmaze_medium:
+                        plot_antmaze_medium(buffer=buffer, n_samples=100000)
 
                     self.tensorboard_writer.add_figure(
                         'ReplayBuffers/1VirtualReplayBuffer', f, epoch)
@@ -424,6 +429,8 @@ class EpochLogger(Logger):
                         plot_antmaze_umaze(buffer=buffer)
                     if is_maze2d_umaze:
                         plot_maze2d_umaze(buffer=buffer)
+                    if is_antmaze_medium:
+                        plot_antmaze_medium(buffer=buffer)
 
                     self.tensorboard_writer.add_figure(
                         'ReplayBuffers/2TestEpisodesReplayBuffer', f, epoch)
