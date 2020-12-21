@@ -61,6 +61,9 @@ class EnvironmentModel(nn.Module):
 
         self.optim = None
 
+        n_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
+        print("Env model parameters: {}".format(n_params))
+
     def forward(self, obs_act, pessimism=0, exploration_mode='state',
                 uncertainty='epistemic'):
 
