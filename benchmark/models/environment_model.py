@@ -266,6 +266,8 @@ class EnvironmentModel(nn.Module):
         ))
 
         device = next(self.parameters()).device
+        use_amp = 'cuda' in device.type
+        scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 
         if self.optim is None:
             self.optim = Adam(self.parameters(), lr=lr, weight_decay=1e-5)
@@ -292,14 +294,16 @@ class EnvironmentModel(nn.Module):
                     device)
 
                 self.optim.zero_grad()
-                if self.type == 'deterministic':
-                    loss = deterministic_loss(x, y, self)
-                else:
-                    loss = probabilistic_loss(x, y, self, debug=debug)
+                with torch.cuda.amp.autocast(enabled=use_amp):
+                    if self.type == 'deterministic':
+                        loss = deterministic_loss(x, y, self)
+                    else:
+                        loss = probabilistic_loss(x, y, self, debug=debug)
 
                 avg_train_loss += loss.item()
-                loss.backward(retain_graph=True)
-                self.optim.step()
+                scaler.scale(loss).backward(retain_graph=True)
+                scaler.step(self.optim)
+                scaler.update()
 
                 if max_n_train_batches != -1 and \
                         max_n_train_batches <= batches_trained:
