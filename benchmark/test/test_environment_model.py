@@ -46,7 +46,7 @@ def test_single_deterministic_network_overfits_on_single_sample():
 
     x = torch.as_tensor([3, 3], dtype=torch.float32)
     y = torch.as_tensor([5, 4, 0], dtype=torch.float32)
-    lr = 1e-3
+    lr = 1e-2
 
     optim = Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
@@ -55,13 +55,13 @@ def test_single_deterministic_network_overfits_on_single_sample():
 
     for i in range(1000):
         optim.zero_grad()
-        y_pred, _, _, _, _ = model(x)
-        loss = criterion(y_pred, y.view(1, 1, -1))
+        y_pred, _, _, _, _ = model(torch.stack(3 * [x]))
+        loss = criterion(y_pred, torch.stack(3 * [y]).unsqueeze(0))
         print("Loss: {}".format(loss))
         loss.backward()
         optim.step()
 
-    assert criterion(y.view(1, 1, -1), y_pred).item() < 2e-5
+    assert criterion(y_pred, torch.stack(3 * [y]).unsqueeze(0)).item() < 1e-3
 
 
 @pytest.mark.medium
@@ -71,7 +71,7 @@ def test_single_deterministic_network_overfits_on_batch():
     x = torch.rand((10, 7))
     y = torch.rand((10, 5))
     y[:, -1] = 0
-    lr = 1e-3
+    lr = 1e-2
 
     optim = Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
@@ -281,7 +281,7 @@ def test_deterministic_ensemble_overfits_on_batch():
     x = torch.rand((10, 7))
     y = torch.rand((10, 5))
     y[:, -1] = 0
-    lr = 1e-3
+    lr = 1e-2
 
     optim = Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
@@ -394,7 +394,7 @@ def test_deterministic_model_does_not_always_output_terminal():
     model = EnvironmentModel(obs_dim, act_dim, type='deterministic',
                              post_fn=postprocessing_functions['hopper'],
                              device=device)
-    optim = Adam(model.parameters(), lr=1e-3)
+    optim = Adam(model.parameters(), lr=1e-2)
 
     for i in range(500):
 

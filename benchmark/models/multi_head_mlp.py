@@ -2,6 +2,7 @@ from benchmark.models.ensemble_dense_layer import EnsembleDenseLayer
 import torch.nn as nn
 import torch
 
+
 class MultiHeadMlp(nn.Module):
 
     def __init__(self, obs_dim, act_dim, hidden, n_networks):
