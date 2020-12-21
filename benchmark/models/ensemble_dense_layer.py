@@ -24,7 +24,6 @@ class EnsembleDenseLayer(nn.Module):
 
         weights = torch.zeros(ensemble_size, n_in, n_out).float()
         biases = torch.zeros(ensemble_size, 1, n_out).float()
-        self.batch_norm = nn.BatchNorm1d(n_out)
 
         for weight in weights:
             if non_linearity == 'swish':
@@ -51,10 +50,10 @@ class EnsembleDenseLayer(nn.Module):
 
         out = self.non_linearity(out)
 
-        out = self.batch_norm(torch.flatten(out, 0, 1)).reshape(
-            inp.shape[0], inp.shape[1], -1)
+        # out = self.batch_norm(torch.flatten(out, 0, 1)).reshape(
+        #     inp.shape[0], inp.shape[1], -1)
 
-        if out.shape[-1] == inp.shape[-1]:
-            out += inp
+        # if out.shape[-1] == inp.shape[-1]:
+        #     out += inp
 
         return out
