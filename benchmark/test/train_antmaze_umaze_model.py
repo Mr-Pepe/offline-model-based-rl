@@ -13,7 +13,7 @@ buffer, obs_dim, act_dim = load_dataset_from_env(env,
 
 model = EnvironmentModel(obs_dim=obs_dim,
                          act_dim=act_dim,
-                         hidden=[200, 200, 200, 200],
+                         hidden=15*[200],
                          type='probabilistic',
                          n_networks=7,
                          device=device,
@@ -30,4 +30,4 @@ model.cpu()
 
 torch.save(
     model,
-    '/home/felipe/Projects/thesis-code/data/models/antmaze_umaze/model.pt')
+    '/home/felipe/Projects/thesis-code/data/models/antmaze_umaze/deepmodel.pt')
