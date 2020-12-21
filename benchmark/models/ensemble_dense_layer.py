@@ -50,10 +50,11 @@ class EnsembleDenseLayer(nn.Module):
         out = torch.baddbmm(self.biases, inp, self.weights)
 
         out = self.non_linearity(out)
-        if out.shape[-1] == inp.shape[-1]:
-            out += inp
 
         out = self.batch_norm(torch.flatten(out, 0, 1)).reshape(
             inp.shape[0], inp.shape[1], -1)
+
+        if out.shape[-1] == inp.shape[-1]:
+            out += inp
 
         return out
