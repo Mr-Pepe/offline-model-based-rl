@@ -64,69 +64,35 @@ class EnvironmentModel(nn.Module):
         n_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
         print("Env model parameters: {}".format(n_params))
 
-    def forward(self, obs_act, pessimism=0, exploration_mode='state',
-                uncertainty='epistemic'):
-
-        if not (uncertainty == 'epistemic' or uncertainty == 'aleatoric'):
-            raise ValueError(
-                "Unknown uncertainty measure: {}".format(uncertainty))
+    def forward(self, raw_obs_act):
 
         device = next(self.layers.parameters()).device
-        raw_obs_act = self.check_device_and_shape(obs_act, device)
+        raw_obs_act = self.check_device_and_shape(raw_obs_act, device)
 
         if self.pre_fn:
             obs_act = self.pre_fn(raw_obs_act)
         else:
             obs_act = raw_obs_act.detach().clone()
 
-        next_obs, reward = self.layers(obs_act)
+        pred_obs_deltas, pred_rewards = self.layers(obs_act)
 
-        predictions = 0
-        means = 0
-        logvars = 0
-        max_logvar = 0
-        min_logvar = 0
+        pred_next_obs = pred_obs_deltas[:, :, :self.obs_dim] + \
+            raw_obs_act[:, :self.obs_dim]
 
-        # The model only learns a residual, so the input has to be added
+        means = torch.cat((pred_next_obs,
+                           pred_rewards[:, :, 0].view((self.n_networks, -1, 1))),
+                          dim=2)
+
         if self.type == 'deterministic':
-            next_obs = next_obs[:, :, :self.obs_dim] + \
-                raw_obs_act[:, :self.obs_dim]
 
-            dones = None
-            if self.post_fn and not self.training:
-                post = self.post_fn(
-                    obs=raw_obs_act[:, :self.obs_dim],
-                    act=raw_obs_act[:, self.obs_dim:],
-                    next_obs=next_obs,
-                )
+            predictions = means
+            logvars = 0
 
-                if 'dones' in post:
-                    dones = post['dones'].to(device)
-
-            if dones is None:
-                dones = torch.zeros((self.n_networks, obs_act.shape[0], 1),
-                                    device=device)
-
-            if self.rew_fn and not self.training:
-                reward = self.rew_fn(
-                    obs=raw_obs_act[:, :self.obs_dim],
-                    act=raw_obs_act[:, self.obs_dim:],
-                    next_obs=next_obs)
-
-            predictions = torch.cat((next_obs,
-                                     reward[:, :, 0].view(
-                                         (self.n_networks, -1, 1)),
-                                     dones), dim=2)
-
-        elif self.type == 'probabilistic':
-            obs_mean = next_obs[:, :, :self.obs_dim] + \
-                raw_obs_act[:, :self.obs_dim]
-            reward_mean = reward[:, :, 0].view((self.n_networks, -1, 1))
-            means = torch.cat((obs_mean, reward_mean), dim=2)
-
-            obs_logvar = next_obs[:, :, self.obs_dim:]
-            reward_logvar = reward[:, :, 1].view((self.n_networks, -1, 1))
-            logvars = torch.cat((obs_logvar, reward_logvar), dim=2)
+        else:
+            next_obs_logvars = pred_next_obs[:, :, self.obs_dim:]
+            reward_logvars = pred_rewards[:, :, 1].view(
+                (self.n_networks, -1, 1))
+            logvars = torch.cat((next_obs_logvars, reward_logvars), dim=2)
 
             max_logvar = self.max_logvar.unsqueeze(1)
             min_logvar = self.min_logvar.unsqueeze(1)
@@ -136,62 +102,6 @@ class EnvironmentModel(nn.Module):
             std = torch.exp(0.5*logvars)
 
             predictions = torch.normal(means, std)
-            next_obs = predictions[:, :, :-1]
-            rewards = predictions[:, :, -1].unsqueeze(-1)
-
-            dones = None
-            if self.post_fn and not self.training:
-                post = self.post_fn(
-                    next_obs=next_obs,
-                    means=means,
-                    logvars=logvars)
-
-                if 'dones' in post:
-                    dones = post['dones'].to(device)
-                if 'means' in post:
-                    means = post['means'].to(device)
-                if 'logvars' in post:
-                    logvars = post['logvars'].to(device)
-
-            if dones is None:
-                dones = torch.zeros((self.n_networks, obs_act.shape[0], 1),
-                                    device=device)
-
-            if self.rew_fn and not self.training:
-                rewards = self.rew_fn(
-                    obs=raw_obs_act[:, :self.obs_dim],
-                    act=raw_obs_act[:, self.obs_dim:],
-                    next_obs=next_obs)
-
-            predictions = torch.cat((next_obs, rewards, dones), dim=2)
-
-            if pessimism != 0:
-                prediction = predictions[torch.randint(
-                    0, len(predictions), (1,))][0]
-
-                if exploration_mode == 'reward':
-                    if uncertainty == 'epistemic':
-                        prediction[:, -2] -= pessimism * \
-                            means[:, :, -1].std(dim=0).mean(dim=1)
-                    elif uncertainty == 'aleatoric':
-                        prediction[:, -2] -= pessimism * \
-                            torch.exp(
-                                logvars[:, :, -1]).max(dim=0).values.to(device)
-
-                elif exploration_mode == 'state':
-                    if uncertainty == 'epistemic':
-                        prediction[:, -2] -= pessimism * \
-                            means[:, :, :-1].std(dim=0).mean(dim=1)
-                    elif uncertainty == 'aleatoric':
-                        prediction[:, -2] -= pessimism * \
-                            torch.exp(
-                                logvars[:, :, :-1]).mean(dim=2).max(dim=0).values.to(device)
-
-                else:
-                    raise ValueError(
-                        "Unknown exploration mode: {}".format(exploration_mode))
-
-                predictions = prediction.unsqueeze(0)
 
         return predictions, \
             means, \
@@ -199,37 +109,74 @@ class EnvironmentModel(nn.Module):
             self.max_logvar, \
             self.min_logvar
 
-    def get_prediction(self, x, i_network=-1,
+    def get_prediction(self, raw_obs_act, i_network=-1,
                        pessimism=0, exploration_mode='state',
                        uncertainty='epistemic'):
 
+        device = next(self.layers.parameters()).device
+
+        if i_network == -1:
+            i_network = torch.randint(self.n_networks, (1,)).item()
+
         self.eval()
 
-        if pessimism == 0:
-            i_network = torch.randint(self.n_networks,
-                                      (1,)) if i_network == -1 else i_network
+        self.check_prediction_arguments(uncertainty, pessimism, exploration_mode)
 
-            with torch.no_grad():
-                predictions, _, _, _, _ = self.forward(x)
+        with torch.no_grad():
+            predictions, means, logvars, _, _ = \
+                self.forward(raw_obs_act)
 
-            prediction = predictions[i_network].view(x.shape[0], -1)
+        pred_next_obs = predictions[:, :, :-1]
+        pred_rewards = predictions[:, :, -1].unsqueeze(-1)
 
-        else:
-            if self.type != 'probabilistic':
-                raise ValueError("Can not predict pessimistically because \
-                    model is not probabilistic")
+        dones = None
 
-            with torch.no_grad():
-                predictions, _, _, _, _ = \
-                    self.forward(x, pessimism=pessimism,
-                                 exploration_mode=exploration_mode,
-                                 uncertainty=uncertainty)
+        if self.post_fn:
+            post = self.post_fn(
+                next_obs=pred_next_obs,
+                means=means,
+                logvars=logvars)
 
-            prediction = predictions[0]
+            if 'dones' in post:
+                dones = post['dones'].to(device)
+            if 'means' in post:
+                means = post['means'].to(device)
+            if 'logvars' in post:
+                logvars = post['logvars'].to(device)
 
-        prediction[:, -1] = prediction[:, -1] > 0.5
+        if self.rew_fn:
+            pred_rewards = self.rew_fn(
+                obs=raw_obs_act[:, :self.obs_dim],
+                act=raw_obs_act[:, self.obs_dim:],
+                next_obs=pred_next_obs)
 
-        self.train()
+        if dones is None:
+            dones = torch.zeros(
+                (self.n_networks, raw_obs_act.shape[0], 1), device=device)
+
+        predictions = torch.cat((pred_next_obs, pred_rewards, dones), dim=2)
+        prediction = predictions[i_network]
+
+        if pessimism != 0:
+
+            if exploration_mode == 'reward':
+                if uncertainty == 'epistemic':
+                    prediction[:, -2] -= pessimism * \
+                        means[:, :, -1].std(dim=0).mean(dim=1)
+                elif uncertainty == 'aleatoric':
+                    prediction[:, -2] -= pessimism * \
+                        torch.exp(
+                            logvars[:, :, -1]).max(dim=0).values.to(device)
+
+            elif exploration_mode == 'state':
+                if uncertainty == 'epistemic':
+                    prediction[:, -2] -= pessimism * \
+                        means[:, :, :-1].std(dim=0).mean(dim=1)
+                elif uncertainty == 'aleatoric':
+                    prediction[:, -2] -= pessimism * \
+                        torch.exp(
+                            logvars[:, :, :-1]).mean(dim=2).max(dim=0).values.to(device)
+
         return prediction
 
     def check_device_and_shape(self, x, device):
@@ -274,6 +221,8 @@ class EnvironmentModel(nn.Module):
 
         if self.optim is None:
             self.optim = Adam(self.parameters(), lr=lr, weight_decay=1e-5)
+
+        self.train()
 
         min_val_loss = 1e10
         n_bad_val_losses = 0
@@ -366,3 +315,17 @@ class EnvironmentModel(nn.Module):
                 print('')
 
         return avg_val_losses, batches_trained
+
+    def check_prediction_arguments(self, uncertainty, pessimism, exploration_mode):
+        if not (uncertainty == 'epistemic' or uncertainty == 'aleatoric'):
+            raise ValueError(
+                "Unknown uncertainty measure: {}".format(uncertainty))
+
+        if not (exploration_mode == 'state' or exploration_mode == 'reward'):
+            raise ValueError(
+                        "Unknown exploration mode: {}".format(exploration_mode))
+
+        if pessimism != 0 and uncertainty == 'aleatoric' and \
+                self.type == 'deterministic':
+            raise ValueError(
+                "Can not use aleatoric uncertainty with deterministic ensemble.")

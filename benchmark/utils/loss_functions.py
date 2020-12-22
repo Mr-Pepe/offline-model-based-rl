@@ -5,9 +5,9 @@ def deterministic_loss(x, y, model, i_network=-1):
     y_pred, _, _, _, _ = model(x)
 
     if i_network == -1:
-        return torch.square(y_pred[:, :, :-1] - y.unsqueeze(0)).mean()
+        return torch.square(y_pred - y.unsqueeze(0)).mean()
     else:
-        return torch.square(y_pred[i_network, :, :-1] - y.unsqueeze(0)).mean()
+        return torch.square(y_pred[i_network] - y.unsqueeze(0)).mean()
 
 
 def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False):

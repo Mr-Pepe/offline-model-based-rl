@@ -34,9 +34,9 @@ def test_takes_state_and_action_as_input_and_outputs_state_reward_done():
 
     tensor_size = (3, obs_dim+act_dim)
     input = torch.rand(tensor_size)
-    output, _, _, _, _ = model(input)
+    output = model.get_prediction(input)
 
-    np.testing.assert_array_equal(output.shape, (1, 3, obs_dim+2))
+    np.testing.assert_array_equal(output.shape, (3, obs_dim+2))
 
 
 @pytest.mark.medium
@@ -45,7 +45,7 @@ def test_single_deterministic_network_overfits_on_single_sample():
     model = EnvironmentModel(1, 1)
 
     x = torch.as_tensor([3, 3], dtype=torch.float32)
-    y = torch.as_tensor([5, 4, 0], dtype=torch.float32)
+    y = torch.as_tensor([5, 4], dtype=torch.float32)
     lr = 1e-2
 
     optim = Adam(model.parameters(), lr=lr)
@@ -69,8 +69,7 @@ def test_single_deterministic_network_overfits_on_batch():
     model = EnvironmentModel(obs_dim=3, act_dim=4)
 
     x = torch.rand((10, 7))
-    y = torch.rand((10, 5))
-    y[:, -1] = 0
+    y = torch.rand((10, 4))
     lr = 1e-2
 
     optim = Adam(model.parameters(), lr=lr)
@@ -98,7 +97,6 @@ def test_deterministic_model_trains_on_offline_data():
     observations = dataset['observations']
     actions = dataset['actions']
     rewards = dataset['rewards'].reshape(-1, 1)
-    dones = dataset['terminals'].reshape(-1, 1)
 
     model = EnvironmentModel(observations.shape[1], actions.shape[1])
 
@@ -120,8 +118,7 @@ def test_deterministic_model_trains_on_offline_data():
                             dtype=torch.float32,
                             device=device)
         y = torch.as_tensor(np.concatenate((observations[idxs+1],
-                                            rewards[idxs],
-                                            dones[idxs]),
+                                            rewards[idxs]),
                                            axis=1),
                             dtype=torch.float32,
                             device=device)
@@ -279,8 +276,7 @@ def test_deterministic_ensemble_overfits_on_batch():
     model = EnvironmentModel(obs_dim=3, act_dim=4, n_networks=n_networks)
 
     x = torch.rand((10, 7))
-    y = torch.rand((10, 5))
-    y[:, -1] = 0
+    y = torch.rand((10, 4))
     lr = 1e-2
 
     optim = Adam(model.parameters(), lr=lr)
@@ -490,7 +486,7 @@ def test_probabilistic_model_does_not_always_output_terminal():
 
 
 @pytest.mark.fast
-def test_pessimistic_prediction_throws_error_if_model_not_probabilistic():
+def test_aleatoric_pessimism_throws_error_if_model_not_probabilistic():
     obs_dim = 5
     act_dim = 6
 
@@ -500,7 +496,35 @@ def test_pessimistic_prediction_throws_error_if_model_not_probabilistic():
     input = torch.rand(tensor_size)
 
     with pytest.raises(ValueError):
-        model.get_prediction(input, pessimism=1)
+        model.get_prediction(input, pessimism=1, uncertainty='aleatoric')
+
+
+@pytest.mark.fast
+def test_throws_error_if_uncertainty_mode_unknown():
+    obs_dim = 5
+    act_dim = 6
+
+    model = EnvironmentModel(obs_dim, act_dim, [2, 2])
+
+    tensor_size = (3, obs_dim+act_dim)
+    input = torch.rand(tensor_size)
+
+    with pytest.raises(ValueError):
+        model.get_prediction(input, pessimism=1, uncertainty='epistemi')
+
+
+@pytest.mark.fast
+def test_throws_error_if_exploration_mode_unknown():
+    obs_dim = 5
+    act_dim = 6
+
+    model = EnvironmentModel(obs_dim, act_dim, [2, 2])
+
+    tensor_size = (3, obs_dim+act_dim)
+    input = torch.rand(tensor_size)
+
+    with pytest.raises(ValueError):
+        model.get_prediction(input, pessimism=1, exploration_mode='stat')
 
 
 @pytest.mark.fast
