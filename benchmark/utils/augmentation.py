@@ -5,7 +5,6 @@ from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.mazes import plot_antmaze_umaze
 import matplotlib.pyplot as plt
 import torch
-import pickle
 
 
 def augment_antmaze_umaze_dataset(f_path, plot=False):
@@ -64,8 +63,7 @@ def augment_antmaze_umaze_dataset(f_path, plot=False):
         plot_antmaze_umaze(buffer=augmented_buffer)
         plt.show()
 
-    with open(f_path, 'wb') as f:
-        pickle.dump(augmented_buffer, f)
+    torch.save(augmented_buffer, f_path)
 
 
 augment_antmaze_umaze_dataset(
