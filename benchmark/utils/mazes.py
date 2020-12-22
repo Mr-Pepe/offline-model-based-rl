@@ -233,7 +233,7 @@ ANTMAZE_UMAZE_WALLS_WITHOUT_OUTSIDE = get_antmaze_umaze_walls(
     no_outside=True)
 ANTMAZE_UMAZE_WALLS_WITHOUT_OUTSIDE_CUDA = get_antmaze_umaze_walls(
     device='cuda', no_outside=True)
-ANTMAZE_UMAZE_GOAL_BLOCK = [-2, 2, 8, 10]
+ANTMAZE_UMAZE_GOAL_BLOCK = [0, 0.5, 8, 9]
 ANTMAZE_UMAZE_MIN = -2
 ANTMAZE_UMAZE_MAX = 10
 
