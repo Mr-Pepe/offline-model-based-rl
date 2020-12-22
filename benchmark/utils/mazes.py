@@ -77,8 +77,11 @@ def get_maze2d_umaze_walls():
     return torch.as_tensor(walls)
 
 
-def plot_antmaze_umaze(xlim=None, ylim=None, buffer=None):
+def plot_antmaze_umaze(xlim=None, ylim=None, buffer=None, n_samples=-1):
     walls = get_antmaze_umaze_walls()
+
+    if n_samples == -1 and buffer is not None:
+        n_samples = buffer.size
 
     for wall in walls:
         plt.fill([wall[0], wall[0], wall[1], wall[1], wall[0]],
@@ -86,8 +89,8 @@ def plot_antmaze_umaze(xlim=None, ylim=None, buffer=None):
                  color='grey', zorder=-1)
 
     if buffer:
-        if buffer.size > 10000:
-            idx = torch.randint(0, buffer.size, (10000,))
+        if buffer.size > n_samples:
+            idx = torch.randint(0, buffer.size, (n_samples,))
         else:
             idx = torch.arange(buffer.size)
 
