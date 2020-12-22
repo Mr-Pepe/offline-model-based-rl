@@ -7,25 +7,28 @@ from benchmark.utils.mazes import plot_antmaze_umaze
 import matplotlib.pyplot as plt
 import time
 
-env = gym.make('antmaze-umaze-v0')
-original_buffer, obs_dim, act_dim = load_dataset_from_env(env, 10)
+env = gym.make('antmaze-medium-diverse-v0')
+original_buffer, obs_dim, act_dim = load_dataset_from_env(env)
 real_buffer = ReplayBuffer(obs_dim, act_dim, original_buffer.size)
 virtual_buffer = ReplayBuffer(obs_dim, act_dim, original_buffer.size)
+
+offset = 100000
+steps = 20
 
 agent = None
 # torch.load(
 #     '/home/felipe/Projects/thesis-code/data/antmaze_umaze_mopo/antmaze_umaze_mopo_s0/pyt_save/agent.pt')
 # agent.cpu()
 model = torch.load(
-    '/home/felipe/Projects/thesis-code/data/models/antmaze_umaze/model.pt')
+    '/home/felipe/Projects/thesis-code/data/models/antmaze_medium/deterministic_model.pt')
 
-obs = original_buffer.obs_buf[0]
+obs = original_buffer.obs_buf[offset]
 
 # What would happen in the virtual environment
-for step in range(original_buffer.size):
+for step in range(steps):
     if not agent:
-        act = original_buffer.act_buf[step]
-        # act = torch.zeros_like(original_buffer.act_buf[0])
+        # act = original_buffer.act_buf[offset+step]
+        act = torch.zeros_like(original_buffer.act_buf[0])
     else:
         act = agent.act(obs)
 
@@ -35,16 +38,15 @@ for step in range(original_buffer.size):
 
     obs = pred[0, :-2]
 
-obs = original_buffer.obs_buf[0]
+obs = original_buffer.obs_buf[offset]
 env.reset()
 # See what the agents actions would have led to in the real environment
 # if agent:
-for step in range(500):
+for step in range(steps):
     # act = agent.act(obs, False)
     act = torch.zeros_like(original_buffer.act_buf[0])
-    # env.set_state(obs[:15].view(-1), obs[15:].view(-1))
+    env.set_state(obs[:15].view(-1), obs[15:].view(-1))
     o2, r, d, _ = env.step(act.cpu().numpy())
-    # env.render()
     real_buffer.store(torch.as_tensor(obs),
                       torch.as_tensor(act),
                       torch.as_tensor(r),
@@ -53,24 +55,20 @@ for step in range(500):
 
     obs = torch.as_tensor(o2)
 
-for step in range(original_buffer.size):
-    obs = original_buffer.obs_buf[step]
-    env.set_state(obs[:15].view(-1), obs[15:].view(-1))
-    env.render()
-    time.sleep(0.1)
-
-    # obs = real_buffer.obs_buf[step]
+for step in range(steps):
+    # obs = original_buffer.obs_buf[offset+step]
     # env.set_state(obs[:15].view(-1), obs[15:].view(-1))
     # env.render()
     # time.sleep(0.1)
+
+    obs = real_buffer.obs_buf[step]
+    env.set_state(obs[:15].view(-1), obs[15:].view(-1))
+    env.render()
+    time.sleep(0.1)
 
     obs = virtual_buffer.obs_buf[step]
     env.set_state(obs[:15].view(-1), obs[15:].view(-1))
     env.render()
     time.sleep(0.1)
-
-# plot_antmaze_umaze(buffer=original_buffer)
-# plt.scatter(virtual_buffer.obs2_buf[:, 0], virtual_buffer.obs2_buf[:, 1])
-# plt.show()
 
 pass
