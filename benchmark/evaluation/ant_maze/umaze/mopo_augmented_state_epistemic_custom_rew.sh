@@ -20,7 +20,7 @@ python main.py \
     --agent_batch_size 256 \
     --agent_lr 3e-4 \
     --use_model True \
-    --pretrained_model_path "/home/felipe/Projects/thesis-code/data/models/antmaze_umaze/model.pt" \
+    --pretrained_model_path "/home/felipe/Projects/thesis-code/data/models/antmaze_umaze/augmented_model.pt" \
     --rollouts_per_step 100 \
     --rollout_schedule 1 1 1 200 \
     --continuous_rollouts True \

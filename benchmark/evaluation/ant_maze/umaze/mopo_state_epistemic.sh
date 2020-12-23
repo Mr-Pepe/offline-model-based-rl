@@ -26,15 +26,15 @@ python main.py \
     --continuous_rollouts True \
     --max_rollout_length 10 \
     --train_model_every 0 \
-    --model_pessimism 50 \
+    --model_pessimism 5 \
     --exploration_mode state \
     --uncertainty epistemic \
     --reset_buffer False \
     --train_model_from_scratch False \
     --virtual_pretrain_epochs 0 \
-    --use_custom_reward True \
+    --use_custom_reward False \
     --num_test_episodes 10 \
-    --exp_name antmaze_umaze_mopo_state_epistemic_custom_rew \
+    --exp_name antmaze_umaze_mopo_state_epistemic \
     --datestamp False \
     --log_dir "" \
     --device cuda \
