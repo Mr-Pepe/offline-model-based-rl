@@ -36,3 +36,11 @@ ENV_CATEGORIES = {
     'maze2d_umaze': MAZE2D_UMAZE_ENVS,
     'antmaze_medium': ANTMAZE_MEDIUM_ENVS,
 }
+
+
+ENVS_WITH_EVAL_VERSION = [
+    'antmaze-umaze-v0',
+    'antmaze-umaze-diverse-v0',
+    'antmaze-medium-diverse-v0',
+    'antmaze-medium-play-v0'
+]
