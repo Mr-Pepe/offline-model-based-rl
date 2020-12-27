@@ -34,7 +34,7 @@ python main.py \
     --virtual_pretrain_epochs 0 \
     --use_custom_reward True \
     --num_test_episodes 10 \
-    --exp_name antmaze_umaze_mopo_state_epistemic_custom_rew \
+    --exp_name antmaze_umaze_mopo_augmented_state_epistemic_custom_rew \
     --datestamp False \
     --log_dir "" \
     --device cuda \
