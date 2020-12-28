@@ -3,7 +3,7 @@ do
 python main.py \
     --env antmaze-umaze-v0 \
     --seed $seed \
-    --epochs 1000 \
+    --epochs 500 \
     --pretrain_epochs 0 \
     --steps_per_epoch 4000 \
     --init_steps 5000 \
