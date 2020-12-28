@@ -26,7 +26,7 @@ python main.py \
     --continuous_rollouts True \
     --max_rollout_length 10 \
     --train_model_every 0 \
-    --model_pessimism 5 \
+    --model_pessimism 50 \
     --exploration_mode state \
     --uncertainty epistemic \
     --reset_buffer False \
