@@ -21,6 +21,8 @@ else:
                                                      buffer_device=device)
     save_path = '/home/felipe/Projects/thesis-code/data/models/antmaze_umaze/model.pt'
 
+buffer.rew_buf *= 100
+
 model = EnvironmentModel(obs_dim=obs_dim,
                          act_dim=act_dim,
                          hidden=4*[512],
