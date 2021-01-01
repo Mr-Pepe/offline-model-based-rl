@@ -27,6 +27,16 @@ def visualize_antmaze_umaze():
     plt.show()
 
 
+def visualize_antmaze_umaze_diverse():
+    env = gym.make('antmaze-umaze-diverse-v0')
+    buffer, _, _ = load_dataset_from_env(env, n_samples=950000)
+
+    print("Samples: {}".format(buffer.size))
+
+    plot_antmaze_umaze(buffer=buffer)
+    plt.show()
+
+
 def visualize_antmaze_medium():
     env = gym.make('antmaze-medium-diverse-v0')
     buffer, _, _ = load_dataset_from_env(env, n_samples=950000)
@@ -57,4 +67,4 @@ def visualize_maze2d_umaze():
     plt.show()
 
 
-visualize_antmaze_medium()
+visualize_antmaze_umaze_diverse()
