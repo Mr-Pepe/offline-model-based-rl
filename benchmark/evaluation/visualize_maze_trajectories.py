@@ -9,7 +9,7 @@ import d4rl  # noqa
 
 def visualize_antmaze_umaze():
     env = gym.make('antmaze-umaze-v0')
-    buffer, _, _ = load_dataset_from_env(env, n_samples=950000)
+    buffer, _, _ = load_dataset_from_env(env)
 
     print("Samples: {}".format(buffer.size))
 
@@ -29,7 +29,7 @@ def visualize_antmaze_umaze():
 
 def visualize_antmaze_umaze_diverse():
     env = gym.make('antmaze-umaze-diverse-v0')
-    buffer, _, _ = load_dataset_from_env(env, n_samples=950000)
+    buffer, _, _ = load_dataset_from_env(env)
 
     print("Samples: {}".format(buffer.size))
 
@@ -39,7 +39,7 @@ def visualize_antmaze_umaze_diverse():
 
 def visualize_antmaze_medium():
     env = gym.make('antmaze-medium-diverse-v0')
-    buffer, _, _ = load_dataset_from_env(env, n_samples=950000)
+    buffer, _, _ = load_dataset_from_env(env)
 
     print("Samples: {}".format(buffer.size))
 
@@ -49,7 +49,7 @@ def visualize_antmaze_medium():
 
 def visualize_maze2d_umaze():
     env = gym.make('maze2d-umaze-v1')
-    buffer, _, _ = load_dataset_from_env(env, n_samples=95000)
+    buffer, _, _ = load_dataset_from_env(env)
 
     print("Samples: {}".format(buffer.size))
 
