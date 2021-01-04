@@ -1,4 +1,4 @@
-from benchmark.utils.envs import ENVS_WITH_EVAL_VERSION
+from benchmark.utils.envs import get_test_env
 from benchmark.utils.reward_functions import get_reward_function
 from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.utils.pretrain_agent import pretrain_agent
@@ -112,10 +112,7 @@ class Trainer():
 
         self.env_name = env_name
         self.env = gym.make(env_name)
-        if env_name in ENVS_WITH_EVAL_VERSION:
-            self.test_env = gym.make(env_name, eval=True)
-        else:
-            self.test_env = gym.make(env_name)
+        self.test_env = get_test_env(env_name)
         self.obs_dim = self.env.observation_space.shape
         self.act_dim = self.env.action_space.shape[0]
 

@@ -1,3 +1,5 @@
+import gym
+
 ANTMAZE_UMAZE_ENVS = ['antmaze-umaze-v0',
                       'antmaze-umaze-diverse-v0']
 
@@ -38,9 +40,22 @@ ENV_CATEGORIES = {
 }
 
 
-ENVS_WITH_EVAL_VERSION = [
-    'antmaze-umaze-v0',
-    'antmaze-umaze-diverse-v0',
-    'antmaze-medium-diverse-v0',
-    'antmaze-medium-play-v0'
-]
+def antmaze_umaze_test_env():
+    env = gym.make('antmaze-umaze-v0')
+    env.set_target((0.6, 9.2))
+    return env
+
+
+TEST_ENV_MAPPING = {
+    'antmaze-umaze-v0': antmaze_umaze_test_env(),
+    'antmaze-umaze-diverse-v0': None,
+    'antmaze-medium-diverse-v0': None,
+    'antmaze-medium-play-v0': None
+}
+
+
+def get_test_env(env_name):
+    if env_name in TEST_ENV_MAPPING:
+        return TEST_ENV_MAPPING[env_name]
+    else:
+        return gym.make(env_name)

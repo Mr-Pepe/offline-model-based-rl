@@ -1,3 +1,4 @@
 Add new maze:
 - Visualize trajectories
 - Train model
+- Check that test environment uses the correct target
