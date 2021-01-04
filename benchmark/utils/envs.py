@@ -1,3 +1,4 @@
+from benchmark.utils.mazes import ANTMAZE_UMAZE_GOAL
 import gym
 
 ANTMAZE_UMAZE_ENVS = ['antmaze-umaze-v0',
@@ -42,7 +43,7 @@ ENV_CATEGORIES = {
 
 def antmaze_umaze_test_env():
     env = gym.make('antmaze-umaze-v0')
-    env.set_target((0.6, 9.2))
+    env.set_target(ANTMAZE_UMAZE_GOAL)
     return env
 
 
