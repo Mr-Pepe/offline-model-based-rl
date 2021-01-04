@@ -1,7 +1,7 @@
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
     deterministic_loss, probabilistic_loss
-from torch.optim.adam import Adam
+from torch.optim.adamw import AdamW
 from benchmark.models.multi_head_mlp import MultiHeadMlp
 import torch.nn as nn
 import torch
@@ -220,7 +220,7 @@ class EnvironmentModel(nn.Module):
         scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 
         if self.optim is None:
-            self.optim = Adam(self.parameters(), lr=lr, weight_decay=1e-5)
+            self.optim = AdamW(self.parameters(), lr=lr)
 
         self.train()
 

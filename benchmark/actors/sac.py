@@ -3,7 +3,7 @@ import itertools
 from copy import deepcopy
 import torch
 import torch.nn as nn
-from torch.optim.adam import Adam
+from torch.optim.adamw import AdamW
 from benchmark.models.mlp_q_function import MLPQFunction
 from benchmark.models.squashed_gaussian_mlp_actor import \
     SquashedGaussianMLPActor
@@ -64,8 +64,8 @@ class SAC(nn.Module):
             self.q1.parameters(), self.q2.parameters())
 
         # Set up optimizers for policy and q-function
-        self.pi_optimizer = Adam(self.pi.parameters(), lr=pi_lr)
-        self.q_optimizer = Adam(self.q_params, lr=q_lr)
+        self.pi_optimizer = AdamW(self.pi.parameters(), lr=pi_lr)
+        self.q_optimizer = AdamW(self.q_params, lr=q_lr)
 
         self.to(device)
 
