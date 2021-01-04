@@ -13,17 +13,7 @@ def visualize_antmaze_umaze():
 
     print("Samples: {}".format(buffer.size))
 
-    plt.scatter(buffer.obs_buf[buffer.done_buf == False, 0],
-                buffer.obs_buf[buffer.done_buf == False, 1],
-                marker='.',
-                s=2,
-                zorder=2)
-    plt.scatter(buffer.obs_buf[buffer.done_buf == True, 0],
-                buffer.obs_buf[buffer.done_buf == True, 1],
-                marker='.',
-                s=50,
-                zorder=3)
-    plot_antmaze_umaze()
+    plot_antmaze_umaze(buffer=buffer)
     plt.show()
 
 
