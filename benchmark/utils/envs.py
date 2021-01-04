@@ -1,4 +1,4 @@
-from benchmark.utils.mazes import ANTMAZE_UMAZE_GOAL
+from benchmark.utils.mazes import ANTMAZE_UMAZE_DIVERSE_GOAL, ANTMAZE_UMAZE_GOAL
 import gym
 
 ANTMAZE_UMAZE_ENVS = ['antmaze-umaze-v0',
@@ -47,9 +47,15 @@ def antmaze_umaze_test_env():
     return env
 
 
+def antmaze_umaze_diverse_test_env():
+    env = gym.make('antmaze-umaze-v0')
+    env.set_target(ANTMAZE_UMAZE_DIVERSE_GOAL)
+    return env
+
+
 TEST_ENV_MAPPING = {
     'antmaze-umaze-v0': antmaze_umaze_test_env(),
-    'antmaze-umaze-diverse-v0': None,
+    'antmaze-umaze-diverse-v0': antmaze_umaze_diverse_test_env(),
     'antmaze-medium-diverse-v0': None,
     'antmaze-medium-play-v0': None
 }

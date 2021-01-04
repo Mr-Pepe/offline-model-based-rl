@@ -234,6 +234,7 @@ ANTMAZE_UMAZE_WALLS_WITHOUT_OUTSIDE = get_antmaze_umaze_walls(
 ANTMAZE_UMAZE_WALLS_WITHOUT_OUTSIDE_CUDA = get_antmaze_umaze_walls(
     device='cuda', no_outside=True)
 ANTMAZE_UMAZE_GOAL = (0.5, 9.5)
+ANTMAZE_UMAZE_DIVERSE_GOAL = (1.0, 9.9)
 ANTMAZE_UMAZE_MIN = -2
 ANTMAZE_UMAZE_MAX = 10
 
