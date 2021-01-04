@@ -68,9 +68,7 @@ def postprocess_antmaze_umaze(next_obs=None, means=None, logvars=None, **_):
     done = ~notdone
     done = torch.logical_or(done, collision)
 
-    return {'dones': done.unsqueeze(-1),
-            'means': means,
-            'logvars': logvars}
+    return {'dones': done.unsqueeze(-1)}
 
 
 def postprocess_antmaze_medium(next_obs=None, means=None, logvars=None, **_):
@@ -103,9 +101,7 @@ def postprocess_antmaze_medium(next_obs=None, means=None, logvars=None, **_):
     done = ~notdone
     done = torch.logical_or(done, collision)
 
-    return {'dones': done.unsqueeze(-1),
-            'means': means,
-            'logvars': logvars}
+    return {'dones': done.unsqueeze(-1)}
 
 
 def postprocess_maze2d_umaze(next_obs=None, means=None, logvars=None, **_):
