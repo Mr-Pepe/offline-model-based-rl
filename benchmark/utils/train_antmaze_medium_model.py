@@ -15,7 +15,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    env = gym.make('antmaze-medium_diverse-v0')
+    env = gym.make('antmaze-medium-diverse-v0')
 
     if args.augment:
         print("Load augmented dataset")
