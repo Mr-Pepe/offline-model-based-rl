@@ -6,9 +6,11 @@ import os
 import os.path as osp
 import torch
 from benchmark.utils.logx import EpochLogger
+from benchmark.utils.str2bool import str2bool
+from benchmark.utils.envs import get_test_env
 
 
-def load_policy_and_env(fpath, itr='last', deterministic=False):
+def load_policy_and_env(fpath, itr='last', deterministic=False, test_env=True):
     """
     Load a policy from save, whether it's TF or PyTorch, along with RL env.
 
@@ -46,6 +48,10 @@ def load_policy_and_env(fpath, itr='last', deterministic=False):
     try:
         state = joblib.load(osp.join(fpath, 'vars'+itr+'.pkl'))
         env = state['env']
+
+        if test_env:
+            env = get_test_env(env.spec.id)
+
     except Exception:
         env = None
 
@@ -137,14 +143,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--fpath', type=str,
-        default="/home/felipe/Projects/thesis-evaluation/hopper/hopper_mbpo_probabilistic_ensemble_use_term_fn/hopper_mbpo_probabilistic_ensemble_use_term_fn_s0")
+        default="/home/felipe/Projects/thesis-evaluation/antmaze-umaze/antmaze_umaze_mopo_state_epistemic_custom_rew_s1")
     parser.add_argument('--len', '-l', type=int, default=0)
     parser.add_argument('--episodes', '-n', type=int, default=100)
     parser.add_argument('--norender', '-nr', action='store_true')
     parser.add_argument('--itr', '-i', type=int, default=-1)
     parser.add_argument('--deterministic', '-d', action='store_true')
+    parser.add_argument('--test_env', type=str2bool, default=True)
     args = parser.parse_args()
     env, get_action = load_policy_and_env(args.fpath,
                                           args.itr if args.itr >= 0 else 'last',
-                                          args.deterministic)
+                                          args.deterministic,
+                                          args.test_env)
     run_policy(env, get_action, args.len, args.episodes, not(args.norender))

@@ -1,5 +1,6 @@
 from benchmark.utils.mazes import ANTMAZE_MEDIUM_DIVERSE_GOAL, ANTMAZE_UMAZE_DIVERSE_GOAL, ANTMAZE_UMAZE_GOAL
 import gym
+import d4rl # noqa
 
 ANTMAZE_UMAZE_ENVS = ['antmaze-umaze-v0',
                       'antmaze-umaze-diverse-v0']
