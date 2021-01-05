@@ -120,7 +120,8 @@ class EnvironmentModel(nn.Module):
 
         self.eval()
 
-        self.check_prediction_arguments(uncertainty, pessimism, exploration_mode)
+        self.check_prediction_arguments(
+            uncertainty, pessimism, exploration_mode)
 
         with torch.no_grad():
             predictions, means, logvars, _, _ = \
@@ -189,7 +190,7 @@ class EnvironmentModel(nn.Module):
 
     def train_to_convergence(self, data, lr=1e-3, batch_size=1024,
                              val_split=0.2, patience=20, patience_value=0,
-                             debug=False, max_n_train_batches=-1, **_):
+                             debug=False, max_n_train_batches=-1, lr_schedule=None, **_):
 
         if type(patience) is list:
             if patience_value > 0 and len(patience) > patience_value:
@@ -217,10 +218,21 @@ class EnvironmentModel(nn.Module):
 
         device = next(self.parameters()).device
         use_amp = 'cuda' in device.type
-        scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+        scaler = torch.cuda.amp.GradScaler(enabled=use_amp,
+                                           growth_factor=1.5,
+                                           backoff_factor=0.7)
 
         if self.optim is None:
             self.optim = AdamW(self.parameters(), lr=lr)
+
+        lr_scheduler = None
+        if lr_schedule is not None:
+            lr_scheduler = torch.optim.lr_scheduler.CyclicLR(self.optim,
+                                                             lr_schedule[0],
+                                                             lr_schedule[1],
+                                                             mode='triangular2',
+                                                             step_size_up=n_train_batches,
+                                                             cycle_momentum=False)
 
         self.train()
 
@@ -256,6 +268,9 @@ class EnvironmentModel(nn.Module):
                 scaler.scale(loss).backward(retain_graph=True)
                 scaler.step(self.optim)
                 scaler.update()
+
+                if lr_scheduler is not None:
+                    lr_scheduler.step()
 
                 if max_n_train_batches != -1 and \
                         max_n_train_batches <= batches_trained:
@@ -323,7 +338,7 @@ class EnvironmentModel(nn.Module):
 
         if not (exploration_mode == 'state' or exploration_mode == 'reward'):
             raise ValueError(
-                        "Unknown exploration mode: {}".format(exploration_mode))
+                "Unknown exploration mode: {}".format(exploration_mode))
 
         if pessimism != 0 and uncertainty == 'aleatoric' and \
                 self.type == 'deterministic':
