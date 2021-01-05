@@ -31,9 +31,9 @@ if __name__ == '__main__':
                              n_networks=15,
                              device=device,
                              pre_fn=get_preprocessing_function(
-                                 'antmaze-medium_diverse-v0'),
+                                 'antmaze-medium-diverse-v0'),
                              post_fn=get_postprocessing_function(
-                                 'antmaze-medium_diverse-v0'),
+                                 'antmaze-medium-diverse-v0'),
                              )
 
     model.train_to_convergence(buffer, debug=True, batch_size=128,
