@@ -1,4 +1,4 @@
-for seed in 1 2 3
+for seed in 1
 do
 python main.py \
     --env antmaze-medium-diverse-v0 \
@@ -6,7 +6,7 @@ python main.py \
     --epochs 2000 \
     --pretrain_epochs 0 \
     --steps_per_epoch 4000 \
-    --init_steps 5000 \
+    --init_steps 0 \
     --random_steps 10000 \
     --env_steps_per_step 0 \
     --real_buffer_size 1000000 \
@@ -20,7 +20,7 @@ python main.py \
     --agent_batch_size 256 \
     --agent_lr 3e-4 \
     --use_model True \
-    --pretrained_model_path "/home/felipe/Projects/thesis-code/data/models/antmaze_medium/model.pt" \
+    --pretrained_model_path "/home/felipe/Projects/thesis-code/data/models/antmaze_medium_diverse/model.pt" \
     --model_type probabilistic \
     --n_networks 7 \
     --model_batch_size 256 \
@@ -30,7 +30,7 @@ python main.py \
     --rollouts_per_step 100 \
     --rollout_schedule 1 1 1 200 \
     --continuous_rollouts True \
-    --max_rollout_length 5 \
+    --max_rollout_length 10 \
     --train_model_every 0 \
     --model_max_n_train_batches 1300 \
     --model_pessimism 5 \
@@ -41,7 +41,7 @@ python main.py \
     --virtual_pretrain_epochs 0 \
     --use_custom_reward True \
     --num_test_episodes 10 \
-    --exp_name antmaze_medium_mopo_state_epistemic_custom_rew \
+    --exp_name antmaze_medium_diverse_mopo_state_epistemic_custom_rew \
     --datestamp False \
     --log_dir "" \
     --device cuda \
