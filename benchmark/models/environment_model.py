@@ -190,7 +190,8 @@ class EnvironmentModel(nn.Module):
 
     def train_to_convergence(self, data, lr=1e-3, batch_size=1024,
                              val_split=0.2, patience=20, patience_value=0,
-                             debug=False, max_n_train_batches=-1, lr_schedule=None, **_):
+                             debug=False, max_n_train_batches=-1, lr_schedule=None, no_reward=False,
+                             **_):
 
         if type(patience) is list:
             if patience_value > 0 and len(patience) > patience_value:
@@ -262,7 +263,7 @@ class EnvironmentModel(nn.Module):
                     if self.type == 'deterministic':
                         loss = deterministic_loss(x, y, self)
                     else:
-                        loss = probabilistic_loss(x, y, self, debug=debug)
+                        loss = probabilistic_loss(x, y, self, debug=debug, no_reward=no_reward)
 
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)
@@ -305,7 +306,8 @@ class EnvironmentModel(nn.Module):
                             y,
                             self,
                             i_network,
-                            only_mse=True).item()
+                            only_mse=True,
+                            no_reward=no_reward).item()
 
                 avg_val_losses[i_network] /= n_val_batches
 
