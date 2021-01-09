@@ -27,7 +27,7 @@ def visualize_antmaze_umaze_diverse():
     plt.show()
 
 
-def visualize_antmaze_medium():
+def visualize_antmaze_medium_diverse():
     env = gym.make('antmaze-medium-diverse-v0')
     buffer, _, _ = load_dataset_from_env(env)
 
