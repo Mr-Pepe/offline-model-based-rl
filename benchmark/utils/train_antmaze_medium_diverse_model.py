@@ -57,7 +57,8 @@ if __name__ == '__main__':
 
     model.train_to_convergence(buffer, debug=True, batch_size=128,
                                max_n_train_batches=-1, patience=15,
-                               val_split=0.05, lr_schedule=(1e-4, 1e-3))
+                               val_split=0.05, lr_schedule=(1e-4, 1e-3),
+                               no_reward=True)
     model.cpu()
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
