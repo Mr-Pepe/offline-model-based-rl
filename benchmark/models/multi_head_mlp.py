@@ -20,10 +20,13 @@ class MultiHeadMlp(nn.Module):
         layers.append(EnsembleDenseLayer(obs_dim + act_dim,
                                          hidden[0],
                                          n_networks))
+        layers.append(BatchNorm(n_networks))
+
         for lyr_idx in range(1, len(hidden) - 1):
             layers.append(EnsembleDenseLayer(hidden[lyr_idx-1],
                                              hidden[lyr_idx],
                                              n_networks))
+            layers.append(BatchNorm(n_networks))
 
         self.layers = nn.Sequential(*layers)
 
@@ -31,6 +34,7 @@ class MultiHeadMlp(nn.Module):
 
         self.obs_layer = nn.Sequential(
             EnsembleDenseLayer(hidden[-2], hidden[-1], n_networks),
+            BatchNorm(n_networks),
             EnsembleDenseLayer(hidden[-1], obs_out_dim,
                                n_networks, non_linearity='linear')
         )
@@ -39,6 +43,7 @@ class MultiHeadMlp(nn.Module):
 
         self.reward_layer = nn.Sequential(
             EnsembleDenseLayer(hidden[-2], hidden[-1], n_networks),
+            BatchNorm(n_networks),
             EnsembleDenseLayer(
                 hidden[-1], reward_out_dim,
                 n_networks, non_linearity='linear')
@@ -51,3 +56,16 @@ class MultiHeadMlp(nn.Module):
         reward = self.reward_layer(features)
 
         return obs, reward
+
+
+class BatchNorm(nn.Module):
+    def __init__(self, n_features) -> None:
+        super().__init__()
+
+        self.layer = nn.BatchNorm1d(n_features)
+
+    def forward(self, x):
+        x = torch.transpose(x, 0, 1)
+
+        out = self.layer(x)
+        return torch.transpose(out, 0, 1)
