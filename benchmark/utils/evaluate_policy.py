@@ -1,5 +1,6 @@
 # Based on https://spinningup.openai.com
 
+from benchmark.utils.setup_test_env import setup_test_env
 import time
 import joblib
 import os
@@ -111,7 +112,11 @@ def test_agent(test_env, agent, max_ep_len, num_test_episodes, logger,
                render=False, buffer=None):
     sum_ep_ret = 0
     for j in range(num_test_episodes):
-        o, d, ep_ret, ep_len = test_env.reset(), False, 0, 0
+        d = False
+        ep_ret = 0
+        ep_len = 0
+        o = setup_test_env(test_env)
+
         while not(d or (ep_len == max_ep_len)):
             # Take deterministic actions at test time
             a = agent.act(o, True).cpu().numpy()
