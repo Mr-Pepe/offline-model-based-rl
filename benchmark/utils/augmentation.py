@@ -1,3 +1,4 @@
+from benchmark.utils.reward_functions import antmaze_medium_diverse_rew_fn
 from benchmark.utils.postprocessing import postprocess_antmaze_medium
 from benchmark.utils.replay_buffer import ReplayBuffer
 import gym
@@ -157,8 +158,10 @@ def augment_antmaze_medium_dataset(buffer, f_path, plot=False):
         print("Augmented buffer too small. Should at least have size: {}".format(
             augmented_samples))
 
+    augmented_buffer.rew_buf = antmaze_medium_diverse_rew_fn(augmented_buffer.obs2_buf.unsqueeze(0))
+
     if plot:
-        plot_antmaze_medium(buffer=augmented_buffer)
+        plot_antmaze_medium(buffer=augmented_buffer, n_samples=20000)
         plt.show()
 
     torch.save(augmented_buffer, f_path)
