@@ -41,6 +41,7 @@ python main.py \
     --train_model_from_scratch False \
     --virtual_pretrain_epochs 0 \
     --use_custom_reward True \
+    --curriculum 0.05 1.1 0 200 \
     --num_test_episodes 20 \
     --exp_name antmaze_medium_diverse_mopo_state_epistemic_custom_rew_curriculum \
     --datestamp False \
