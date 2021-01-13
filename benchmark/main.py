@@ -12,14 +12,14 @@ if __name__ == '__main__':
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=500)
     parser.add_argument('--pretrain_epochs', type=int, default=0)
-    parser.add_argument('--steps_per_epoch', type=int, default=1000)
-    parser.add_argument('--init_steps', type=int, default=1000)
+    parser.add_argument('--steps_per_epoch', type=int, default=100)
+    parser.add_argument('--init_steps', type=int, default=0)
     parser.add_argument('--random_steps', type=int, default=10000)
     parser.add_argument('--env_steps_per_step', type=int, default=0)
     parser.add_argument('--real_buffer_size', type=int, default=int(1e6))
     parser.add_argument('--virtual_buffer_size', type=int, default=int(1e6))
-    parser.add_argument('--n_samples_from_dataset', type=int, default=100000)
-    parser.add_argument('--reset_maze2d_umaze', type=str2bool, default=True)
+    parser.add_argument('--n_samples_from_dataset', type=int, default=-1)
+    parser.add_argument('--reset_maze2d_umaze', type=str2bool, default=False)
     parser.add_argument('--dataset_path', type=str, default='')
 
     parser.add_argument('--hid', type=int, default=200)
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     parser.add_argument('--virtual_pretrain_epochs', type=int, default=0)
     parser.add_argument('--use_custom_reward', type=str2bool, default=False)
     parser.add_argument('--curriculum', nargs='+',
-                        type=float, default=[0.1, 1, 0, 30])
+                        type=float, default=[1, 1, 0, 30])
 
     parser.add_argument('--num_test_episodes', type=int, default=3)
     parser.add_argument('--exp_name', type=str, default='antmaze_umaze_mopo')
