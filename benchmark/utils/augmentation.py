@@ -183,4 +183,4 @@ if __name__ == "__main__":
 
     buffer = train_buffer
     augment_antmaze_medium_dataset(buffer,
-                                   '/home/felipe/Projects/thesis-code/data/datasets/antmaze_umaze_augmented.p')
+                                   '/home/felipe/Projects/thesis-code/data/datasets/antmaze_medium_diverse_augmented.p')

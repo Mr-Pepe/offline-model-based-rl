@@ -13,7 +13,8 @@ from benchmark.utils.str2bool import str2bool
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--rew_amp', type=int, default=0.05)
-    parser.add_argument('--reduced', type=str2bool, default=True)
+    parser.add_argument('--reduced', type=str2bool, default=False)
+    parser.add_argument('--data_path', type=str, default='/home/felipe/Projects/thesis-code/data/datasets/antmaze_medium_diverse_augmented.p')
     args = parser.parse_args()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -21,6 +22,7 @@ if __name__ == '__main__':
 
     buffer, obs_dim, act_dim = load_dataset_from_env(env,
                                                      buffer_device=device)
+
     save_path = '/home/felipe/Projects/thesis-code/data/models/antmaze_medium_diverse/model.pt'
 
     buffer.rew_buf *= args.rew_amp
@@ -43,9 +45,13 @@ if __name__ == '__main__':
 
         save_path = '/home/felipe/Projects/thesis-code/data/models/antmaze_medium_diverse/reduced_model.pt'
 
+    if args.data_path != '':
+        buffer = torch.load(args.data_path)
+        save_path = '/home/felipe/Projects/thesis-code/data/models/antmaze_medium_diverse/augmented_model.pt'
+
     model = EnvironmentModel(obs_dim=obs_dim,
                              act_dim=act_dim,
-                             hidden=5*[512],
+                             hidden=4*[512],
                              type='probabilistic',
                              n_networks=15,
                              device=device,
@@ -56,7 +62,7 @@ if __name__ == '__main__':
                              )
 
     model.train_to_convergence(buffer, debug=True, batch_size=128,
-                               max_n_train_batches=-1, patience=15,
+                               max_n_train_batches=-1, patience=2,
                                val_split=0.05, lr_schedule=(1e-4, 1e-3),
                                no_reward=True)
     model.cpu()
