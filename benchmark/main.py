@@ -53,6 +53,8 @@ if __name__ == '__main__':
     parser.add_argument('--train_model_from_scratch', type=str2bool, default=False)
     parser.add_argument('--virtual_pretrain_epochs', type=int, default=0)
     parser.add_argument('--use_custom_reward', type=str2bool, default=False)
+    parser.add_argument('--curriculum', nargs='+',
+                        type=float, default=[0.1, 1, 0, 30])
 
     parser.add_argument('--num_test_episodes', type=int, default=3)
     parser.add_argument('--exp_name', type=str, default='antmaze_umaze_mopo')
@@ -121,6 +123,7 @@ if __name__ == '__main__':
                       max_rollout_length=args.max_rollout_length,
                       reset_buffer=args.reset_buffer,
                       reset_maze2d_umaze=args.reset_maze2d_umaze,
+                      curriculum=args.curriculum,
                       render=args.render)
 
     trainer.train()

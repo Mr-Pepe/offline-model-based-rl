@@ -1,3 +1,4 @@
+from benchmark.utils.selectors import get_selector
 from benchmark.utils.envs import get_test_env
 from benchmark.utils.reward_functions import get_reward_function
 from benchmark.utils.preprocessing import get_preprocessing_function
@@ -7,8 +8,8 @@ import gym
 from benchmark.utils.model_needs_training import model_needs_training
 from benchmark.utils.actions import Actions
 from benchmark.utils.load_dataset import load_dataset_from_env
-from benchmark.utils.rollout_length_from_schedule import \
-    get_rollout_length_from_schedule
+from benchmark.utils.value_from_schedule import \
+    get_value_from_schedule
 from benchmark.utils.virtual_rollouts import generate_virtual_rollouts
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.evaluate_policy import test_agent
@@ -38,6 +39,7 @@ class Trainer():
                  n_samples_from_dataset=0,
                  agent_updates_per_step=1,
                  num_test_episodes=10,
+                 curriculum=[1, 1, 20, 100],
                  max_ep_len=1000,
                  use_model=False,
                  pretrained_agent_path='',
@@ -199,6 +201,12 @@ class Trainer():
             'virtual_replay_buffer': self.virtual_replay_buffer,
         })
 
+        if curriculum[0] < 1:
+            self.selector = get_selector(env_name)(self.real_replay_buffer)
+            self.selector.progress = curriculum[0]
+        else:
+            self.selector = None
+
         self.epochs = epochs
         self.steps_per_epoch = steps_per_epoch
         self.init_steps = init_steps
@@ -227,6 +235,7 @@ class Trainer():
             "maze2d-umaze" in env_name
         self.train_model_from_scratch = train_model_from_scratch
         self.virtual_pretrain_epochs = virtual_pretrain_epochs
+        self.curriculum = curriculum
 
         self.num_test_episodes = num_test_episodes
         self.save_freq = save_freq
@@ -266,9 +275,15 @@ class Trainer():
             episode_finished = False
             tested_agent = False
 
-            rollout_length = get_rollout_length_from_schedule(
+            rollout_length = get_value_from_schedule(
                 self.rollout_schedule,
                 epoch)
+
+            if self.selector is not None:
+                self.selector.progress = get_value_from_schedule(
+                    self.curriculum,
+                    epoch,
+                    is_float=True)
 
             print("Epoch {}\tRollout length: {}".format(epoch, rollout_length))
 
@@ -381,7 +396,8 @@ class Trainer():
                             uncertainty=self.uncertainty,
                             random_action=take_random_action,
                             prev_obs=prev_obs if self.continuous_rollouts else None,
-                            max_rollout_length=self.max_rollout_length
+                            max_rollout_length=self.max_rollout_length,
+                            selector=self.selector,
                         )
                         self.virtual_replay_buffer.store_batch(
                             rollouts['obs'],

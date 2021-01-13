@@ -1,3 +1,4 @@
+from benchmark.utils.envs import ANTMAZE_MEDIUM_ENVS, ANTMAZE_UMAZE_ENVS
 import torch
 
 
@@ -10,6 +11,8 @@ class antmaze_selector():
         if len(self.goal_states) == 0:
             raise ValueError("No goal states in buffer.")
 
+        print("Found {} goal states.".format(len(self.goal_states)))
+
         self.max_distance = -1
 
         for goal_state in self.goal_states:
@@ -18,6 +21,8 @@ class antmaze_selector():
             max_distance = torch.sqrt(max_distance).max()
             if max_distance > self.max_distance:
                 self.max_distance = max_distance
+
+        print("Maximum distance in curriculum: {}".format(self.max_distance))
 
         self.progress = 0.1
 
@@ -31,3 +36,10 @@ class antmaze_selector():
         idxs = distances < max_distance
 
         return obs[idxs], obs2[idxs], act[idxs], rew[idxs], done[idxs]
+
+
+def get_selector(env_name):
+    if env_name in ANTMAZE_MEDIUM_ENVS or env_name in ANTMAZE_UMAZE_ENVS:
+        return antmaze_selector
+    else:
+        return None

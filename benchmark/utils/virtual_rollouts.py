@@ -5,7 +5,7 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
                               n_rollouts=1, stop_on_terminal=True, pessimism=0,
                               random_action=False, prev_obs=None,
                               max_rollout_length=-1, exploration_mode='state',
-                              uncertainty='epistemic'):
+                              uncertainty='epistemic', selector=None):
 
     model_is_training = model.training
     agent_is_training = agent.training
@@ -22,7 +22,7 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
     out_dones = None
 
     if prev_obs is None:
-        observations = buffer.sample_batch(n_rollouts, True)['obs']
+        observations = buffer.sample_batch(n_rollouts, True, selector)['obs']
         lengths = torch.zeros((n_rollouts)).to(observations.device)
     else:
         observations = prev_obs['obs']
@@ -33,7 +33,7 @@ def generate_virtual_rollouts(model, agent, buffer, steps,
         if len(observations) < n_rollouts:
             observations = torch.cat((
                 observations,
-                buffer.sample_batch(n_new_rollouts, True)['obs']))
+                buffer.sample_batch(n_new_rollouts, True, selector)['obs']))
 
             lengths = torch.cat(
                 (lengths, torch.zeros(n_new_rollouts).to(lengths.device)))

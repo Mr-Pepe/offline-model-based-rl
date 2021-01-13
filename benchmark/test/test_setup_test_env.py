@@ -3,7 +3,6 @@ import pytest
 import gym
 import d4rl # noqa
 
-@pytest.mark.current
 @pytest.mark.fast
 def test_setup_antmaze_medium_diverse():
     env = gym.make('antmaze-medium-diverse-v0')
