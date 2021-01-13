@@ -6,7 +6,7 @@ class antmaze_selector():
 
     def __init__(self, buffer):
         goal_state_idxs = buffer.rew_buf > 0
-        self.goal_states = buffer.obs_buf[goal_state_idxs][:, :2]
+        self.goal_states = buffer.obs_buf[goal_state_idxs, :2]
 
         if len(self.goal_states) == 0:
             raise ValueError("No goal states in buffer.")
