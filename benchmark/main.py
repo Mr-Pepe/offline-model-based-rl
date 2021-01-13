@@ -20,6 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('--virtual_buffer_size', type=int, default=int(1e6))
     parser.add_argument('--n_samples_from_dataset', type=int, default=100000)
     parser.add_argument('--reset_maze2d_umaze', type=str2bool, default=True)
+    parser.add_argument('--dataset_path', type=str, default='')
 
     parser.add_argument('--hid', type=int, default=200)
     parser.add_argument('--l', type=int, default=4)
@@ -113,6 +114,7 @@ if __name__ == '__main__':
                       continuous_rollouts=args.continuous_rollouts,
                       train_model_every=args.train_model_every,
                       num_test_episodes=args.num_test_episodes,
+                      dataset_path=args.dataset_path,
                       virtual_pretrain_epochs=args.virtual_pretrain_epochs,
                       n_samples_from_dataset=args.n_samples_from_dataset,
                       train_model_from_scratch=args.train_model_from_scratch,

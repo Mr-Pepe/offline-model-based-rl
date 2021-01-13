@@ -28,6 +28,7 @@ class Trainer():
                  env_name,
                  sac_kwargs=dict(),
                  model_kwargs=dict(),
+                 dataset_path='',
                  seed=0,
                  epochs=100,
                  steps_per_epoch=4000,
@@ -121,7 +122,10 @@ class Trainer():
         self.test_env.seed(seed)
         self.test_env.action_space.seed(seed)
 
-        if n_samples_from_dataset != 0:
+        if dataset_path != '':
+            self.real_replay_buffer = torch.load(dataset_path)
+
+        elif n_samples_from_dataset != 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
                 self.env,
                 n_samples=n_samples_from_dataset,
