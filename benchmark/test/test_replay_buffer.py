@@ -233,3 +233,23 @@ def test_clear_buffer():
     assert buffer.ptr == 0
     assert buffer.size == 0
     buffer.obs_buf[80] == 1
+
+
+@pytest.mark.fast
+def test_buffer_to_device():
+    buffer = ReplayBuffer(1, 1, 100)
+
+    for _ in range(100):
+        buffer.store(torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     False)
+
+    buffer.to('cuda')
+
+    assert buffer.obs_buf.device == torch.device('cuda', index=0)
+    assert buffer.obs2_buf.device == torch.device('cuda', index=0)
+    assert buffer.act_buf.device == torch.device('cuda', index=0)
+    assert buffer.rew_buf.device == torch.device('cuda', index=0)
+    assert buffer.done_buf.device == torch.device('cuda', index=0)

@@ -165,3 +165,10 @@ class ReplayBuffer:
                       self.act_dim,
                       self.max_size,
                       device=self.device)
+
+    def to(self, device):
+        self.obs_buf = self.obs_buf.to(device)
+        self.act_buf = self.act_buf.to(device)
+        self.obs2_buf = self.obs2_buf.to(device)
+        self.rew_buf = self.rew_buf.to(device)
+        self.done_buf = self.done_buf.to(device)
