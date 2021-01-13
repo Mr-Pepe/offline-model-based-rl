@@ -27,10 +27,10 @@ def load_dataset_from_env(env,
 
     buffer_size = n_samples if buffer_size == -1 else buffer_size
 
-    buffer = ReplayBuffer(observations.shape[1],
-                          actions.shape[1],
-                          buffer_size,
-                          buffer_device)
+    buffer: ReplayBuffer = ReplayBuffer(observations.shape[1],
+                                        actions.shape[1],
+                                        buffer_size,
+                                        buffer_device)
 
     buffer.store_batch(observations,
                        actions,
