@@ -1,3 +1,5 @@
+from benchmark.utils.selectors import antmaze_selector
+from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.replay_buffer import ReplayBuffer
 import d4rl  # noqa
 import gym
@@ -253,3 +255,52 @@ def test_buffer_to_device():
     assert buffer.act_buf.device == torch.device('cuda', index=0)
     assert buffer.rew_buf.device == torch.device('cuda', index=0)
     assert buffer.done_buf.device == torch.device('cuda', index=0)
+
+
+@pytest.mark.medium
+def test_sample_selection():
+    env = gym.make('antmaze-medium-diverse-v0')
+
+    buffer, obs_dim, act_dim = load_dataset_from_env(env)
+
+    selector = antmaze_selector(buffer)
+
+    batch_size = 1000
+
+    batch = buffer.sample_batch(batch_size, selector=selector)
+
+    assert len(batch['obs']) == batch_size
+
+    for obs in batch['obs']:
+        assert obs[0] > 16
+        assert obs[1] > 16
+
+
+@pytest.mark.medium
+def test_raise_error_if_sample_can_not_be_generated():
+    env = gym.make('antmaze-medium-diverse-v0')
+
+    buffer, obs_dim, act_dim = load_dataset_from_env(env)
+
+    selector = antmaze_selector(buffer)
+    selector.progress = 0
+
+    batch_size = 100
+
+    with pytest.raises(Exception):
+        buffer.sample_batch(batch_size, selector=selector)
+
+
+@pytest.mark.fast
+def test_selector_can_not_be_initialized_of_no_goal_state():
+    buffer = ReplayBuffer(1, 1, 100)
+
+    for _ in range(100):
+        buffer.store(torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     torch.as_tensor(0),
+                     False)
+
+    with pytest.raises(ValueError):
+        antmaze_selector(buffer)
