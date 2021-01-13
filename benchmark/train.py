@@ -124,6 +124,7 @@ class Trainer():
 
         if dataset_path != '':
             self.real_replay_buffer = torch.load(dataset_path)
+            self.real_replay_buffer.to(device)
 
         elif n_samples_from_dataset != 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
