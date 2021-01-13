@@ -1,4 +1,4 @@
-from benchmark.utils.selectors import get_selector
+from benchmark.utils.sample_selectors import get_selector
 from benchmark.utils.envs import get_test_env
 from benchmark.utils.reward_functions import get_reward_function
 from benchmark.utils.preprocessing import get_preprocessing_function

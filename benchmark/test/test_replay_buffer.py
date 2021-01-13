@@ -1,4 +1,4 @@
-from benchmark.utils.selectors import antmaze_selector
+from benchmark.utils.sample_selectors import antmaze_selector
 from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.replay_buffer import ReplayBuffer
 import d4rl  # noqa
