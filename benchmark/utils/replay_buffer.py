@@ -83,19 +83,59 @@ class ReplayBuffer:
         self.ptr += remaining_batch_size
         self.size = min(self.size+remaining_batch_size, self.max_size)
 
-    def sample_batch(self, batch_size=32, non_terminals_only=False):
+    def sample_batch(self, batch_size=32, non_terminals_only=False, selector=None):
         if non_terminals_only and self.done_buf.sum() < self.size:
-            idxs = torch.nonzero((self.done_buf == 0), as_tuple=False)
+            possible_idxs = torch.nonzero((self.done_buf == 0), as_tuple=False)
         else:
-            idxs = torch.arange(self.size)
+            possible_idxs = torch.arange(self.size)
 
-        idxs = idxs[torch.randint(0, idxs.numel(), (batch_size,))].flatten()
+        obs = None
+        obs2 = None
+        act = None
+        rew = None
+        done = None
 
-        return dict(obs=self.obs_buf[idxs],
-                    obs2=self.obs2_buf[idxs],
-                    act=self.act_buf[idxs],
-                    rew=self.rew_buf[idxs],
-                    done=self.done_buf[idxs])
+        n_remaining = batch_size
+        tries = 0
+
+        while n_remaining > 0:
+
+            idxs = possible_idxs[torch.randint(
+                0, possible_idxs.numel(), (n_remaining,))].flatten()
+
+            if obs is None:
+                obs = self.obs_buf[idxs]
+                obs2 = self.obs2_buf[idxs]
+                act = self.act_buf[idxs]
+                rew = self.rew_buf[idxs]
+                done = self.done_buf[idxs]
+            else:
+                obs = torch.cat((obs, self.obs_buf[idxs]))
+                obs2 = torch.cat((obs2, self.obs2_buf[idxs]))
+                act = torch.cat((act, self.act_buf[idxs]))
+                rew = torch.cat((rew, self.rew_buf[idxs]))
+                done = torch.cat((done, self.done_buf[idxs]))
+
+            if selector is not None:
+                obs, obs2, act, rew, done = selector.select(obs=obs,
+                                                            obs2=obs2,
+                                                            act=act,
+                                                            rew=rew,
+                                                            done=done)
+
+            n_remaining = batch_size - len(obs)
+            tries += 1
+
+            if tries > 1000:
+                raise Exception("Could not sample batch.")
+
+        batch = dict(obs=obs,
+                     obs2=obs2,
+                     act=act,
+                     rew=rew,
+                     done=done)
+
+        return batch
 
     def sample_train_batch(self, batch_size=32, val_split=0.2):
         if self.split_at_size != self.size or \
