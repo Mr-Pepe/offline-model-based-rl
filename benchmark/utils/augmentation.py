@@ -169,8 +169,8 @@ def augment_antmaze_medium_dataset(buffer, f_path, plot=False):
 
 def antmaze_augmentation(obs, obs2, xmin, xmax, ymin, ymax):
     n_samples = len(obs)
-    x = torch.rand((n_samples,))*(xmax-xmin)+xmin
-    y = torch.rand((n_samples,))*(ymax-ymin)+ymin
+    x = torch.rand((n_samples,), device=obs.device)*(xmax-xmin)+xmin
+    y = torch.rand((n_samples,), device=obs.device)*(ymax-ymin)+ymin
 
     x_shift = x - obs[:, 0]
     y_shift = y - obs[:, 1]
