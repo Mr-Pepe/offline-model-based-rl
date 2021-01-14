@@ -191,7 +191,7 @@ class EnvironmentModel(nn.Module):
     def train_to_convergence(self, data, lr=1e-3, batch_size=1024,
                              val_split=0.2, patience=20, patience_value=0,
                              debug=False, max_n_train_batches=-1, lr_schedule=None, no_reward=False,
-                             **_):
+                             augmentation_fn=None, **_):
 
         if type(patience) is list:
             if patience_value > 0 and len(patience) > patience_value:
@@ -257,6 +257,9 @@ class EnvironmentModel(nn.Module):
                     data.sample_train_batch(batch_size,
                                             val_split),
                     device)
+
+                if augmentation_fn is not None:
+                    augmentation_fn(x, y)
 
                 self.optim.zero_grad()
                 with torch.cuda.amp.autocast(enabled=use_amp):
