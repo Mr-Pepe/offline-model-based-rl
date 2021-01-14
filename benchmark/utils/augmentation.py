@@ -167,6 +167,20 @@ def augment_antmaze_medium_dataset(buffer, f_path, plot=False):
     torch.save(augmented_buffer, f_path)
 
 
+def antmaze_augmentation(obs, obs2, xmin, xmax, ymin, ymax):
+    n_samples = len(obs)
+    x = torch.rand((n_samples,))*(xmax-xmin)+xmin
+    y = torch.rand((n_samples,))*(ymax-ymin)+ymin
+
+    x_shift = x - obs[:, 0]
+    y_shift = y - obs[:, 1]
+
+    obs[:, 0] += x_shift
+    obs2[:, 0] += x_shift
+    obs[:, 1] += y_shift
+    obs2[:, 1] += y_shift
+
+
 if __name__ == "__main__":
     env = gym.make('antmaze-medium-diverse-v0')
     ant_radius = 0.8
