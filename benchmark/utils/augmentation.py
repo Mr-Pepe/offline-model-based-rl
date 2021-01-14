@@ -158,7 +158,7 @@ def augment_antmaze_medium_dataset(buffer, f_path, plot=False):
         print("Augmented buffer too small. Should at least have size: {}".format(
             augmented_samples))
 
-    augmented_buffer.rew_buf = antmaze_medium_diverse_rew_fn(augmented_buffer.obs2_buf.unsqueeze(0))
+    augmented_buffer.rew_buf = antmaze_medium_diverse_rew_fn(augmented_buffer.obs2_buf.unsqueeze(0)).view(-1)
 
     if plot:
         plot_antmaze_medium(buffer=augmented_buffer, n_samples=20000)
