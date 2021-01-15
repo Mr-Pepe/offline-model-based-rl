@@ -285,6 +285,8 @@ class Trainer():
                     epoch,
                     is_float=True)
 
+                self.real_replay_buffer.set_curriculum(self.selector)
+
             print("Epoch {}\tRollout length: {}".format(epoch, rollout_length))
 
             for step_epoch in range(self.steps_per_epoch):
@@ -397,7 +399,6 @@ class Trainer():
                             random_action=take_random_action,
                             prev_obs=prev_obs if self.continuous_rollouts else None,
                             max_rollout_length=self.max_rollout_length,
-                            selector=self.selector,
                         )
                         self.virtual_replay_buffer.store_batch(
                             rollouts['obs'],

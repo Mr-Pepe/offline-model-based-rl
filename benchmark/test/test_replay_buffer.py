@@ -265,9 +265,11 @@ def test_sample_selection():
 
     selector = antmaze_selector(buffer)
 
+    buffer.set_curriculum(selector)
+
     batch_size = 1000
 
-    batch = buffer.sample_batch(batch_size, selector=selector)
+    batch = buffer.sample_batch(batch_size)
 
     assert len(batch['obs']) == batch_size
 
@@ -276,23 +278,8 @@ def test_sample_selection():
         assert obs[1] > 16
 
 
-@pytest.mark.medium
-def test_raise_error_if_sample_can_not_be_generated():
-    env = gym.make('antmaze-medium-diverse-v0')
-
-    buffer, obs_dim, act_dim = load_dataset_from_env(env)
-
-    selector = antmaze_selector(buffer)
-    selector.progress = 0
-
-    batch_size = 100
-
-    with pytest.raises(Exception):
-        buffer.sample_batch(batch_size, selector=selector)
-
-
 @pytest.mark.fast
-def test_selector_can_not_be_initialized_of_no_goal_state():
+def test_selector_can_not_be_initialized_if_no_goal_state():
     buffer = ReplayBuffer(1, 1, 100)
 
     for _ in range(100):

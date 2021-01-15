@@ -6,7 +6,6 @@ from benchmark.utils.replay_buffer import ReplayBuffer
 import pytest
 
 
-@pytest.mark.current
 @pytest.mark.fast
 def test_antmaze_augmentation():
     n_samples = 1000

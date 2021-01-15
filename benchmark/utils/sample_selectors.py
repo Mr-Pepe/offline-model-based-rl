@@ -5,37 +5,37 @@ import torch
 class antmaze_selector():
 
     def __init__(self, buffer):
-        goal_state_idxs = buffer.rew_buf > 0
-        self.goal_states = buffer.obs_buf[goal_state_idxs.view(-1), :2]
+        self.goal_state_idxs = torch.nonzero(
+            buffer.rew_buf > 0, as_tuple=False)
 
-        if len(self.goal_states) == 0:
+        if self.goal_state_idxs.numel() == 0:
             raise ValueError("No goal states in buffer.")
 
-        print("Found {} goal states.".format(len(self.goal_states)))
+        print("Found {} goal states.".format(self.goal_state_idxs.numel()))
 
-        self.max_distance = -1
+        mean_goal = buffer.obs_buf[self.goal_state_idxs, :2].mean(dim=0)
 
-        for goal_state in self.goal_states:
-            max_distance = torch.square(buffer.obs_buf[:, :2] - goal_state)
-            max_distance = torch.sum(max_distance, dim=1)
-            max_distance = torch.sqrt(max_distance).max()
-            if max_distance > self.max_distance:
-                self.max_distance = max_distance
+        self.max_distance = torch.sqrt(torch.sum(torch.square(
+            buffer.obs_buf[:, :2] - mean_goal), dim=1)).max()
 
         print("Maximum distance in curriculum: {}".format(self.max_distance))
 
         self.progress = 0.1
 
-    def select(self, obs, obs2, act, rew, done):
+    def select(self, buffer):
 
         max_distance = self.max_distance * self.progress
-        goal_state = self.goal_states[torch.randint(len(self.goal_states), (1,))]
+        goal_state = buffer.obs_buf[self.goal_state_idxs[torch.randint(
+            self.goal_state_idxs.numel(), (1,))]].view(-1)[:2]
 
-        distances = torch.sqrt(torch.sum(torch.square(obs[:, :2] - goal_state), dim=1))
+        distances = torch.sqrt(torch.sum(torch.square(
+            buffer.obs_buf[:, :2] - goal_state), dim=1))
 
         idxs = distances < max_distance
 
-        return obs[idxs], obs2[idxs], act[idxs], rew[idxs], done[idxs]
+        idxs = torch.logical_and(idxs, buffer.done_buf == 0)
+
+        return torch.nonzero(idxs, as_tuple=False)
 
 
 def get_selector(env_name):

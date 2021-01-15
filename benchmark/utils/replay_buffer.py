@@ -25,6 +25,8 @@ class ReplayBuffer:
         self.train_idxs = []
         self.val_idxs = []
 
+        self.possible_idxs = None
+
         self.obs_dim = obs_dim
         self.act_dim = act_dim
         self.device = device
@@ -83,51 +85,24 @@ class ReplayBuffer:
         self.ptr += remaining_batch_size
         self.size = min(self.size+remaining_batch_size, self.max_size)
 
-    def sample_batch(self, batch_size=32, non_terminals_only=False, selector=None):
-        if non_terminals_only and self.done_buf.sum() < self.size:
-            possible_idxs = torch.nonzero((self.done_buf == 0), as_tuple=False)
+    def sample_batch(self, batch_size=32, non_terminals_only=False):
+        if self.possible_idxs is not None:
+            possible_idxs = self.possible_idxs
         else:
-            possible_idxs = torch.arange(self.size)
-
-        obs = None
-        obs2 = None
-        act = None
-        rew = None
-        done = None
-
-        n_remaining = batch_size
-        tries = 0
-
-        while n_remaining > 0:
-
-            idxs = possible_idxs[torch.randint(
-                0, possible_idxs.numel(), (n_remaining,))].flatten()
-
-            if obs is None:
-                obs = self.obs_buf[idxs]
-                obs2 = self.obs2_buf[idxs]
-                act = self.act_buf[idxs]
-                rew = self.rew_buf[idxs]
-                done = self.done_buf[idxs]
+            if non_terminals_only and self.done_buf.sum() < self.size:
+                possible_idxs = torch.nonzero(
+                    (self.done_buf == 0), as_tuple=False)
             else:
-                obs = torch.cat((obs, self.obs_buf[idxs]))
-                obs2 = torch.cat((obs2, self.obs2_buf[idxs]))
-                act = torch.cat((act, self.act_buf[idxs]))
-                rew = torch.cat((rew, self.rew_buf[idxs]))
-                done = torch.cat((done, self.done_buf[idxs]))
+                possible_idxs = torch.arange(self.size)
 
-            if selector is not None:
-                obs, obs2, act, rew, done = selector.select(obs=obs,
-                                                            obs2=obs2,
-                                                            act=act,
-                                                            rew=rew,
-                                                            done=done)
+        idxs = possible_idxs[torch.randint(
+            0, possible_idxs.numel(), (batch_size,))].flatten()
 
-            n_remaining = batch_size - len(obs)
-            tries += 1
-
-            if tries > 1000:
-                raise Exception("Could not sample batch.")
+        obs = self.obs_buf[idxs]
+        obs2 = self.obs2_buf[idxs]
+        act = self.act_buf[idxs]
+        rew = self.rew_buf[idxs]
+        done = self.done_buf[idxs]
 
         batch = dict(obs=obs,
                      obs2=obs2,
@@ -212,3 +187,6 @@ class ReplayBuffer:
         self.obs2_buf = self.obs2_buf.to(device)
         self.rew_buf = self.rew_buf.to(device)
         self.done_buf = self.done_buf.to(device)
+
+    def set_curriculum(self, selector):
+        self.possible_idxs = selector.select(self)
