@@ -36,8 +36,6 @@ def antmaze_medium_diverse_rew_fn(next_obs, **_):
                          torch.square(y - ANTMAZE_MEDIUM_DIVERSE_GOAL[1])) < ANTMAZE_ANT_RADIUS
     rewards = rewards.unsqueeze(-1)
 
-    rewards = rewards*100
-
     return rewards
 
 
