@@ -72,37 +72,37 @@ def postprocess_antmaze_umaze(next_obs=None, means=None, logvars=None, **_):
 
 
 def postprocess_antmaze_medium(next_obs=None, means=None, logvars=None, ant_radius=None, **_):
-    # x = next_obs[:, :, 0]
-    # y = next_obs[:, :, 1]
+    x = next_obs[:, :, 0]
+    y = next_obs[:, :, 1]
 
-    # if x.device.type == 'cpu':
-    #     walls = ANTMAZE_MEDIUM_WALLS_WITHOUT_OUTSIDE
-    # else:
-    #     walls = ANTMAZE_MEDIUM_WALLS_WITHOUT_OUTSIDE_CUDA
+    if x.device.type == 'cpu':
+        walls = ANTMAZE_MEDIUM_WALLS_WITHOUT_OUTSIDE
+    else:
+        walls = ANTMAZE_MEDIUM_WALLS_WITHOUT_OUTSIDE_CUDA
 
-    # if ant_radius is None:
-    #     ant_radius = ANTMAZE_ANT_RADIUS
+    if ant_radius is None:
+        ant_radius = ANTMAZE_ANT_RADIUS
 
-    # maze_min = ANTMAZE_MEDIUM_MIN + ant_radius
-    # maze_max = ANTMAZE_MEDIUM_MAX - ant_radius
+    maze_min = ANTMAZE_MEDIUM_MIN + ant_radius
+    maze_max = ANTMAZE_MEDIUM_MAX - ant_radius
 
-    # collision = \
-    #     (((walls[:, 0] <= x.unsqueeze(-1) + ant_radius) *
-    #       (walls[:, 1] > x.unsqueeze(-1) - ant_radius) *
-    #       (walls[:, 2] <= y.unsqueeze(-1) + ant_radius) *
-    #       (walls[:, 3] > y.unsqueeze(-1) - ant_radius)).sum(dim=2) +
-    #      (maze_max <= x) +
-    #      (x <= maze_min) +
-    #      (maze_max <= y) +
-    #      (y <= maze_min)).to(x.device)
+    collision = \
+        (((walls[:, 0] <= x.unsqueeze(-1) + ant_radius) *
+          (walls[:, 1] > x.unsqueeze(-1) - ant_radius) *
+          (walls[:, 2] <= y.unsqueeze(-1) + ant_radius) *
+          (walls[:, 3] > y.unsqueeze(-1) - ant_radius)).sum(dim=2) +
+         (maze_max <= x) +
+         (x <= maze_min) +
+         (maze_max <= y) +
+         (y <= maze_min)).to(x.device)
 
-    # collision = collision > 0
+    collision = collision > 0
 
     notdone = ((torch.isfinite(next_obs).all(dim=2) *
                 (next_obs[:, :, 2] >= 0.2) *
                 (next_obs[:, :, 2] <= 1.0)))
     done = ~notdone
-    # done = torch.logical_or(done, collision)
+    done = torch.logical_or(done, collision)
 
     return {'dones': done.unsqueeze(-1)}
 
