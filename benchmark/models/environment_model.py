@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch
 from torch.nn.functional import softplus
 from torch.nn.parameter import Parameter
+from ray import tune
 
 
 class EnvironmentModel(nn.Module):
@@ -170,7 +171,8 @@ class EnvironmentModel(nn.Module):
                             logvars[:, :, -1]).max(dim=0).values.to(device)
 
             elif exploration_mode == 'state':
-                max_disc = torch.cdist(torch.transpose(means[:, :, :-1], 0, 1), torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
+                max_disc = torch.cdist(torch.transpose(
+                    means[:, :, :-1], 0, 1), torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
                 if uncertainty == 'epistemic':
                     prediction[max_disc > pessimism, -2] = -10
                 elif uncertainty == 'aleatoric':
@@ -191,7 +193,7 @@ class EnvironmentModel(nn.Module):
     def train_to_convergence(self, data, lr=1e-3, batch_size=1024,
                              val_split=0.2, patience=20, patience_value=0,
                              debug=False, max_n_train_batches=-1, lr_schedule=None, no_reward=False,
-                             augmentation_fn=None, **_):
+                             augmentation_fn=None, max_n_train_epochs=-1, **_):
 
         if type(patience) is list:
             if patience_value > 0 and len(patience) > patience_value:
@@ -248,7 +250,9 @@ class EnvironmentModel(nn.Module):
 
         avg_val_losses = torch.zeros((self.n_networks))
 
-        while n_bad_val_losses < patience:
+        epoch = 0
+
+        while n_bad_val_losses < patience and (max_n_train_epochs == -1 or epoch < max_n_train_epochs):
 
             avg_train_loss = 0
 
@@ -266,7 +270,8 @@ class EnvironmentModel(nn.Module):
                     if self.type == 'deterministic':
                         loss = deterministic_loss(x, y, self)
                     else:
-                        loss = probabilistic_loss(x, y, self, debug=debug, no_reward=no_reward)
+                        loss = probabilistic_loss(
+                            x, y, self, debug=debug, no_reward=no_reward)
 
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)
@@ -315,6 +320,7 @@ class EnvironmentModel(nn.Module):
                 avg_val_losses[i_network] /= n_val_batches
 
             avg_val_loss = avg_val_losses.mean()
+            tune.report(val_loss=avg_val_loss)
 
             if avg_val_loss < min_val_loss:
                 n_bad_val_losses = 0
@@ -324,6 +330,8 @@ class EnvironmentModel(nn.Module):
 
             if stop_training:
                 break
+
+            epoch += 1
 
             print("Train batches: {} Patience: {}/{} Val losses: {}".format(
                 batches_trained,
