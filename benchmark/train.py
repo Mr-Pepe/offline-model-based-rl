@@ -453,7 +453,7 @@ class Trainer():
                                          self.render and
                                          step_total > self.init_steps,
                                          buffer=eval_buffer,
-                                         setup_test_env=self.setup_test_env)
+                                         use_setup=self.setup_test_env)
 
                 tested_agent = True
                 self.logger.add_to_pytorch_saver({'eval_buffer': eval_buffer})

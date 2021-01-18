@@ -109,13 +109,13 @@ def run_policy(env, get_action, max_ep_len=None, num_episodes=100, render=True):
 
 
 def test_agent(test_env, agent, max_ep_len, num_test_episodes, logger,
-               render=False, buffer=None, setup_test_env=False):
+               render=False, buffer=None, use_setup=False):
     sum_ep_ret = 0
     for j in range(num_test_episodes):
         d = False
         ep_ret = 0
         ep_len = 0
-        if setup_test_env:
+        if use_setup:
             o = setup_test_env(test_env)
         else:
             o = test_env.reset()
