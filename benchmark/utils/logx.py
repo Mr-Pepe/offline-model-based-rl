@@ -420,6 +420,9 @@ class EpochLogger(Logger):
                     self.tensorboard_writer.add_figure(
                         'ReplayBuffers/1VirtualReplayBuffer', f, epoch)
 
+                    print("{:.3f}% of samples outside support".format(
+                        (buffer.rew_buf == -1000).sum().float() / buffer.size * 100))
+
             if 'eval_buffer' in self.pytorch_saver_elements:
                 buffer = self.pytorch_saver_elements['eval_buffer']
                 if self.tensorboard_writer:
