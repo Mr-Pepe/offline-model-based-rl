@@ -61,6 +61,7 @@ class Trainer():
                  train_model_from_scratch=False,
                  reset_maze2d_umaze=False,
                  pretrain_epochs=0,
+                 setup_test_env=False,
                  logger_kwargs=dict(),
                  save_freq=1,
                  device='cpu',
@@ -238,6 +239,7 @@ class Trainer():
         self.curriculum = curriculum
 
         self.num_test_episodes = num_test_episodes
+        self.setup_test_env = setup_test_env
         self.save_freq = save_freq
         self.render = render
 
@@ -450,7 +452,8 @@ class Trainer():
                                          self.logger,
                                          self.render and
                                          step_total > self.init_steps,
-                                         buffer=eval_buffer)
+                                         buffer=eval_buffer,
+                                         setup_test_env=self.setup_test_env)
 
                 tested_agent = True
                 self.logger.add_to_pytorch_saver({'eval_buffer': eval_buffer})

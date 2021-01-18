@@ -57,6 +57,7 @@ if __name__ == '__main__':
                         type=float, default=[1, 1, 0, 30])
 
     parser.add_argument('--num_test_episodes', type=int, default=3)
+    parser.add_argument('--setup_test_env', type=str2bool, default=False)
     parser.add_argument('--exp_name', type=str, default='antmaze_umaze_mopo')
     parser.add_argument('--datestamp', type=str2bool, default=False)
     parser.add_argument('--log_dir', type=str, default='')
@@ -117,6 +118,7 @@ if __name__ == '__main__':
                       train_model_every=args.train_model_every,
                       num_test_episodes=args.num_test_episodes,
                       dataset_path=args.dataset_path,
+                      setup_test_env=args.setup_test_env,
                       virtual_pretrain_epochs=args.virtual_pretrain_epochs,
                       n_samples_from_dataset=args.n_samples_from_dataset,
                       train_model_from_scratch=args.train_model_from_scratch,
