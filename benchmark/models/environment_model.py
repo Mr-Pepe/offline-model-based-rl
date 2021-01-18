@@ -170,9 +170,9 @@ class EnvironmentModel(nn.Module):
                             logvars[:, :, -1]).max(dim=0).values.to(device)
 
             elif exploration_mode == 'state':
+                max_disc = torch.cdist(torch.transpose(means[:, :, :-1], 0, 1), torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
                 if uncertainty == 'epistemic':
-                    prediction[:, -2] -= pessimism * \
-                        means[:, :, :-1].std(dim=0).mean(dim=1)
+                    prediction[max_disc > pessimism, -2] = -1000
                 elif uncertainty == 'aleatoric':
                     prediction[:, -2] -= pessimism * \
                         torch.exp(
