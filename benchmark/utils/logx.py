@@ -380,7 +380,7 @@ class EpochLogger(Logger):
             v[0], np.ndarray) and len(v[0].shape) > 0 else v
         return mpi_statistics_scalar(vals)
 
-    def save_replay_buffer_to_tensorboard(self, epoch, mode=''):
+    def save_replay_buffer_to_tensorboard(self, epoch, pessimism=None):
         is_antmaze_umaze = self.env_name in ANTMAZE_UMAZE_ENVS
         is_maze2d_umaze = self.env_name in MAZE2D_UMAZE_ENVS
         is_antmaze_medium = self.env_name in ANTMAZE_MEDIUM_ENVS
@@ -421,7 +421,7 @@ class EpochLogger(Logger):
                         'ReplayBuffers/1VirtualReplayBuffer', f, epoch)
 
                     print("{:.3f}% of samples outside support".format(
-                        (buffer.rew_buf == -10).sum().float() / buffer.size * 100))
+                        (buffer.rew_buf == ).sum().float() / buffer.size * 100))
 
             if 'eval_buffer' in self.pytorch_saver_elements:
                 buffer = self.pytorch_saver_elements['eval_buffer']

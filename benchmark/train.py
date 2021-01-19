@@ -466,7 +466,7 @@ class Trainer():
 
             log_end_of_epoch(self.logger, epoch, step_total, start_time,
                              agent_update_performed, model_trained_this_epoch,
-                             rollout_length, episode_finished, tested_agent)
+                             rollout_length, episode_finished, tested_agent, self.model_pessimism)
 
         return torch.as_tensor(test_performances, dtype=torch.float32), \
             torch.as_tensor(action_log, dtype=torch.float32)
@@ -474,7 +474,7 @@ class Trainer():
 
 def log_end_of_epoch(logger, epoch, step_total, start_time,
                      agent_update_performed, model_trained, rollout_length,
-                     episode_finished, tested_agent):
+                     episode_finished, tested_agent, pessimism):
 
     logger.log_tabular('Epoch', epoch, epoch)
 
@@ -519,4 +519,4 @@ def log_end_of_epoch(logger, epoch, step_total, start_time,
     logger.log_tabular('Time', epoch, time.time()-start_time)
     logger.dump_tabular()
 
-    logger.save_replay_buffer_to_tensorboard(epoch, mode='umaze')
+    logger.save_replay_buffer_to_tensorboard(epoch, pessimism=pessimism)
