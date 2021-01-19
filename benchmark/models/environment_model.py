@@ -174,7 +174,7 @@ class EnvironmentModel(nn.Module):
                 max_disc = torch.cdist(torch.transpose(
                     means[:, :, :-1], 0, 1), torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
                 if uncertainty == 'epistemic':
-                    prediction[max_disc > ood_threshold, -2] = -pessimism
+                    prediction[:, -2] -= pessimism*max_disc
                 elif uncertainty == 'aleatoric':
                     prediction[:, -2] -= pessimism * \
                         torch.exp(
