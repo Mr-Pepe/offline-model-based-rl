@@ -45,6 +45,7 @@ class Trainer():
                  pretrained_agent_path='',
                  pretrained_model_path='',
                  model_pessimism=0,
+                 ood_threshold=-1,
                  exploration_mode='state',
                  uncertainty='epistemic',
                  model_max_n_train_batches=-1,
@@ -228,6 +229,7 @@ class Trainer():
         self.train_model_every = train_model_every
         self.continuous_rollouts = continuous_rollouts
         self.model_pessimism = model_pessimism
+        self.ood_threshold = ood_threshold
         self.uncertainty = uncertainty
         self.exploration_mode = exploration_mode
         self.model_max_n_train_batches = model_max_n_train_batches
@@ -332,6 +334,7 @@ class Trainer():
                             n_random_actions=self.virtual_pretrain_epochs*self.steps_per_epoch/4,
                             max_rollout_length=self.max_ep_len,
                             pessimism=self.model_pessimism,
+                            ood_threshold=self.ood_threshold,
                             exploration_mode=self.exploration_mode,
                         )
 
@@ -396,6 +399,7 @@ class Trainer():
                             rollout_length,
                             n_rollouts=self.rollouts_per_step,
                             pessimism=self.model_pessimism,
+                            ood_threshold=self.ood_threshold,
                             exploration_mode=self.exploration_mode,
                             uncertainty=self.uncertainty,
                             random_action=take_random_action,

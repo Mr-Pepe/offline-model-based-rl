@@ -47,6 +47,7 @@ if __name__ == '__main__':
     parser.add_argument('--train_model_every', type=int, default=0)
     parser.add_argument('--model_max_n_train_batches', type=int, default=5000)
     parser.add_argument('--model_pessimism', type=float, default=1)
+    parser.add_argument('--ood_threshold', type=float, default=-1)
     parser.add_argument('--exploration_mode', type=str, default='state')
     parser.add_argument('--uncertainty', type=str, default='epistemic')
     parser.add_argument('--reset_buffer', type=str2bool, default=False)
@@ -106,6 +107,7 @@ if __name__ == '__main__':
                       virtual_buffer_size=args.virtual_buffer_size,
                       use_model=args.use_model,
                       model_pessimism=args.model_pessimism,
+                      ood_threshold=args.ood_threshold,
                       exploration_mode=args.exploration_mode,
                       model_max_n_train_batches=args.model_max_n_train_batches,
                       pretrained_model_path=args.pretrained_model_path,

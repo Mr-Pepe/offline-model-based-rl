@@ -112,7 +112,7 @@ class EnvironmentModel(nn.Module):
 
     def get_prediction(self, raw_obs_act, i_network=-1,
                        pessimism=0, exploration_mode='state',
-                       uncertainty='epistemic'):
+                       uncertainty='epistemic', ood_threshold=-1):
 
         device = next(self.layers.parameters()).device
 
@@ -174,7 +174,7 @@ class EnvironmentModel(nn.Module):
                 max_disc = torch.cdist(torch.transpose(
                     means[:, :, :-1], 0, 1), torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
                 if uncertainty == 'epistemic':
-                    prediction[max_disc > pessimism, -2] = -10
+                    prediction[max_disc > ood_threshold, -2] = -pessimism
                 elif uncertainty == 'aleatoric':
                     prediction[:, -2] -= pessimism * \
                         torch.exp(
