@@ -86,7 +86,12 @@ def run_policy(env, get_action, max_ep_len=None, num_episodes=100, render=True):
         page on Experiment Outputs for how to handle this situation."""
 
     logger = EpochLogger()
-    o, r, d, ep_ret, ep_len, n = env.reset(), 0, False, 0, 0, 0
+    r = 0
+    d = False
+    ep_ret = 0
+    ep_len = 0
+    n = 0
+    o = setup_test_env(env)
     while n < num_episodes:
         if render:
             env.render()
@@ -100,7 +105,11 @@ def run_policy(env, get_action, max_ep_len=None, num_episodes=100, render=True):
         if d or (ep_len == max_ep_len):
             logger.store(EpRet=ep_ret, EpLen=ep_len)
             print('Episode %d \t EpRet %.3f \t EpLen %d' % (n, ep_ret, ep_len))
-            o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
+            r = 0
+            d = False
+            ep_ret = 0
+            ep_len = 0
+            o = setup_test_env(env)
             n += 1
 
     logger.log_tabular('EpRet', with_min_and_max=True)
