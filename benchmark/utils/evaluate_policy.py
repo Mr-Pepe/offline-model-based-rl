@@ -72,7 +72,7 @@ def load_pytorch_policy(fpath, itr, deterministic=False):
     def get_action(x):
         with torch.no_grad():
             x = torch.as_tensor(x, dtype=torch.float32)
-            action = model.act(x)
+            action = model.act(x, True)
         return action
 
     return get_action
