@@ -135,11 +135,8 @@ def test_antmaze_umaze_preprocessing():
         preprocessed)
 
 
-@pytest.mark.current
 @pytest.mark.medium
 def test_cheetah_medium_replay_preprocessing():
-    n_samples = 100
-
     torch.manual_seed(0)
 
     env_name = 'halfcheetah-medium-replay-v1'
@@ -148,7 +145,7 @@ def test_cheetah_medium_replay_preprocessing():
     assert pre_fn is not None
 
     env = gym.make(env_name)
-    buffer, obs_dim, act_dim = load_dataset_from_env(env)
+    buffer, _, _ = load_dataset_from_env(env)
 
     obs_act = torch.cat((buffer.obs_buf, buffer.act_buf), dim=1)
 
