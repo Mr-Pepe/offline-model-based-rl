@@ -16,11 +16,11 @@ HOPPER_ENVS = ['Hopper-v2',
                'hopper-medium-expert-v0']
 
 HALF_CHEETAH_ENVS = ['HalfCheetah-v2',
-                     'halfcheetah-random-v0',
-                     'halfcheetah-medium-v0',
-                     'halfcheetah-expert-v0',
-                     'halfcheetah-medium-replay-v0',
-                     'halfcheetah-medium-expert-v0']
+                     'halfcheetah-random-v1',
+                     'halfcheetah-medium-v1',
+                     'halfcheetah-expert-v1',
+                     'halfcheetah-medium-replay-v1',
+                     'halfcheetah-medium-expert-v1']
 
 WALKER_ENVS = ['Walker2d-v2',
                'walker2d-random-v0',
