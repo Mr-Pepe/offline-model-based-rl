@@ -1,3 +1,4 @@
+import os
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
     deterministic_loss, probabilistic_loss
@@ -195,7 +196,7 @@ class EnvironmentModel(nn.Module):
     def train_to_convergence(self, data, lr=1e-3, batch_size=1024,
                              val_split=0.2, patience=20, patience_value=0,
                              debug=False, max_n_train_batches=-1, lr_schedule=None, no_reward=False,
-                             augmentation_fn=None, max_n_train_epochs=-1, **_):
+                             augmentation_fn=None, max_n_train_epochs=-1, checkpoint_dir=None, **_):
 
         if type(patience) is list:
             if patience_value > 0 and len(patience) > patience_value:
@@ -238,6 +239,14 @@ class EnvironmentModel(nn.Module):
                                                              mode='triangular2',
                                                              step_size_up=n_train_batches,
                                                              cycle_momentum=False)
+
+        if checkpoint_dir:
+            print("Loading from checkpoint.")
+            path = os.path.join(checkpoint_dir, "checkpoint")
+            checkpoint = torch.load(path)
+            self.load_state_dict(checkpoint["model_state_dict"])
+            epoch = checkpoint["step"]
+            self.optim.load_state_dict(checkpoint["optim_state_dict"])
 
         self.train()
 
@@ -332,6 +341,15 @@ class EnvironmentModel(nn.Module):
 
             if stop_training:
                 break
+
+            with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
+                path = os.path.join(checkpoint_dir, "checkpoint")
+                torch.save({
+                    "step": epoch,
+                    "model_state_dict": self.state_dict(),
+                    "optim_state_dict": self.optim.state_dict(),
+                    "val_loss": float(avg_val_loss.item())
+                }, path)
 
             epoch += 1
 
