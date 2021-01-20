@@ -1,6 +1,7 @@
 import argparse
 from ray import tune
 import ray
+from ray.tune.schedulers.async_hyperband import ASHAScheduler
 from benchmark.utils.postprocessing import get_postprocessing_function
 from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.models.environment_model import EnvironmentModel
@@ -13,7 +14,8 @@ import torch
 def training_function(config, data, checkpoint_dir=None):
     model = EnvironmentModel(hidden=4*[config['n_hidden']], **config)
 
-    model.train_to_convergence(data=data, checkpoint_dir=checkpoint_dir, **config)
+    model.train_to_convergence(
+        data=data, checkpoint_dir=checkpoint_dir, **config)
 
 
 if __name__ == '__main__':
@@ -34,10 +36,18 @@ if __name__ == '__main__':
     assert post_fn is not None
 
     ray.init(local_mode=True)
+    scheduler = ASHAScheduler(
+        time_attr='time_since_restore',
+        metric='val_loss',
+        mode='min',
+        max_t=1000,
+        grace_period=5,
+        reduction_factor=3,
+        brackets=1)
+
     analysis = tune.run(
         tune.with_parameters(training_function, data=buffer),
-        metric="val_loss",
-        mode="min",
+        scheduler=scheduler,
         num_samples=20,
         config={
             "max_n_train_epochs": 20,
