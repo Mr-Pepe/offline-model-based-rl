@@ -23,6 +23,7 @@ class EnvironmentModel(nn.Module):
                  pre_fn=None,
                  post_fn=None,
                  rew_fn=None,
+                 use_batch_norm=False,
                  **_):
         """
             type (string): deterministic or probabilistic
@@ -45,7 +46,8 @@ class EnvironmentModel(nn.Module):
         if type != 'deterministic' and type != 'probabilistic':
             raise ValueError("Unknown type {}".format(type))
 
-        self.layers = MultiHeadMlp(obs_dim, act_dim, hidden, n_networks)
+        self.layers = MultiHeadMlp(
+            obs_dim, act_dim, hidden, n_networks, use_batch_norm=use_batch_norm)
 
         # Taken from https://github.com/kchua/handful-of-trials/blob/master/
         # dmbrl/modeling/models/BNN.py
