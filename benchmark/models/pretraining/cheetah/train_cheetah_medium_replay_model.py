@@ -10,10 +10,10 @@ import d4rl  # noqa
 import torch
 
 
-def training_function(config, checkpoint_dir=None):
+def training_function(config, data, checkpoint_dir=None):
     model = EnvironmentModel(**config)
 
-    model.train_to_convergence(**config)
+    model.train_to_convergence(data=data, **config)
 
 
 if __name__ == '__main__':
@@ -35,13 +35,12 @@ if __name__ == '__main__':
 
     ray.init(local_mode=True)
     analysis = tune.run(
-        training_function,
+        tune.with_parameters(training_function, data=buffer),
         metric="val_loss",
         mode="min",
         num_samples=20,
         config={
             "max_n_train_epochs": 20,
-            "data": buffer,
             "patience": 20,
             "no_reward": False,
             "lr": tune.loguniform(1e-4, 1e-2),
