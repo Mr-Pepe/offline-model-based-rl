@@ -322,7 +322,7 @@ class EnvironmentModel(nn.Module):
                 avg_val_losses[i_network] /= n_val_batches
 
             avg_val_loss = avg_val_losses.mean()
-            tune.report(val_loss=avg_val_loss)
+            tune.report(val_loss=float(avg_val_loss.item()))
 
             if avg_val_loss < min_val_loss:
                 n_bad_val_losses = 0
