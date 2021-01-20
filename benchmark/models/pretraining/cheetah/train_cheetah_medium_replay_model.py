@@ -11,9 +11,9 @@ import torch
 
 
 def training_function(config, data, checkpoint_dir=None):
-    model = EnvironmentModel(**config)
+    model = EnvironmentModel(hidden=4*[config['n_hidden']], **config)
 
-    model.train_to_convergence(data=data, **config)
+    model.train_to_convergence(data=data, checkpoint_dir=checkpoint_dir, **config)
 
 
 if __name__ == '__main__':
@@ -44,13 +44,10 @@ if __name__ == '__main__':
             "patience": 20,
             "no_reward": False,
             "lr": tune.loguniform(1e-4, 1e-2),
-            "batch_size": tune.choice([32, 64, 128, 256]),
+            "batch_size": tune.choice([128, 256]),
             "obs_dim": obs_dim,
             "act_dim": act_dim,
-            "hidden": tune.choice([[64, 64, 64, 64],
-                                   [128, 128, 128, 128],
-                                   [256, 256, 256, 256],
-                                   [512, 512, 512, 512]]),
+            "n_hidden": tune.choice([64, 128, 256, 512]),
             "n_networks": 3,
             "pre_fn": pre_fn,
             "post_fn": post_fn,
