@@ -2,24 +2,6 @@ from benchmark.utils.envs import ENV_CATEGORIES
 import torch
 
 
-def preprocess_maze2d_umaze(obs_act):
-    obs_act = obs_act.detach().clone()
-
-    mean = torch.as_tensor([1.8653e+00,  2.0270e+00, -5.9192e-02, -6.7519e-02,
-                            5.5773e-04, -2.4673e-04], device=obs_act.device)
-
-    std = torch.as_tensor([0.9751, 0.9118, 0.8677, 0.9782, 0.5770, 0.5776],
-                          device=obs_act.device)
-
-    # This allows to preprocess an observation without action
-    length = obs_act.shape[-1]
-
-    obs_act -= mean[:length]
-    obs_act /= std[:length]
-
-    return obs_act
-
-
 def preprocess_antmaze_umaze(obs_act):
     obs_act = obs_act.detach().clone()
 
@@ -50,7 +32,7 @@ def preprocess_antmaze_umaze(obs_act):
     return obs_act
 
 
-def preprocess_antmaze_medium(obs_act):
+def preprocess_antmaze_medium_diverse(obs_act):
     obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([
@@ -81,18 +63,18 @@ def preprocess_antmaze_medium(obs_act):
     return obs_act
 
 
-def preprocess_hopper(obs_act):
+def preprocess_half_cheetah_medium_replay(obs_act):
     obs_act = obs_act.detach().clone()
 
-    mean = torch.as_tensor(
-        [0.4982,  0.0009, -0.0892, -0.1062,  0.0413,  0.6030, -0.0670, -0.1053,
-         -0.1612, -0.1475,  0.0463,  0.0133,  0.0145, -0.0380],
-        device=obs_act.device)
+    mean = torch.as_tensor([-0.1288,  0.3736, -0.1500, -0.2348, -0.2842, -0.1310, -0.2016, -0.0652,
+                            3.4770, -0.0278, -0.0149,  0.0767,  0.0126,  0.0275,  0.0237,  0.0099,
+                            -0.0159, -0.2636, -0.3636, -0.6473, -0.2020, -0.4300, -0.1152],
+                           device=obs_act.device)
 
-    std = torch.as_tensor(
-        [0.6143, 0.0488, 0.1826, 0.2178, 0.3215, 1.1208, 0.7118, 0.7581, 1.2504,
-         1.6932, 3.1109, 0.3190, 0.3701, 0.4193],
-        device=obs_act.device)
+    std = torch.as_tensor([0.1702, 1.2842, 0.3344, 0.3673, 0.2609, 0.4784, 0.3182, 0.3355, 2.0931,
+                           0.8037, 1.9044, 6.5731, 7.5727, 5.0700, 9.1051, 6.0855, 7.2533, 0.7994,
+                           0.6885, 0.6088, 0.6628, 0.6553, 0.7183],
+                          device=obs_act.device)
 
     # This allows to preprocess an observation without action
     length = obs_act.shape[-1]
@@ -103,27 +85,16 @@ def preprocess_hopper(obs_act):
     return obs_act
 
 
-def preprocess_half_cheetah(obs_act):
-    return obs_act.detach().clone()
-
-
-def preprocess_walker2d(obs_act):
-    return obs_act.detach().clone()
-
-
 preprocessing_functions = {
-    'hopper': preprocess_hopper,
-    'half_cheetah': preprocess_half_cheetah,
-    'walker2d': preprocess_walker2d,
-    'antmaze_umaze': preprocess_antmaze_umaze,
-    'maze2d_umaze': preprocess_maze2d_umaze,
-    'antmaze_medium': preprocess_antmaze_medium
+    'halfcheetah-medium-replay-v1': preprocess_half_cheetah_medium_replay,
+    'antmaze-umaze-v0': preprocess_antmaze_umaze,
+    'antmaze-medium-diverse-v0': preprocess_antmaze_medium_diverse
 }
 
 
 def get_preprocessing_function(env_name):
-    for fn_name in ENV_CATEGORIES:
-        if env_name in ENV_CATEGORIES[fn_name]:
-            return preprocessing_functions[fn_name]
+    if env_name in preprocessing_functions:
+        return preprocessing_functions[env_name]
 
+    print("No preprocessing function found for {}".format(env_name))
     return None
