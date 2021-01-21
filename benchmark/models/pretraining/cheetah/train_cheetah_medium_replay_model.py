@@ -82,6 +82,7 @@ if __name__ == '__main__':
 
         analysis = tune.run(
             tune.with_parameters(training_function, data=buffer),
+            name=args.env_name,
             scheduler=scheduler,
             search_alg=search_alg,
             num_samples=50,
