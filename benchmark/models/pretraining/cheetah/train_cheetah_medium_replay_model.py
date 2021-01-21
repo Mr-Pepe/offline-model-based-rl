@@ -22,7 +22,7 @@ def training_function(config, data, checkpoint_dir=None, save_path=None):
         data=data, checkpoint_dir=checkpoint_dir, tuning=True, **config)
 
     if save_path:
-        os.makedirs(os.path.dirname(save_path))
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
         torch.save(model, save_path)
 
 
