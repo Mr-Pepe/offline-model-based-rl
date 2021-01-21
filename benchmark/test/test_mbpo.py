@@ -1,3 +1,4 @@
+from benchmark.utils.envs import HOPPER_ORIGINAL
 import torch
 from benchmark.train import Trainer
 from benchmark.utils.run_utils import setup_logger_kwargs
@@ -9,7 +10,7 @@ def test_mbpo_online():
     logger_kwargs = setup_logger_kwargs('test_mbpo')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    trainer = Trainer('Hopper-v2',
+    trainer = Trainer(HOPPER_ORIGINAL,
                       steps_per_epoch=1000,
                       model_kwargs=dict(
                           batch_size=256, type='probabilistic', n_networks=3),

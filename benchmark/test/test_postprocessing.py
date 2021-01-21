@@ -1,3 +1,4 @@
+from benchmark.utils.envs import HOPPER_ORIGINAL, WALKER_ORIGINAL
 from benchmark.utils.mazes import \
     plot_antmaze_medium, plot_antmaze_umaze, \
     plot_maze2d_umaze
@@ -38,7 +39,7 @@ def run_env(env, n_steps):
 
 @pytest.mark.fast
 def test_hopper_postprocessing():
-    next_observations, dones = run_env(gym.make('Hopper-v2'), 100)
+    next_observations, dones = run_env(gym.make(HOPPER_ORIGINAL), 100)
 
     assert dones.sum() > 0
 
@@ -63,7 +64,7 @@ def test_half_cheetah_postprocessing():
 @pytest.mark.fast
 def test_walker2d_postprocessing():
 
-    next_observations, dones = run_env(gym.make('Walker2d-v2'), 100)
+    next_observations, dones = run_env(gym.make(WALKER_ORIGINAL), 100)
 
     assert dones.sum() > 0
 

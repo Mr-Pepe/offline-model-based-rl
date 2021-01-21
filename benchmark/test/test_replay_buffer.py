@@ -1,3 +1,4 @@
+from benchmark.utils.envs import HOPPER_RANDOM
 from benchmark.utils.sample_selectors import antmaze_selector
 from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.replay_buffer import ReplayBuffer
@@ -10,7 +11,7 @@ import pytest
 
 @pytest.mark.medium
 def test_buffer_returns_percentage_of_terminal_states():
-    env = gym.make('hopper-random-v0')
+    env = gym.make(HOPPER_RANDOM)
     dataset = d4rl.qlearning_dataset(env)
     observations = dataset['observations']
     next_observations = dataset['next_observations']

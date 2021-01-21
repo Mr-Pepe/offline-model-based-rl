@@ -1,3 +1,4 @@
+from benchmark.utils.envs import HALF_CHEETAH_RANDOM, HOPPER_RANDOM
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.replay_buffer import ReplayBuffer
 from benchmark.utils.random_agent import RandomAgent
@@ -92,7 +93,7 @@ def test_single_deterministic_network_overfits_on_batch():
 def test_deterministic_model_trains_on_offline_data():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    env = gym.make('halfcheetah-random-v0')
+    env = gym.make(HALF_CHEETAH_RANDOM)
     dataset = env.get_dataset()
     observations = dataset['observations']
     actions = dataset['actions']
@@ -384,7 +385,7 @@ def test_deterministic_model_returns_binary_done_signal_when_post_fn_used():
 def test_deterministic_model_does_not_always_output_terminal():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
-    env = gym.make('hopper-random-v0')
+    env = gym.make(HOPPER_RANDOM)
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
         env, n_samples=10000, buffer_device=device)
     model = EnvironmentModel(obs_dim, act_dim, type='deterministic',
@@ -436,7 +437,7 @@ def test_deterministic_model_does_not_always_output_terminal():
 def test_probabilistic_model_does_not_always_output_terminal():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
-    env = gym.make('hopper-random-v0')
+    env = gym.make(HOPPER_RANDOM)
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
         env, 10000, buffer_device=device)
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',

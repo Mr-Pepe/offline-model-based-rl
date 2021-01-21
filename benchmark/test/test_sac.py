@@ -1,3 +1,4 @@
+from benchmark.utils.envs import HALF_CHEETAH_RANDOM
 from benchmark.utils.logx import EpochLogger
 import time
 import gym
@@ -54,7 +55,7 @@ def test_sac_converges():
 def test_sac_offline():
     logger_kwargs = setup_logger_kwargs('test_sac_offline')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    env = 'halfcheetah-random-v0'
+    env = HALF_CHEETAH_RANDOM
     n_samples = 900000
 
     trainer = Trainer(env,
@@ -83,7 +84,7 @@ def sac_trains_faster_on_gpu_on_filled_buffer():
     for device in ['cpu', 'cuda']:
         torch.manual_seed(0)
 
-        env = gym.make('halfcheetah-random-v0')
+        env = gym.make(HALF_CHEETAH_RANDOM)
         buffer, obs_dim, act_dim = load_dataset_from_env(env,
                                                          buffer_device=device,
                                                          n_samples=100000)

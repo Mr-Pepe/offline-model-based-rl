@@ -1,3 +1,4 @@
+from benchmark.utils.envs import HALF_CHEETAH_RANDOM
 from benchmark.utils.load_dataset import load_dataset_from_env
 import gym
 import torch
@@ -10,7 +11,7 @@ def test_train_deterministic_environment_model():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
 
-    env = gym.make('halfcheetah-random-v0')
+    env = gym.make(HALF_CHEETAH_RANDOM)
     buffer, obs_dim, act_dim = load_dataset_from_env(env,
                                                      buffer_device=device,
                                                      n_samples=100000)
@@ -32,7 +33,7 @@ def test_train_probabilistic_model():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
 
-    env = gym.make('halfcheetah-random-v0')
+    env = gym.make(HALF_CHEETAH_RANDOM)
     buffer, obs_dim, act_dim = load_dataset_from_env(env,
                                                      buffer_device=device,
                                                      n_samples=100000)
@@ -55,7 +56,7 @@ def test_train_deterministic_ensemble():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
 
-    env = gym.make('halfcheetah-random-v0')
+    env = gym.make(HALF_CHEETAH_RANDOM)
     buffer, obs_dim, act_dim = load_dataset_from_env(env,
                                                      buffer_device=device,
                                                      n_samples=100000)
@@ -79,7 +80,7 @@ def test_train_probabilistic_ensemble():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
 
-    env = gym.make('halfcheetah-random-v0')
+    env = gym.make(HALF_CHEETAH_RANDOM)
     buffer, obs_dim, act_dim = load_dataset_from_env(env,
                                                      buffer_device=device,
                                                      n_samples=100000)
@@ -107,7 +108,7 @@ def test_patience_can_be_list():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
 
-    env = gym.make('halfcheetah-random-v0')
+    env = gym.make(HALF_CHEETAH_RANDOM)
     buffer, obs_dim, act_dim = load_dataset_from_env(env,
                                                      buffer_device=device,
                                                      n_samples=100000)
@@ -136,7 +137,7 @@ def test_training_stops_after_specified_number_of_batches():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
 
-    env = gym.make('halfcheetah-random-v0')
+    env = gym.make(HALF_CHEETAH_RANDOM)
     buffer, obs_dim, act_dim = load_dataset_from_env(env,
                                                      buffer_device=device,
                                                      n_samples=100000)

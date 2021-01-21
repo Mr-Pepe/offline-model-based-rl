@@ -1,3 +1,4 @@
+from benchmark.utils.envs import HOPPER_ORIGINAL, HOPPER_RANDOM, WALKER_ORIGINAL
 from benchmark.utils.actions import Actions
 from benchmark.train import Trainer
 import pytest
@@ -77,7 +78,7 @@ def test_actions_for_online_model_based_training():
     random_steps = 50
     train_model_every = 50
 
-    trainer = Trainer('hopper-random-v0',
+    trainer = Trainer(HOPPER_RANDOM,
                       epochs=epochs,
                       sac_kwargs=dict(hidden=[32, 32, 32],
                                       batch_size=32),
@@ -184,7 +185,7 @@ def test_actions_for_offline_model_based_training_with_fine_tuning():
     random_steps = 50
     train_model_every = 50
 
-    trainer = Trainer('hopper-random-v0',
+    trainer = Trainer(HOPPER_RANDOM,
                       epochs=epochs,
                       pretrain_epochs=pretrain_epochs,
                       sac_kwargs=dict(hidden=[32, 32, 32],
@@ -239,7 +240,7 @@ def test_throws_error_if_using_model_but_no_postprocessing_fn_available():
 
 @pytest.mark.medium
 def test_trainer_picks_correct_postprocessing_functions():
-    trainer = Trainer('Hopper-v2', use_model=True)
+    trainer = Trainer(HOPPER_ORIGINAL, use_model=True)
 
     assert trainer.post_fn == postprocessing_functions['hopper']
 
@@ -247,7 +248,7 @@ def test_trainer_picks_correct_postprocessing_functions():
 
     assert trainer.post_fn == postprocessing_functions['half_cheetah']
 
-    trainer = Trainer('Walker2d-v2', use_model=True)
+    trainer = Trainer(WALKER_ORIGINAL, use_model=True)
 
     assert trainer.post_fn == postprocessing_functions['walker2d']
 
@@ -260,7 +261,7 @@ def test_results_are_reproducible():
     random_steps = 50
     train_model_every = 50
 
-    trainer1 = Trainer('hopper-random-v0',
+    trainer1 = Trainer(HOPPER_RANDOM,
                        epochs=epochs,
                        sac_kwargs=dict(hidden=[32, 32, 32],
                                        batch_size=32),
@@ -278,7 +279,7 @@ def test_results_are_reproducible():
 
     test_performances1, action_log1 = trainer1.train()
 
-    trainer2 = Trainer('hopper-random-v0',
+    trainer2 = Trainer(HOPPER_RANDOM,
                        epochs=epochs,
                        sac_kwargs=dict(hidden=[32, 32, 32],
                                        batch_size=32),

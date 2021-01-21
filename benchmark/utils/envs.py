@@ -1,33 +1,53 @@
 from benchmark.utils.mazes import ANTMAZE_MEDIUM_DIVERSE_GOAL, ANTMAZE_UMAZE_DIVERSE_GOAL, ANTMAZE_UMAZE_GOAL
 import gym
-import d4rl # noqa
+import d4rl  # noqa
 
 ANTMAZE_UMAZE_ENVS = ['antmaze-umaze-v0',
                       'antmaze-umaze-diverse-v0']
 
 MAZE2D_UMAZE_ENVS = ['maze2d-umaze-v1']
 
+HOPPER_ORIGINAL = 'Hopper-v2'
+HOPPER_RANDOM = 'hopper-random-v1'
+HOPPER_MEDIUM = 'hopper-medium-v1'
+HOPPER_EXPERT = 'hopper-expert-v1'
+HOPPER_MEDIUM_REPLAY = 'hopper-medium-replay-v1'
+HOPPER_MEDIUM_EXPERT = 'hopper-medium-expert-v1'
 
-HOPPER_ENVS = ['Hopper-v2',
-               'hopper-random-v0',
-               'hopper-medium-v0',
-               'hopper-expert-v0',
-               'hopper-medium-replay-v0',
-               'hopper-medium-expert-v0']
+HOPPER_ENVS = [HOPPER_ORIGINAL,
+               HOPPER_RANDOM,
+               HOPPER_MEDIUM,
+               HOPPER_EXPERT,
+               HOPPER_MEDIUM_REPLAY,
+               HOPPER_MEDIUM_EXPERT]
 
-HALF_CHEETAH_ENVS = ['HalfCheetah-v2',
-                     'halfcheetah-random-v1',
-                     'halfcheetah-medium-v1',
-                     'halfcheetah-expert-v1',
-                     'halfcheetah-medium-replay-v1',
-                     'halfcheetah-medium-expert-v1']
+HALF_CHEETAH_ORIGINAL = 'HalfCheetah-v2'
+HALF_CHEETAH_RANDOM = 'halfcheetah-random-v1'
+HALF_CHEETAH_MEDIUM = 'halfcheetah-medium-v1'
+HALF_CHEETAH_EXPERT = 'halfcheetah-expert-v1'
+HALF_CHEETAH_MEDIUM_REPLAY = 'halfcheetah-medium-replay-v1'
+HALF_CHEETAH_MEDIUM_EXPERT = 'halfcheetah-medium-expert-v1'
 
-WALKER_ENVS = ['Walker2d-v2',
-               'walker2d-random-v0',
-               'walker2d-medium-v0',
-               'walker2d-expert-v0',
-               'walker2d-medium-replay-v0',
-               'walker2d-medium-expert-v0']
+HALF_CHEETAH_ENVS = [HALF_CHEETAH_ORIGINAL,
+                     HALF_CHEETAH_RANDOM,
+                     HALF_CHEETAH_MEDIUM,
+                     HALF_CHEETAH_EXPERT,
+                     HALF_CHEETAH_MEDIUM_REPLAY,
+                     HALF_CHEETAH_MEDIUM_EXPERT]
+
+WALKER_ORIGINAL = 'Walker2d-v2'
+WALKER_RANDOM = 'walker2d-random-v1'
+WALKER_MEDIUM = 'walker2d-medium-v1'
+WALKER_EXPERT = 'walker2d-expert-v1'
+WALKER_MEDIUM_REPLAY = 'walker2d-medium-replay-v1'
+WALKER_MEDIUM_EXPERT = 'walker2d-medium-expert-v1'
+
+WALKER_ENVS = [WALKER_ORIGINAL,
+               WALKER_RANDOM,
+               WALKER_MEDIUM,
+               WALKER_EXPERT,
+               WALKER_MEDIUM_REPLAY,
+               WALKER_MEDIUM_EXPERT]
 
 ANTMAZE_MEDIUM_ENVS = ['antmaze-medium-diverse-v0',
                        'antmaze-medium-play-v0']
