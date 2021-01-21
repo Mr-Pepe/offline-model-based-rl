@@ -15,7 +15,7 @@ class SAC(nn.Module):
     def __init__(self, observation_space, action_space, hidden=(256, 256),
                  activation=nn.ReLU, pi_lr=3e-4, q_lr=3e-4, gamma=0.99,
                  alpha=0.2, polyak=0.995, batch_size=100, 
-                 pre_fn=None, device='cpu'):
+                 pre_fn=None, device='cpu', **_):
         '''
             gamma (float): Discount factor. (Always between 0 and 1.)
 
