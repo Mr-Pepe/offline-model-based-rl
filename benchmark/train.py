@@ -1,3 +1,4 @@
+from ray import tune
 from benchmark.utils.sample_selectors import get_selector
 from benchmark.utils.envs import get_test_env
 from benchmark.utils.reward_functions import get_reward_function
@@ -245,7 +246,7 @@ class Trainer():
         self.save_freq = save_freq
         self.render = render
 
-    def train(self):
+    def train(self, tuning=False):
 
         start_time = time.time()
         o, ep_ret, ep_len = self.env.reset(), 0, 0
@@ -461,6 +462,9 @@ class Trainer():
 
                 tested_agent = True
                 self.logger.add_to_pytorch_saver({'eval_buffer': eval_buffer})
+
+            if tuning:
+                tune.report(avg_test_return=test_return)
 
             test_performances.append([epoch, test_return])
 
