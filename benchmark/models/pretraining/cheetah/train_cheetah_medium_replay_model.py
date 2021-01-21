@@ -4,6 +4,7 @@ from pathlib import Path
 from ray import tune
 import ray
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
+from ray.tune.suggest.hyperopt import HyperOptSearch
 from benchmark.utils.postprocessing import get_postprocessing_function
 from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.models.environment_model import EnvironmentModel
@@ -61,7 +62,8 @@ if __name__ == '__main__':
                 "debug": True,
                 "use_batch_norm": True},
             data=buffer,
-            save_path=os.path.join(str(Path.home()), 'Projects/thesis-code/data/models/cheetah/medium_replay.pt')
+            save_path=os.path.join(
+                str(Path.home()), 'Projects/thesis-code/data/models/cheetah/medium_replay.pt')
         )
     else:
         ray.init(local_mode=True)
@@ -74,15 +76,20 @@ if __name__ == '__main__':
             reduction_factor=3,
             brackets=1)
 
+        search_alg = HyperOptSearch(
+            metric='val_loss',
+            mode='min')
+
         analysis = tune.run(
             tune.with_parameters(training_function, data=buffer),
             scheduler=scheduler,
-            num_samples=20,
+            search_alg=search_alg,
+            num_samples=50,
             config={
-                "max_n_train_epochs": 30,
+                "max_n_train_epochs": 50,
                 "patience": 30,
                 "no_reward": False,
-                "lr": tune.loguniform(1e-4, 1e-2),
+                "lr": tune.loguniform(1e-5, 1e-2),
                 "batch_size": tune.choice([256, 512, 1024, 2048]),
                 "obs_dim": obs_dim,
                 "act_dim": act_dim,
