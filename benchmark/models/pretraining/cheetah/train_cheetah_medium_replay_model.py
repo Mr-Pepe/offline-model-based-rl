@@ -18,7 +18,7 @@ def training_function(config, data, checkpoint_dir=None, save_path=None):
     model = EnvironmentModel(hidden=4*[config['n_hidden']], **config)
 
     model.train_to_convergence(
-        data=data, checkpoint_dir=checkpoint_dir, **config)
+        data=data, checkpoint_dir=checkpoint_dir, tuning=True, **config)
 
     if save_path:
         os.makedirs(os.path.dirname(save_path))
@@ -54,6 +54,7 @@ if __name__ == '__main__':
                 "obs_dim": obs_dim,
                 "act_dim": act_dim,
                 "n_hidden": 512,
+                "type": "probabilistic",
                 "n_networks": 7,
                 "pre_fn": pre_fn,
                 "post_fn": post_fn,
@@ -86,6 +87,7 @@ if __name__ == '__main__':
                 "obs_dim": obs_dim,
                 "act_dim": act_dim,
                 "n_hidden": tune.choice([64, 128, 256, 512]),
+                "type": "probabilistic",
                 "n_networks": 3,
                 "pre_fn": pre_fn,
                 "post_fn": post_fn,
