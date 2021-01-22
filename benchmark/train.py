@@ -347,10 +347,11 @@ class Trainer():
                     actions_this_step[Actions.TRAIN_MODEL] = 1
                     print('')
 
-                print("Epoch {}, step {}/{}".format(epoch,
-                                                    step_epoch+1,
-                                                    self.steps_per_epoch),
-                      end='\r')
+                if step_epoch % 10 == 0:
+                    print("Epoch {}, step {}/{}".format(epoch,
+                                                        step_epoch+1,
+                                                        self.steps_per_epoch),
+                          end='\r')
 
                 if epoch > 0:
 
