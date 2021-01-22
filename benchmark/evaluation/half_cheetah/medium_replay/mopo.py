@@ -107,7 +107,7 @@ if __name__ == '__main__':
             if args.mode == 'mopo' or args.mode == 'morel':
                 config.update(model_pessimism=tune.uniform(0, 50))
         else:
-            raise ValueError("Not tuning level {}".format(args.level))
+            raise ValueError("No tuning level {}".format(args.level))
 
         ray.init(local_mode=True)
         scheduler = ASHAScheduler(
@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
         analysis = tune.run(
             tune.with_parameters(training_function),
-            name=args.env_name+'-'+args.mode+'-tuning-lvl-'+args.level,
+            name=args.env_name+'-'+args.mode+'-tuning-lvl-'+str(args.level),
             scheduler=scheduler,
             search_alg=search_alg,
             num_samples=num_samples,
