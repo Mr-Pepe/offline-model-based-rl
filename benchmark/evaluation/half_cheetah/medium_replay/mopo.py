@@ -22,6 +22,9 @@ if __name__ == '__main__':
     parser.add_argument('--env_name', type=str,
                         default=HALF_CHEETAH_MEDIUM_REPLAY)
     parser.add_argument('--level', type=str2bool, default=0)
+    parser.add_argument('--mode', type=str, default='mopo')
+    parser.add_argument('--epochs', type=int, default=200)
+    parser.add_argument('--seeds', type=int, default=1)
     args = parser.parse_args()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -54,8 +57,7 @@ if __name__ == '__main__':
         pretrained_model_path='/home/felipe/Projects/thesis-code/data/models/cheetah/medium_replay.pt',
         model_pessimism=50,
         ood_threshold=-1,
-        exploration_mode='reward',
-        uncertainty='aleatoric',
+        mode=args.mode,
         model_max_n_train_batches=-1,
         rollouts_per_step=38,
         rollout_schedule=[1, 1, 20, 100],
@@ -77,11 +79,14 @@ if __name__ == '__main__':
         render=False)
 
     if args.level == 0:
-        config.update(
-            epochs=200,
-            logger_kwargs=setup_logger_kwargs('cheetah_medium_replay_mopo')
-        )
-        training_function(config, tuning=False)
+        for seed in range(args.seeds):
+            config.update(
+                epochs=args.epochs,
+                seed=seed,
+                logger_kwargs=setup_logger_kwargs(
+                    args.env_name+config['mode'], seed=config['seed']),
+            )
+            training_function(config, tuning=False)
 
     else:
         # Tuning gets increasingly specific
