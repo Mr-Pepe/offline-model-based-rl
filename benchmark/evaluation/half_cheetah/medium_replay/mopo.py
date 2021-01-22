@@ -101,10 +101,11 @@ if __name__ == '__main__':
                                 pi_lr=tune.loguniform(1e-5, 1e-3),
                                 q_lr=tune.loguniform(1e-5, 1e-3),
                                 ),
-                model_pessimism=tune.uniform(0, 50),
                 rollouts_per_step=tune.randint(1, 401),
                 max_rollout_length=tune.randint(1, 10),
             )
+            if args.mode == 'mopo' or args.mode == 'morel':
+                config.update(model_pessimism=tune.uniform(0, 50))
         else:
             raise ValueError("Not tuning level {}".format(args.level))
 
@@ -124,7 +125,7 @@ if __name__ == '__main__':
 
         analysis = tune.run(
             tune.with_parameters(training_function),
-            name=args.env_name+'-mopo-tuning-lvl-'+args.level,
+            name=args.env_name+'-'+args.mode+'-tuning-lvl-'+args.level,
             scheduler=scheduler,
             search_alg=search_alg,
             num_samples=num_samples,
