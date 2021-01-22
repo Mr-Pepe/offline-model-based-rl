@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--env_name', type=str,
                         default=HALF_CHEETAH_MEDIUM_REPLAY)
-    parser.add_argument('--level', type=str2bool, default=0)
+    parser.add_argument('--level', type=int, default=0)
     parser.add_argument('--mode', type=str, default='mopo')
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--seeds', type=int, default=1)
@@ -84,7 +84,7 @@ if __name__ == '__main__':
                 epochs=args.epochs,
                 seed=seed,
                 logger_kwargs=setup_logger_kwargs(
-                    args.env_name+config['mode'], seed=config['seed']),
+                    args.env_name+'-'+config['mode'], seed=config['seed']),
             )
             training_function(config, tuning=False)
 
