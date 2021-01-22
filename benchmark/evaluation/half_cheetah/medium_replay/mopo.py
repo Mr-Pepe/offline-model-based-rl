@@ -1,4 +1,5 @@
 import argparse
+from benchmark.utils.run_utils import setup_logger_kwargs
 from ray import tune
 import ray
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
@@ -9,11 +10,11 @@ from benchmark.train import Trainer
 import torch
 
 
-def training_function(config):
+def training_function(config, tuning=True):
     config["sac_kwargs"].update(
         {"hidden": 4*[config["sac_kwargs"]["agent_hidden"]]})
     trainer = Trainer(**config)
-    trainer.train(tuning=True)
+    trainer.train(tuning=tuning)
 
 
 if __name__ == '__main__':
@@ -76,7 +77,12 @@ if __name__ == '__main__':
         render=False)
 
     if args.level == 0:
-        pass
+        config.update(
+            epochs=200,
+            logger_kwargs=setup_logger_kwargs('cheetah_medium_replay_mopo')
+        )
+        training_function(config, tuning=False)
+
     else:
         # Tuning gets increasingly specific
         if args.level == 1:
