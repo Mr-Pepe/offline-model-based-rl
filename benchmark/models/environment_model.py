@@ -171,7 +171,7 @@ class EnvironmentModel(nn.Module):
                     torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
                 prediction[max_disc > ood_threshold, -2] = -pessimism
             elif mode == 'pepe':
-                prediction[:, -2] = predictions[:, :, -1].min(dim=0).values
+                prediction[:, -2] = predictions[:, :, -2].min(dim=0).values
 
         return prediction
 
