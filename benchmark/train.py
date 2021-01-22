@@ -47,8 +47,7 @@ class Trainer():
                  pretrained_model_path='',
                  model_pessimism=0,
                  ood_threshold=-1,
-                 exploration_mode='state',
-                 uncertainty='epistemic',
+                 mode='mopo',
                  model_max_n_train_batches=-1,
                  rollouts_per_step=10,
                  rollout_schedule=[1, 1, 20, 100],
@@ -231,8 +230,7 @@ class Trainer():
         self.continuous_rollouts = continuous_rollouts
         self.model_pessimism = model_pessimism
         self.ood_threshold = ood_threshold
-        self.uncertainty = uncertainty
-        self.exploration_mode = exploration_mode
+        self.mode = mode
         self.model_max_n_train_batches = model_max_n_train_batches
         self.reset_buffer = reset_buffer
         self.reset_maze2d_umaze = reset_maze2d_umaze and \
@@ -402,8 +400,7 @@ class Trainer():
                             n_rollouts=self.rollouts_per_step,
                             pessimism=self.model_pessimism,
                             ood_threshold=self.ood_threshold,
-                            exploration_mode=self.exploration_mode,
-                            uncertainty=self.uncertainty,
+                            mode=self.mode,
                             random_action=take_random_action,
                             prev_obs=prev_obs if self.continuous_rollouts else None,
                             max_rollout_length=self.max_rollout_length,

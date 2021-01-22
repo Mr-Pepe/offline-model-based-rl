@@ -497,11 +497,11 @@ def test_aleatoric_pessimism_throws_error_if_model_not_probabilistic():
     input = torch.rand(tensor_size)
 
     with pytest.raises(ValueError):
-        model.get_prediction(input, pessimism=1, uncertainty='aleatoric')
+        model.get_prediction(input, pessimism=1, mode='mopo')
 
 
 @pytest.mark.fast
-def test_throws_error_if_uncertainty_mode_unknown():
+def test_throws_error_if_mode_unknown():
     obs_dim = 5
     act_dim = 6
 
@@ -511,21 +511,7 @@ def test_throws_error_if_uncertainty_mode_unknown():
     input = torch.rand(tensor_size)
 
     with pytest.raises(ValueError):
-        model.get_prediction(input, pessimism=1, uncertainty='epistemi')
-
-
-@pytest.mark.fast
-def test_throws_error_if_exploration_mode_unknown():
-    obs_dim = 5
-    act_dim = 6
-
-    model = EnvironmentModel(obs_dim, act_dim, [2, 2])
-
-    tensor_size = (3, obs_dim+act_dim)
-    input = torch.rand(tensor_size)
-
-    with pytest.raises(ValueError):
-        model.get_prediction(input, pessimism=1, exploration_mode='stat')
+        model.get_prediction(input, pessimism=1, mode='epistemi')
 
 
 @pytest.mark.fast

@@ -114,8 +114,7 @@ class EnvironmentModel(nn.Module):
             self.min_logvar
 
     def get_prediction(self, raw_obs_act, i_network=-1,
-                       pessimism=0, exploration_mode='state',
-                       uncertainty='epistemic', ood_threshold=-1):
+                       pessimism=0, mode='mopo', ood_threshold=-1):
 
         device = next(self.layers.parameters()).device
 
@@ -124,8 +123,7 @@ class EnvironmentModel(nn.Module):
 
         self.eval()
 
-        self.check_prediction_arguments(
-            uncertainty, pessimism, exploration_mode)
+        self.check_prediction_arguments(mode, pessimism)
 
         with torch.no_grad():
             predictions, means, logvars, _, _ = \
@@ -164,25 +162,16 @@ class EnvironmentModel(nn.Module):
 
         if pessimism != 0:
 
-            if exploration_mode == 'reward':
-                if uncertainty == 'epistemic':
-                    max_disc = torch.cdist(torch.transpose(means[:, :, -1:], 0, 1),
-                                           torch.transpose(means[:, :, -1:], 0, 1)).max(-1).values.max(-1).values
-                    prediction[:, -2] -= pessimism * max_disc
-                elif uncertainty == 'aleatoric':
-                    prediction[:, -2] -= pessimism * \
-                        torch.exp(
-                            logvars[:, :, -1]).max(dim=0).values.to(device)
-
-            elif exploration_mode == 'state':
-                if uncertainty == 'epistemic':
-                    max_disc = torch.cdist(torch.transpose(means[:, :, :-1], 0, 1),
-                                           torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
-                    prediction[:, -2] -= pessimism * max_disc
-                elif uncertainty == 'aleatoric':
-                    prediction[:, -2] -= pessimism * \
-                        torch.exp(
-                            logvars[:, :, :-1]).mean(dim=2).max(dim=0).values.to(device)
+            if mode == 'mopo':
+                prediction[:, -2] -= pessimism * \
+                    torch.exp(logvars[:, :, -1]).max(dim=0).values.to(device)
+            elif mode == 'morel':
+                max_disc = torch.cdist(
+                    torch.transpose(means[:, :, :-1], 0, 1),
+                    torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
+                prediction[max_disc > ood_threshold, -2] = -pessimism
+            elif mode == 'pepe':
+                prediction[:, -2] = predictions[:, :, -1].min(dim=0).values
 
         return prediction
 
@@ -197,7 +186,7 @@ class EnvironmentModel(nn.Module):
     def train_to_convergence(self, data, lr=1e-3, batch_size=1024,
                              val_split=0.2, patience=20, patience_value=0,
                              debug=False, max_n_train_batches=-1, lr_schedule=None, no_reward=False,
-                             augmentation_fn=None, max_n_train_epochs=-1, checkpoint_dir=None, 
+                             augmentation_fn=None, max_n_train_epochs=-1, checkpoint_dir=None,
                              tuning=False, **_):
 
         if type(patience) is list:
@@ -367,16 +356,12 @@ class EnvironmentModel(nn.Module):
 
         return avg_val_losses, batches_trained
 
-    def check_prediction_arguments(self, uncertainty, pessimism, exploration_mode):
-        if not (uncertainty == 'epistemic' or uncertainty == 'aleatoric'):
+    def check_prediction_arguments(self, mode, pessimism):
+        if not (mode == 'mopo' or mode == 'morel' or mode == 'pepe'):
             raise ValueError(
-                "Unknown uncertainty measure: {}".format(uncertainty))
+                "Unknown mode: {}".format(mode))
 
-        if not (exploration_mode == 'state' or exploration_mode == 'reward'):
-            raise ValueError(
-                "Unknown exploration mode: {}".format(exploration_mode))
-
-        if pessimism != 0 and uncertainty == 'aleatoric' and \
+        if pessimism != 0 and mode == 'mopo' and \
                 self.type == 'deterministic':
             raise ValueError(
-                "Can not use aleatoric uncertainty with deterministic ensemble.")
+                "Can not use MOPO with deterministic ensemble.")

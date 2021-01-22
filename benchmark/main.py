@@ -48,8 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_max_n_train_batches', type=int, default=5000)
     parser.add_argument('--model_pessimism', type=float, default=1)
     parser.add_argument('--ood_threshold', type=float, default=-1)
-    parser.add_argument('--exploration_mode', type=str, default='state')
-    parser.add_argument('--uncertainty', type=str, default='epistemic')
+    parser.add_argument('--mode', type=str, default='mopo')
     parser.add_argument('--reset_buffer', type=str2bool, default=False)
     parser.add_argument('--train_model_from_scratch', type=str2bool, default=False)
     parser.add_argument('--virtual_pretrain_epochs', type=int, default=0)
@@ -108,13 +107,12 @@ if __name__ == '__main__':
                       use_model=args.use_model,
                       model_pessimism=args.model_pessimism,
                       ood_threshold=args.ood_threshold,
-                      exploration_mode=args.exploration_mode,
+                      mode=args.mode,
                       model_max_n_train_batches=args.model_max_n_train_batches,
                       pretrained_model_path=args.pretrained_model_path,
                       agent_updates_per_step=args.agent_updates_per_step,
                       rollouts_per_step=args.rollouts_per_step,
                       rollout_schedule=args.rollout_schedule,
-                      uncertainty=args.uncertainty,
                       use_custom_reward=args.use_custom_reward,
                       continuous_rollouts=args.continuous_rollouts,
                       train_model_every=args.train_model_every,
