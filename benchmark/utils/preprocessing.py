@@ -1,4 +1,4 @@
-from benchmark.utils.envs import ENV_CATEGORIES
+from benchmark.utils.envs import HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_REPLAY
 import torch
 
 
@@ -85,8 +85,33 @@ def preprocess_half_cheetah_medium_replay(obs_act):
     return obs_act
 
 
+def preprocess_half_cheetah_medium(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([-7.0458e-02,  3.9261e-02, -1.8216e-01, -2.7503e-01, -3.3857e-01,
+                            -9.1859e-02, -2.1238e-01, -8.6914e-02,  5.1485e+00, -4.2427e-02,
+                            -3.5751e-02,  1.4064e-01,  5.8565e-02,  9.1873e-02,  6.8410e-02,
+                            3.7346e-03,  1.2949e-02, -3.2010e-01, -4.0871e-01, -7.3186e-01,
+                            -1.2125e-01, -4.6688e-01, -1.5668e-01],
+                           device=obs_act.device)
+
+    std = torch.as_tensor([0.0811,  0.3874,  0.3026,  0.3447,  0.1796,  0.5071,  0.2569,  0.3296,
+                           1.3096,  0.7588,  1.9791,  6.5656,  7.4688,  4.4834, 10.5581,  5.6839,
+                           7.4979,  0.8052,  0.6707,  0.5524,  0.6835,  0.6410,  0.7192],
+                          device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
 preprocessing_functions = {
-    'halfcheetah-medium-replay-v1': preprocess_half_cheetah_medium_replay,
+    HALF_CHEETAH_MEDIUM_REPLAY: preprocess_half_cheetah_medium_replay,
+    HALF_CHEETAH_MEDIUM: preprocess_half_cheetah_medium,
     'antmaze-umaze-v0': preprocess_antmaze_umaze,
     'antmaze-medium-diverse-v0': preprocess_antmaze_medium_diverse
 }
