@@ -48,6 +48,7 @@ if __name__ == '__main__':
 
     # None values must be filled for tuning and final training
     config = {
+        "device": device,
         "obs_dim": obs_dim,
         "act_dim": act_dim,
         "max_n_train_epochs": 50,
@@ -56,7 +57,7 @@ if __name__ == '__main__':
         "n_networks": 7,
         "pre_fn": pre_fn,
         "post_fn": post_fn,
-        "debug": True,
+        "debug": False,
         "no_reward": False,
         "lr": None,
         "batch_size": None,
