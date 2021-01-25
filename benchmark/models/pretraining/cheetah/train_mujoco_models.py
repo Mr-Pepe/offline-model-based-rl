@@ -70,7 +70,9 @@ if __name__ == '__main__':
 
         save_path = os.path.join(MODELS_DIR, args.env_name+'-model')
 
-        config.update(max_n_train_epochs=-1)
+        config.update(
+            max_n_train_epochs=-1,
+            debug=True)
 
         if args.env_name == HALF_CHEETAH_MEDIUM_REPLAY:
             config.update(
