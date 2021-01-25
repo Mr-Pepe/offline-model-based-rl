@@ -17,11 +17,11 @@ import d4rl  # noqa
 import torch
 
 
-def training_function(config, data, checkpoint_dir=None, save_path=None):
+def training_function(config, data, checkpoint_dir=None, save_path=None, tuning=True):
     model = EnvironmentModel(hidden=4*[config['n_hidden']], **config)
 
     model.train_to_convergence(
-        data=data, checkpoint_dir=checkpoint_dir, tuning=True, **config)
+        data=data, checkpoint_dir=checkpoint_dir, tuning=tuning, **config)
 
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -95,6 +95,7 @@ if __name__ == '__main__':
             config=config,
             data=buffer,
             save_path=save_path,
+            tuning=False
         )
     else:
         if args.level == 1:
