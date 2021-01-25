@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
         analysis = tune.run(
             tune.with_parameters(training_function, data=buffer),
-            name=args.env_name + 'model-tuning-lvl-' + str(args.level),
+            name=args.env_name + '-model-tuning-lvl-' + str(args.level),
             config=config,
             scheduler=scheduler,
             search_alg=search_alg,
