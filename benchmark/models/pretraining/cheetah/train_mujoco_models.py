@@ -26,6 +26,7 @@ def training_function(config, data, checkpoint_dir=None, save_path=None, tuning=
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         torch.save(model, save_path)
+        print("Saved model to: {}".format(save_path))
 
 
 if __name__ == '__main__':
@@ -68,7 +69,7 @@ if __name__ == '__main__':
     if args.level == 0:
         # Perform training with tuned hyperparameters and save model
 
-        save_path = os.path.join(MODELS_DIR, args.env_name+'-model')
+        save_path = os.path.join(MODELS_DIR, args.env_name+'-model.pt')
 
         config.update(
             max_n_train_epochs=-1,
