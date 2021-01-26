@@ -123,7 +123,7 @@ if __name__ == '__main__':
         assert config['max_rollout_length'] is not None
         assert config['model_pessimism'] is not None
 
-        ray.init(local_mode=True)
+        ray.init()
         scheduler = ASHAScheduler(
             time_attr='time_since_restore',
             metric='avg_test_return',
