@@ -4,10 +4,11 @@ from ray import tune
 import ray
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
 from ray.tune.suggest.hyperopt import HyperOptSearch
-from benchmark.utils.str2bool import str2bool
 from benchmark.utils.envs import HALF_CHEETAH_MEDIUM_REPLAY
+from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
 import torch
+import os
 
 
 def training_function(config, tuning=True):
@@ -29,20 +30,22 @@ if __name__ == '__main__':
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    # This is the optimal configuration that has been found so far.
-    # Certain values get replaced during tuning
+    # None values must be filled for tuning and final training
     config = dict(
         env_name=args.env_name,
-        sac_kwargs=dict(batch_size=128,
-                        agent_hidden=64,
-                        gamma=0.996,
-                        pi_lr=7e-5,
-                        q_lr=6e-4,
+        sac_kwargs=dict(batch_size=None,
+                        agent_hidden=None,
+                        gamma=None,
+                        pi_lr=None,
+                        q_lr=None,
                         ),
+        rollouts_per_step=None,
+        max_rollout_length=None,
+        model_pessimism=None,
         model_kwargs=dict(),
         dataset_path='',
         seed=0,
-        epochs=30,
+        epochs=args.epochs,
         steps_per_epoch=4000,
         random_steps=8000,
         init_steps=4000,
@@ -54,14 +57,12 @@ if __name__ == '__main__':
         max_ep_len=1000,
         use_model=True,
         pretrained_agent_path='',
-        pretrained_model_path='/home/felipe/Projects/thesis-code/data/models/cheetah/medium_replay.pt',
-        model_pessimism=50,
+        pretrained_model_path=os.path.join(
+            MODELS_DIR, args.env_name + '-model.pt'),
         ood_threshold=-1,
         mode=args.mode,
         model_max_n_train_batches=-1,
-        rollouts_per_step=38,
         rollout_schedule=[1, 1, 20, 100],
-        max_rollout_length=8,
         continuous_rollouts=True,
         train_model_every=0,
         use_custom_reward=False,
@@ -79,6 +80,16 @@ if __name__ == '__main__':
         render=False)
 
     if args.level == 0:
+
+        assert config['sac_kwargs']['batch_size'] is not None
+        assert config['sac_kwargs']['agent_hidden'] is not None
+        assert config['sac_kwargs']['gamma'] is not None
+        assert config['sac_kwargs']['pi_lr'] is not None
+        assert config['sac_kwargs']['q_lr'] is not None
+        assert config['rollouts_per_step'] is not None
+        assert config['max_rollout_length'] is not None
+        assert config['model_pessimism'] is not None
+
         for seed in range(args.seeds):
             config.update(
                 epochs=args.epochs,
@@ -89,32 +100,35 @@ if __name__ == '__main__':
             training_function(config, tuning=False)
 
     else:
-        # Tuning gets increasingly specific
         if args.level == 1:
-            max_t = 1000
-            num_samples = 100
             config.update(
                 epochs=30,
                 sac_kwargs=dict(batch_size=tune.choice([128, 256, 512]),
                                 agent_hidden=tune.choice([32, 64, 128, 256]),
                                 gamma=tune.uniform(0.99, 0.999),
-                                pi_lr=tune.loguniform(1e-5, 1e-3),
-                                q_lr=tune.loguniform(1e-5, 1e-3),
+                                pi_lr=tune.loguniform(1e-5, 1e-2),
+                                q_lr=tune.loguniform(1e-5, 1e-2),
                                 ),
                 rollouts_per_step=tune.randint(1, 401),
-                max_rollout_length=tune.randint(1, 10),
+                max_rollout_length=tune.randint(1, 50),
+                model_pessimism=tune.uniform(0.001, 500)
             )
-            if args.mode == 'mopo' or args.mode == 'morel':
-                config.update(model_pessimism=tune.uniform(0, 50))
-        else:
-            raise ValueError("No tuning level {}".format(args.level))
+
+        assert config['sac_kwargs']['batch_size'] is not None
+        assert config['sac_kwargs']['agent_hidden'] is not None
+        assert config['sac_kwargs']['gamma'] is not None
+        assert config['sac_kwargs']['pi_lr'] is not None
+        assert config['sac_kwargs']['q_lr'] is not None
+        assert config['rollouts_per_step'] is not None
+        assert config['max_rollout_length'] is not None
+        assert config['model_pessimism'] is not None
 
         ray.init(local_mode=True)
         scheduler = ASHAScheduler(
             time_attr='time_since_restore',
             metric='avg_test_return',
             mode='max',
-            max_t=max_t,
+            max_t=1000,
             grace_period=10,
             reduction_factor=3,
             brackets=1)
@@ -125,10 +139,10 @@ if __name__ == '__main__':
 
         analysis = tune.run(
             tune.with_parameters(training_function),
-            name=args.env_name+'-'+args.mode+'-tuning-lvl-'+str(args.level),
+            name=args.env_name+'-'+config['mode']+'-tuning-lvl-'+str(args.level),
             scheduler=scheduler,
             search_alg=search_alg,
-            num_samples=num_samples,
+            num_samples=200,
             config=config,
             resources_per_trial={"gpu": 1}
         )
