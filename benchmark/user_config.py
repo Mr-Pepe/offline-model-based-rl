@@ -2,7 +2,7 @@ from pathlib import Path
 import os.path as osp
 
 # Where experiment outputs are saved by default:
-DEFAULT_DATA_DIR = osp.join(Path.home(), 'Projects', 'thesis-code', 'data')
+DEFAULT_DATA_DIR = osp.join(Path.home(), 'Projects', 'thesis-code', 'data', 'experiments')
 
 MODELS_DIR = osp.join(Path.home(), 'Projects', 'thesis-code', 'data', 'models')
 
