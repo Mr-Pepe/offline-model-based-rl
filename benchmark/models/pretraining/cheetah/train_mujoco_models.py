@@ -11,7 +11,7 @@ from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.str2bool import str2bool
 from benchmark.utils.load_dataset import load_dataset_from_env
-from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_REPLAY
+from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM
 import gym
 import d4rl  # noqa
 import torch
@@ -92,6 +92,20 @@ if __name__ == '__main__':
             config.update(
                 lr=0.001,
                 batch_size=512,
+                n_hidden=512,
+                use_batch_norm=False)
+
+        if args.env_name == HALF_CHEETAH_RANDOM:
+            config.update(
+                lr=0.0007,
+                batch_size=512,
+                n_hidden=512,
+                use_batch_norm=False)
+
+        if args.env_name == HALF_CHEETAH_MEDIUM_EXPERT:
+            config.update(
+                lr=0.004,
+                batch_size=2048,
                 n_hidden=512,
                 use_batch_norm=False)
 
