@@ -15,6 +15,11 @@ def training_function(config, tuning=True):
     config["sac_kwargs"].update(
         {"hidden": 4*[config["sac_kwargs"]["agent_hidden"]]})
     trainer = Trainer(**config)
+
+    # This is necessary because the parameters don't show up in Tensorboard otherwise
+    tune.report(rollouts_per_step=int(config['rollouts_per_step']))
+    tune.report(max_rollout_length=int(config['max_rollout_length']))
+
     trainer.train(tuning=tuning)
 
 
