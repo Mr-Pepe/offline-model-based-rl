@@ -462,7 +462,9 @@ class Trainer():
                 self.logger.add_to_pytorch_saver({'eval_buffer': eval_buffer})
 
             if tuning:
-                tune.report(avg_test_return=test_return)
+                tune.report(avg_test_return=test_return,
+                            rollouts_per_step=self.rollouts_per_step,
+                            max_rollout_length=self.max_rollout_length)
 
             test_performances.append([epoch, test_return])
 
