@@ -1,9 +1,9 @@
 import argparse
-from ray.tune.suggest.bayesopt import BayesOptSearch
 from benchmark.utils.run_utils import setup_logger_kwargs
 from ray import tune
 import ray
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
+from ray.tune.suggest.hyperopt import HyperOptSearch
 from benchmark.utils.envs import HALF_CHEETAH_MEDIUM_REPLAY
 from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
@@ -128,9 +128,14 @@ if __name__ == '__main__':
             time_attr='time_since_restore',
             metric='avg_test_return',
             mode='max',
-            max_t=1000)
+            max_t=1000,
+            grace_period=10,
+            reduction_factor=3,
+            brackets=1)
 
-        search_alg = BayesOptSearch(metric="avg_test_return", mode="max")
+        search_alg = HyperOptSearch(
+            metric='avg_test_return',
+            mode='max')
 
         analysis = tune.run(
             tune.with_parameters(training_function),
