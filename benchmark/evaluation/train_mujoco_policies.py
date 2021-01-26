@@ -1,4 +1,6 @@
 import argparse
+
+import numpy as np
 from benchmark.utils.run_utils import setup_logger_kwargs
 from ray import tune
 import ray
@@ -109,8 +111,8 @@ if __name__ == '__main__':
                                 pi_lr=tune.loguniform(1e-5, 1e-2),
                                 q_lr=tune.loguniform(1e-5, 1e-2),
                                 ),
-                rollouts_per_step=tune.randint(1, 401),
-                max_rollout_length=tune.randint(1, 50),
+                rollouts_per_step=tune.sample_from(lambda _: np.random.randint(1, 401)),
+                max_rollout_length=tune.sample_from(lambda _: np.random.randint(1, 50)),
                 model_pessimism=tune.uniform(0.001, 500)
             )
 
@@ -144,7 +146,7 @@ if __name__ == '__main__':
             search_alg=search_alg,
             num_samples=200,
             config=config,
-            resources_per_trial={"gpu": 0.3}
+            resources_per_trial={"gpu": 0.5}
         )
 
         print("Best config: ", analysis.get_best_config(
