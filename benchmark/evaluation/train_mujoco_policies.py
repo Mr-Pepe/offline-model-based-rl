@@ -46,13 +46,13 @@ if __name__ == '__main__':
         dataset_path='',
         seed=0,
         epochs=args.epochs,
-        steps_per_epoch=4000,
+        steps_per_epoch=15000,
         random_steps=8000,
         init_steps=4000,
         env_steps_per_step=0,
         n_samples_from_dataset=-1,
         agent_updates_per_step=1,
-        num_test_episodes=10,
+        num_test_episodes=20,
         curriculum=[1, 1, 20, 100],
         max_ep_len=1000,
         use_model=True,
@@ -139,7 +139,7 @@ if __name__ == '__main__':
             search_alg=search_alg,
             num_samples=200,
             config=config,
-            resources_per_trial={"gpu": 1}
+            resources_per_trial={"gpu": 0.3}
         )
 
         print("Best config: ", analysis.get_best_config(
