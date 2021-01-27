@@ -81,6 +81,19 @@ if __name__ == '__main__':
 
     if args.level == 0:
 
+        # Basic config
+        config.update(
+            sac_kwargs=dict(batch_size=256,
+                            agent_hidden=128,
+                            gamma=0.99,
+                            pi_lr=3e-4,
+                            q_lr=3e-4,
+                            ),
+            rollouts_per_step=100,
+            max_rollout_length=1,
+            model_pessimism=1
+        )
+
         if args.env_name == HALF_CHEETAH_MEDIUM_EXPERT:
             config.update(real_buffer_size=int(2e6))
 
