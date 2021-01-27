@@ -198,9 +198,9 @@ class Trainer():
 
         self.logger.setup_pytorch_saver({
             'agent': self.agent,
-            'model': self.env_model,
-            'replay_buffer': self.real_replay_buffer,
-            'virtual_replay_buffer': self.virtual_replay_buffer,
+            # 'model': self.env_model,
+            # 'replay_buffer': self.real_replay_buffer,
+            # 'virtual_replay_buffer': self.virtual_replay_buffer,
         })
 
         if curriculum[0] < 1:
@@ -459,7 +459,7 @@ class Trainer():
                                          use_setup=self.setup_test_env)
 
                 tested_agent = True
-                self.logger.add_to_pytorch_saver({'eval_buffer': eval_buffer})
+                # self.logger.add_to_pytorch_saver({'eval_buffer': eval_buffer})
 
             if tuning:
                 tune.report(avg_test_return=test_return,
