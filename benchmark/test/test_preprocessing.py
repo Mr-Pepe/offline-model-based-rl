@@ -1,4 +1,4 @@
-from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_RANDOM
+from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_REPLAY, HOPPER_RANDOM
 from benchmark.utils.load_dataset import load_dataset_from_env
 import numpy as np
 from benchmark.utils.preprocessing import \
@@ -268,4 +268,139 @@ def test_cheetah_medium_expert_preprocessing():
         preprocessed)
 
     assert preprocessed.mean(dim=0).abs().sum() < 0.1
+    assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
+
+
+@pytest.mark.medium
+def test_hopper_random_preprocessing():
+    torch.manual_seed(0)
+
+    env_name = HOPPER_RANDOM
+
+    pre_fn = get_preprocessing_function(env_name)
+    assert pre_fn is not None
+
+    env = gym.make(env_name)
+    buffer, _, _ = load_dataset_from_env(env)
+
+    obs_act = torch.cat((buffer.obs_buf, buffer.act_buf), dim=1)
+
+    preprocessed = pre_fn(obs_act)
+
+    np.testing.assert_array_equal(obs_act.shape, preprocessed.shape)
+
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal,
+        obs_act,
+        preprocessed)
+
+    assert preprocessed.mean(dim=0).abs().sum() < 0.15
+    assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
+
+
+@pytest.mark.medium
+def test_hopper_medium_preprocessing():
+    torch.manual_seed(0)
+
+    env_name = HOPPER_MEDIUM
+
+    pre_fn = get_preprocessing_function(env_name)
+    assert pre_fn is not None
+
+    env = gym.make(env_name)
+    buffer, _, _ = load_dataset_from_env(env)
+
+    obs_act = torch.cat((buffer.obs_buf, buffer.act_buf), dim=1)
+
+    preprocessed = pre_fn(obs_act)
+
+    np.testing.assert_array_equal(obs_act.shape, preprocessed.shape)
+
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal,
+        obs_act,
+        preprocessed)
+
+    assert preprocessed.mean(dim=0).abs().sum() < 0.15
+    assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
+
+
+@pytest.mark.medium
+def test_hopper_medium_replay_preprocessing():
+    torch.manual_seed(0)
+
+    env_name = HOPPER_MEDIUM_REPLAY
+
+    pre_fn = get_preprocessing_function(env_name)
+    assert pre_fn is not None
+
+    env = gym.make(env_name)
+    buffer, _, _ = load_dataset_from_env(env)
+
+    obs_act = torch.cat((buffer.obs_buf, buffer.act_buf), dim=1)
+
+    preprocessed = pre_fn(obs_act)
+
+    np.testing.assert_array_equal(obs_act.shape, preprocessed.shape)
+
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal,
+        obs_act,
+        preprocessed)
+
+    assert preprocessed.mean(dim=0).abs().sum() < 0.15
+    assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
+
+
+@pytest.mark.medium
+def test_hopper_medium_expert_preprocessing():
+    torch.manual_seed(0)
+
+    env_name = HOPPER_MEDIUM_EXPERT
+
+    pre_fn = get_preprocessing_function(env_name)
+    assert pre_fn is not None
+
+    env = gym.make(env_name)
+    buffer, _, _ = load_dataset_from_env(env)
+
+    obs_act = torch.cat((buffer.obs_buf, buffer.act_buf), dim=1)
+
+    preprocessed = pre_fn(obs_act)
+
+    np.testing.assert_array_equal(obs_act.shape, preprocessed.shape)
+
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal,
+        obs_act,
+        preprocessed)
+
+    assert preprocessed.mean(dim=0).abs().sum() < 0.15
+    assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
+
+
+@pytest.mark.medium
+def test_hopper_expert_preprocessing():
+    torch.manual_seed(0)
+
+    env_name = HOPPER_EXPERT
+
+    pre_fn = get_preprocessing_function(env_name)
+    assert pre_fn is not None
+
+    env = gym.make(env_name)
+    buffer, _, _ = load_dataset_from_env(env)
+
+    obs_act = torch.cat((buffer.obs_buf, buffer.act_buf), dim=1)
+
+    preprocessed = pre_fn(obs_act)
+
+    np.testing.assert_array_equal(obs_act.shape, preprocessed.shape)
+
+    np.testing.assert_raises(
+        AssertionError, np.testing.assert_array_equal,
+        obs_act,
+        preprocessed)
+
+    assert preprocessed.mean(dim=0).abs().sum() < 0.15
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1

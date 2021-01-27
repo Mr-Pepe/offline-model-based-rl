@@ -1,4 +1,4 @@
-from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM
+from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_REPLAY, HOPPER_RANDOM
 import torch
 
 
@@ -177,12 +177,119 @@ def preprocess_half_cheetah_medium_expert(obs_act):
     return obs_act
 
 
+def preprocess_hopper_random(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([1.2273e+00, -6.1983e-02, -4.3004e-02, -6.2249e-02,  4.3225e-02,
+                            -1.5939e-01, -2.4343e-01, -1.1214e+00, -7.7519e-01, -8.6454e-01,
+                            4.5092e-01,  4.1513e-05, -1.0491e-04, -2.0277e-04],
+                           device=obs_act.device)
+
+    std = torch.as_tensor([0.0247, 0.0633, 0.0643, 0.1024, 0.1509, 0.4084, 0.2987, 1.3903, 1.4430,
+                           1.4840, 1.7350, 0.5776, 0.5773, 0.5775],
+                          device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
+def preprocess_hopper_medium(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([1.0285e+00, -1.0670e-01, -1.5392e-03, -1.1538e+00,  7.2936e-01,
+                            5.0019e-01, -4.3483e-01, -1.2107e-02, -7.5291e-03, -1.7051e+00,
+                            5.1350e-01,  6.0635e-01,  9.3471e-03,  6.6806e-01],
+                           device=obs_act.device)
+
+    std = torch.as_tensor([0.1600, 0.0327, 0.0105, 0.5526, 0.1624, 0.2380, 0.5784, 0.4661, 0.3273,
+                           0.7685, 2.4598, 0.4637, 0.3298, 0.4812],
+                          device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
+def preprocess_hopper_medium_replay(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([1.2451,  0.0231, -0.2818, -0.3319,  0.1226,  2.0493, -0.1399,  0.0193,
+                            -0.2790, -0.2019,  0.0021,  0.0442,  0.0486, -0.1263],
+                           device=obs_act.device)
+
+    std = torch.as_tensor([0.1592, 0.0696, 0.2358, 0.2834, 0.5703, 1.0523, 1.2749, 0.9437, 2.0762,
+                           2.9279, 5.5717, 0.4752, 0.5847, 0.6789],
+                          device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
+def preprocess_hopper_medium_expert(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([1.1419, -0.0446, -0.1921, -0.7269,  0.3994,  1.4767, -0.2804, -0.0044,
+                            -0.1252, -0.9139,  0.2974,  0.3045,  0.0276,  0.2545],
+                           device=obs_act.device)
+
+    std = torch.as_tensor([0.1929, 0.0794, 0.2406, 0.6063, 0.5459, 1.1919, 1.0353, 0.7059, 1.5226,
+                           2.4569, 4.7061, 0.5426, 0.4862, 0.7200],
+                          device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
+def preprocess_hopper_expert(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([1.2560,  0.0175, -0.3803, -0.2997,  0.0681,  2.4628, -0.1259,  0.0033,
+                            -0.2430, -0.1225,  0.0812,  0.0026,  0.0458, -0.1586],
+                           device=obs_act.device)
+
+    std = torch.as_tensor([0.1529, 0.0620, 0.2097, 0.2550, 0.5937, 0.9267, 1.3272, 0.8827, 2.1219,
+                           3.1985, 6.1769, 0.4380, 0.6028, 0.6817],
+                          device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
 preprocessing_functions = {
     HALF_CHEETAH_MEDIUM_REPLAY: preprocess_half_cheetah_medium_replay,
     HALF_CHEETAH_MEDIUM: preprocess_half_cheetah_medium,
     HALF_CHEETAH_EXPERT: preprocess_half_cheetah_expert,
     HALF_CHEETAH_RANDOM: preprocess_half_cheetah_random,
     HALF_CHEETAH_MEDIUM_EXPERT: preprocess_half_cheetah_medium_expert,
+    HOPPER_RANDOM: preprocess_hopper_random,
+    HOPPER_MEDIUM: preprocess_hopper_medium,
+    HOPPER_MEDIUM_REPLAY: preprocess_hopper_medium_replay,
+    HOPPER_MEDIUM_EXPERT: preprocess_hopper_medium_expert,
+    HOPPER_EXPERT: preprocess_hopper_expert,
     'antmaze-umaze-v0': preprocess_antmaze_umaze,
     'antmaze-medium-diverse-v0': preprocess_antmaze_medium_diverse
 }
