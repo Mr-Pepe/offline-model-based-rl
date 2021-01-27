@@ -83,6 +83,7 @@ if __name__ == '__main__':
 
         # Basic config
         config.update(
+            steps_per_epoch=4000,
             sac_kwargs=dict(batch_size=256,
                             agent_hidden=128,
                             gamma=0.99,
