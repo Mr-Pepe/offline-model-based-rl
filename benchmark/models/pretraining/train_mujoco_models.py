@@ -11,17 +11,17 @@ from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.str2bool import str2bool
 from benchmark.utils.load_dataset import load_dataset_from_env
-from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM
+from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM, HOPPER_RANDOM
 import gym
 import d4rl  # noqa
 import torch
 
 
-def training_function(config, data, checkpoint_dir=None, save_path=None, tuning=True):
+def training_function(config, data, save_path=None, tuning=True):
     model = EnvironmentModel(hidden=4*[config['n_hidden']], **config)
 
     model.train_to_convergence(
-        data=data, checkpoint_dir=checkpoint_dir, tuning=tuning, **config)
+        data=data, checkpoint_dir=None, tuning=tuning, **config)
 
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -104,6 +104,13 @@ if __name__ == '__main__':
                 use_batch_norm=False)
 
         if args.env_name == HALF_CHEETAH_MEDIUM_EXPERT:
+            config.update(
+                lr=0.004,
+                batch_size=2048,
+                n_hidden=512,
+                use_batch_norm=False)
+
+        if args.env_name == HOPPER_RANDOM:
             config.update(
                 lr=0.004,
                 batch_size=2048,
