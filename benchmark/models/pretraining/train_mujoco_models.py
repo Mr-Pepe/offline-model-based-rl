@@ -12,7 +12,7 @@ from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, \
-    HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM, \
+    HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, \
     HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_REPLAY, HOPPER_RANDOM
 import d4rl  # noqa
 
@@ -143,7 +143,7 @@ if __name__ == '__main__':
                 n_hidden=512,
                 use_batch_norm=False)
 
-        if args.env_name == HOPPER_MEDIUM_EXPERT:
+        if args.env_name == HOPPER_EXPERT:
             config.update(
                 lr=4e-4,
                 batch_size=256,
