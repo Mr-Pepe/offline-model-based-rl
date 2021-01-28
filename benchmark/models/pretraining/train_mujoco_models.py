@@ -39,8 +39,8 @@ if __name__ == '__main__':
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    if device != '':
-        device = device
+    if args.device != '':
+        device = args.device
 
     env = gym.make(args.env_name)
 
