@@ -26,6 +26,7 @@ if __name__ == '__main__':
     parser.add_argument('--mode', type=str, default='mopo')
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--seeds', type=int, default=1)
+    parser.add_argument('--rollout_length', type=int, default=1)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
 
@@ -95,7 +96,7 @@ if __name__ == '__main__':
                             q_lr=3e-4,
                             ),
             rollouts_per_step=100,
-            max_rollout_length=1,
+            max_rollout_length=args.rollout_length,
             model_pessimism=1
         )
 
