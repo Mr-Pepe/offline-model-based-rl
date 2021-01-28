@@ -34,9 +34,14 @@ if __name__ == '__main__':
     parser.add_argument('--env_name', type=str,
                         default=HALF_CHEETAH_MEDIUM_REPLAY)
     parser.add_argument('--level', type=int, default=0)
+    parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    if device != '':
+        device = device
+
     env = gym.make(args.env_name)
 
     buffer, obs_dim, act_dim = load_dataset_from_env(env,
