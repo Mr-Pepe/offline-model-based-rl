@@ -26,9 +26,13 @@ if __name__ == '__main__':
     parser.add_argument('--mode', type=str, default='mopo')
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--seeds', type=int, default=1)
+    parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    if args.device != '':
+        device = args.device
 
     # None values must be filled for tuning and final training
     config = dict(
