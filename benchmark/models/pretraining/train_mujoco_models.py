@@ -1,7 +1,8 @@
+import torch
+import gym
 import argparse
 from benchmark.user_config import MODELS_DIR
 import os
-from pathlib import Path
 from ray import tune
 import ray
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
@@ -9,12 +10,11 @@ from ray.tune.suggest.hyperopt import HyperOptSearch
 from benchmark.utils.postprocessing import get_postprocessing_function
 from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.models.environment_model import EnvironmentModel
-from benchmark.utils.str2bool import str2bool
 from benchmark.utils.load_dataset import load_dataset_from_env
-from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM, HOPPER_RANDOM
-import gym
+from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, \
+    HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM, \
+    HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_REPLAY, HOPPER_RANDOM
 import d4rl  # noqa
-import torch
 
 
 def training_function(config, data, save_path=None, tuning=True):
@@ -112,8 +112,36 @@ if __name__ == '__main__':
 
         if args.env_name == HOPPER_RANDOM:
             config.update(
-                lr=0.004,
+                lr=1e-4,
+                batch_size=512,
+                n_hidden=512,
+                use_batch_norm=False)
+
+        if args.env_name == HOPPER_MEDIUM:
+            config.update(
+                lr=6e-4,
+                batch_size=512,
+                n_hidden=512,
+                use_batch_norm=False)
+
+        if args.env_name == HOPPER_MEDIUM_REPLAY:
+            config.update(
+                lr=1e-3,
                 batch_size=2048,
+                n_hidden=512,
+                use_batch_norm=False)
+
+        if args.env_name == HOPPER_MEDIUM_EXPERT:
+            config.update(
+                lr=7e-4,
+                batch_size=2048,
+                n_hidden=512,
+                use_batch_norm=False)
+
+        if args.env_name == HOPPER_MEDIUM_EXPERT:
+            config.update(
+                lr=4e-4,
+                batch_size=256,
                 n_hidden=512,
                 use_batch_norm=False)
 
@@ -163,4 +191,5 @@ if __name__ == '__main__':
             fail_fast=True
         )
 
-        print("Best config: ", analysis.get_best_config(metric="val_loss", mode="min"))
+        print("Best config: ", analysis.get_best_config(
+            metric="val_loss", mode="min"))
