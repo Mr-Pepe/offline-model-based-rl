@@ -117,7 +117,8 @@ if __name__ == '__main__':
                 epochs=args.epochs,
                 seed=seed,
                 logger_kwargs=setup_logger_kwargs(
-                    args.env_name+'-'+config['mode'], seed=config['seed']),
+                    args.env_name+'-'+config['mode']+'-'+str(config['max_rollout_length'])+'steps',
+                    seed=config['seed']),
             )
             training_function(config, tuning=False)
 
