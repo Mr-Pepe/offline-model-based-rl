@@ -4,7 +4,7 @@ from ray import tune
 import ray
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
 from ray.tune.suggest.hyperopt import HyperOptSearch
-from benchmark.utils.envs import HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY
+from benchmark.utils.envs import HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HOPPER_MEDIUM_EXPERT, WALKER_MEDIUM_EXPERT
 from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
 import torch
@@ -100,7 +100,9 @@ if __name__ == '__main__':
             model_pessimism=1
         )
 
-        if args.env_name == HALF_CHEETAH_MEDIUM_EXPERT:
+        if args.env_name in [HALF_CHEETAH_MEDIUM_EXPERT,
+                             HOPPER_MEDIUM_EXPERT,
+                             WALKER_MEDIUM_EXPERT]:
             config.update(real_buffer_size=int(2e6))
 
         assert config['sac_kwargs']['batch_size'] is not None
@@ -117,7 +119,8 @@ if __name__ == '__main__':
                 epochs=args.epochs,
                 seed=seed,
                 logger_kwargs=setup_logger_kwargs(
-                    args.env_name+'-'+config['mode']+'-'+str(config['max_rollout_length'])+'steps',
+                    args.env_name+'-'+config['mode']+'-' +
+                    str(config['max_rollout_length'])+'steps',
                     seed=config['seed']),
             )
             training_function(config, tuning=False)
@@ -165,7 +168,8 @@ if __name__ == '__main__':
 
         analysis = tune.run(
             tune.with_parameters(training_function),
-            name=args.env_name+'-'+config['mode']+'-tuning-lvl-'+str(args.level),
+            name=args.env_name+'-'+config['mode'] +
+            '-tuning-lvl-'+str(args.level),
             scheduler=scheduler,
             search_alg=search_alg,
             num_samples=200,
