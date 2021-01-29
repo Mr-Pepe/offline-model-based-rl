@@ -1,4 +1,4 @@
-from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_REPLAY, HOPPER_RANDOM
+from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_REPLAY, HOPPER_RANDOM, WALKER_EXPERT, WALKER_MEDIUM, WALKER_MEDIUM_EXPERT, WALKER_MEDIUM_REPLAY, WALKER_RANDOM
 import torch
 
 
@@ -279,6 +279,122 @@ def preprocess_hopper_expert(obs_act):
     return obs_act
 
 
+def preprocess_walker_random(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([1.2005e+00, -3.5051e-01, -2.1683e-01, -3.0372e-01,  2.5575e-01,
+                            -2.1869e-01, -2.9801e-01,  2.5205e-01, -8.8394e-01, -9.4614e-01,
+                            -4.7904e+00, -3.0537e+00, -3.1154e+00,  1.2333e+00, -3.0596e+00,
+                            -3.0795e+00,  1.2012e+00,  1.1066e-04,  4.2039e-05, -1.1647e-03,
+                            -2.2870e-04,  3.9766e-04, -4.0958e-05],
+                           device=obs_act.device)
+
+    std = torch.as_tensor([0.0593, 0.3028, 0.2785, 0.4247, 0.4046, 0.2790, 0.4186, 0.4084, 0.5838,
+                           0.9833, 4.7057, 5.9832, 5.3067, 7.4124, 5.9868, 5.3072, 7.4135, 0.5777,
+                           0.5778, 0.5773, 0.5780, 0.5772, 0.5775],
+                          device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
+def preprocess_walker_medium(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([1.2242,  0.1637, -0.0389, -0.1410,  0.5397, -0.0314, -0.4620,  0.0300,
+                            2.4538, -0.0333,  0.0511, -0.0246, -0.1057,  0.0936, -0.0042, -0.1246,
+                            -0.5578,  0.4630,  0.3515,  0.4456,  0.7674,  0.0298, -0.1330],
+                           device=obs_act.device)
+
+    std = torch.as_tensor([0.1174, 0.3012, 0.1155, 0.2635, 0.5393, 0.1929, 0.3729, 0.7390, 1.2013,
+                           0.8049, 1.5591, 1.8162, 3.0536, 4.0526, 1.4324, 3.7664, 5.6389, 0.5070,
+                           0.5176, 0.6980, 0.3528, 0.5328, 0.7405],
+                          device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
+def preprocess_walker_expert(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([1.2384e+00,  1.9592e-01, -1.0488e-01, -1.8577e-01,  2.3020e-01,
+                            2.2739e-02, -3.7382e-01,  3.3736e-01,  3.9236e+00, -4.7796e-03,
+                            2.5380e-02, -5.6899e-03, -1.8003e-02, -4.7798e-01,  6.6257e-04,
+                            -8.1859e-04,  6.8521e-03,  4.3935e-01,  2.9337e-01,  2.7342e-01,
+                            8.0970e-01,  1.0854e-01,  2.5088e-01],
+                           device=obs_act.device)
+
+    std = torch.as_tensor([0.0668, 0.1704, 0.1736, 0.2187, 0.7462, 0.0244, 0.3730, 0.6229, 0.9724,
+                           0.7302, 1.5059, 2.4981, 3.5159, 5.3649, 0.7978, 4.3177, 6.1804, 0.5192,
+                           0.5194, 0.6883, 0.2659, 0.5347, 0.7243],
+                          device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
+def preprocess_walker_medium_replay(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([1.2094,  0.1326, -0.1437, -0.2047,  0.5578, -0.0323, -0.2785,  0.1913,
+                            1.4700, -0.1251,  0.0564, -0.1001, -0.3400,  0.0353, -0.0893, -0.2996,
+                            -0.5981,  0.2774,  0.3647,  0.4011,  0.6208,  0.2002,  0.0159],
+                           device=obs_act.device)
+
+    std = torch.as_tensor([0.1193, 0.3563, 0.2585, 0.4208, 0.5202, 0.1569, 0.3677, 0.7161, 1.3764,
+                           0.8633, 2.6369, 3.0145, 3.7218, 4.8678, 2.6692, 3.8458, 5.4765, 0.5431,
+                           0.5890, 0.6473, 0.4548, 0.5756, 0.7632],
+                          device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
+def preprocess_walker_medium_expert(obs_act):
+    obs_act = obs_act.detach().clone()
+
+    mean = torch.as_tensor([1.2321e+00,  1.7979e-01, -7.1895e-02, -1.6340e-01,  3.8396e-01,
+                            -4.3268e-03, -4.1909e-01,  1.8357e-01,  3.1913e+00, -1.9048e-02,
+                            3.8232e-02, -1.5101e-02, -6.1875e-02, -1.9218e-01, -1.7649e-03,
+                            -6.2679e-02, -2.7553e-01,  4.5139e-01,  3.2250e-01,  3.5996e-01,
+                            7.9039e-01,  6.9182e-02,  5.8900e-02],
+                           device=obs_act.device)
+
+    std = torch.as_tensor([0.0958, 0.2452, 0.1511, 0.2432, 0.6693, 0.1401, 0.3756, 0.7005, 1.3170,
+                           0.7686, 1.5327, 2.1838, 3.2931, 4.7627, 1.1594, 4.0518, 5.9225, 0.5133,
+                           0.5193, 0.6985, 0.3131, 0.5352, 0.7572],
+                          device=obs_act.device)
+
+    # This allows to preprocess an observation without action
+    length = obs_act.shape[-1]
+
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
+
+    return obs_act
+
+
 preprocessing_functions = {
     HALF_CHEETAH_MEDIUM_REPLAY: preprocess_half_cheetah_medium_replay,
     HALF_CHEETAH_MEDIUM: preprocess_half_cheetah_medium,
@@ -290,6 +406,11 @@ preprocessing_functions = {
     HOPPER_MEDIUM_REPLAY: preprocess_hopper_medium_replay,
     HOPPER_MEDIUM_EXPERT: preprocess_hopper_medium_expert,
     HOPPER_EXPERT: preprocess_hopper_expert,
+    WALKER_RANDOM: preprocess_walker_random,
+    WALKER_MEDIUM: preprocess_walker_medium,
+    WALKER_EXPERT: preprocess_walker_expert,
+    WALKER_MEDIUM_REPLAY: preprocess_walker_medium_replay,
+    WALKER_MEDIUM_EXPERT: preprocess_walker_medium_expert,
     'antmaze-umaze-v0': preprocess_antmaze_umaze,
     'antmaze-medium-diverse-v0': preprocess_antmaze_medium_diverse
 }
