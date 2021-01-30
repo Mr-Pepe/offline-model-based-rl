@@ -10,7 +10,8 @@ def deterministic_loss(x, y, model, i_network=-1):
         return torch.square(y_pred[i_network] - y.unsqueeze(0)).mean()
 
 
-def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, no_reward=False):
+def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, no_reward=False,
+                       only_var_loss=False):
     _, mean, logvar, max_logvar, min_logvar = model(x)
 
     if no_reward:
@@ -31,6 +32,8 @@ def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, n
 
     if only_mse:
         return torch.square(mean - y).mean()
+    elif only_var_loss:
+        return logvar.mean()
     else:
         mse_loss = torch.square(mean - y)
         mse_inv_var_loss = (mse_loss * inv_var).mean()
