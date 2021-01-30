@@ -173,71 +173,51 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
 
     n_networks = 4
 
+    buffer = ReplayBuffer(1, 1, size=100000, device=device)
+    buffer.obs_buf = x.unsqueeze(-1)
+    buffer.obs2_buf = y.unsqueeze(-1)
+    buffer.size = x.numel()
+
     model = EnvironmentModel(
-        1, 0, hidden=[200, 200, 200, 200], type='probabilistic',
+        1, 1, hidden=[200, 200, 200, 200], type='probabilistic',
         n_networks=n_networks,
         device=device)
-
-    lr = 1e-4
-    optim = Adam(model.parameters(), lr=lr)
-
-    loss = torch.tensor(0)
 
     x_true = torch.arange(-3*PI, 3*PI, 0.01)
     y_true = torch.sin(x_true)
     f, axs = plt.subplots(n_networks, 1)
 
     for i in range(steps):
-        optim.zero_grad()
-        _, mean, logvar, max_logvar, min_logvar = model(
-            torch.reshape(x, (-1, 1)))
-        inv_var = torch.exp(-logvar)
+        model.train_to_convergence(
+            buffer, lr=1e-4, debug=True, max_n_train_batches=100, batch_size=10)
 
-        mse_loss = torch.square(mean[:, :, 0] - y).mean()
-        mse_var_loss = (torch.square(
-            mean[:, :, 0] - y) * inv_var[:, :, 0]).mean()
-        var_loss = logvar[:, :, 0].mean()
-        var_bound_loss = 0.01 * \
-            max_logvar[:, 0].sum() - 0.01 * min_logvar[:, 0].sum()
-        loss = mse_var_loss + var_loss + var_bound_loss
+        if plot:
+            _, mean_plt, logvar_plt, max_logvar_plt, _ = model(
+                torch.cat((x_true.unsqueeze(-1), torch.zeros_like(x_true.unsqueeze(-1))), dim=1))
+            mean_plt = mean_plt[:, :, 0].detach().cpu()
+            logvar_plt = logvar_plt[:, :, 0].detach().cpu()
+            max_std = torch.exp(0.5*max_logvar_plt[:, 0].detach().cpu())
 
-        if i % 100 == 0:
-            print("Step {}/{} Loss: {:.3f}, MSE: {:.3f}, MSE + INV VAR: {:.3f} VAR: {:.3f}, VAR BOUND: {:.3f}"
-                  .format(i, steps, loss, mse_loss, mse_var_loss, var_loss, var_bound_loss))
+            std = torch.exp(0.5*logvar_plt)
 
-            if plot:
-                _, mean_plt, logvar_plt, max_logvar_plt, _ = model(
-                    torch.reshape(x_true, (-1, 1)))
-                mean_plt = mean_plt[:, :, 0].detach().cpu()
-                logvar_plt = logvar_plt[:, :, 0].detach().cpu()
-                max_std = torch.exp(0.5*max_logvar_plt[:, 0].detach().cpu())
+            x_plt = x.cpu()
+            y_plt = y.cpu()
 
-                std = torch.exp(0.5*logvar_plt)
+            for i_ax, ax in enumerate(axs):
+                ax.clear()
 
-                x_plt = x.cpu()
-                y_plt = y.cpu()
+                ax.fill_between(x_true, (mean_plt[i_ax]+max_std[i_ax]).view(-1),
+                                (mean_plt[i_ax]-max_std[i_ax]).view(-1),
+                                color='grey', zorder=-2)
+                ax.fill_between(x_true, (mean_plt[i_ax]+std[i_ax]).view(-1), (mean_plt[i_ax]-std[i_ax]).view(-1),
+                                color='lightcoral')
+                ax.scatter(x_plt[800:1200], y_plt[800:1200],
+                           color='green', marker='x', s=2)
+                ax.plot(x_true, y_true, color='black')
+                ax.plot(x_true, mean_plt[i_ax].view(-1), color='red')
 
-                for i_ax, ax in enumerate(axs):
-                    ax.clear()
-
-                    ax.fill_between(x_true, (mean_plt[i_ax]+max_std[i_ax]).view(-1),
-                                    (mean_plt[i_ax]-max_std[i_ax]).view(-1),
-                                    color='grey', zorder=-2)
-                    ax.fill_between(x_true, (mean_plt[i_ax]+std[i_ax]).view(-1), (mean_plt[i_ax]-std[i_ax]).view(-1),
-                                    color='lightcoral')
-                    ax.scatter(x_plt[800:1200], y_plt[800:1200],
-                               color='green', marker='x', s=2)
-                    ax.plot(x_true, y_true, color='black')
-                    ax.plot(x_true, mean_plt[i_ax].view(-1), color='red')
-
-                plt.draw()
-                plt.pause(0.001)
-
-        loss.backward(retain_graph=True)
-        optim.step()
-
-    if not plot:
-        assert loss.item() < 200
+            plt.draw()
+            plt.pause(0.001)
 
 
 @pytest.mark.fast
