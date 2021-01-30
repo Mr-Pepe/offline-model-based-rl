@@ -13,7 +13,7 @@ from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, \
     HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, \
-    HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_REPLAY, HOPPER_RANDOM
+    HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_REPLAY, HOPPER_RANDOM, WALKER_EXPERT, WALKER_MEDIUM, WALKER_MEDIUM_EXPERT, WALKER_MEDIUM_REPLAY, WALKER_RANDOM
 import d4rl  # noqa
 
 
@@ -147,6 +147,41 @@ if __name__ == '__main__':
             config.update(
                 lr=4e-4,
                 batch_size=256,
+                n_hidden=512,
+                use_batch_norm=False)
+
+        if args.env_name == WALKER_RANDOM:
+            config.update(
+                lr=5e-4,
+                batch_size=256,
+                n_hidden=512,
+                use_batch_norm=True)
+
+        if args.env_name == WALKER_MEDIUM:
+            config.update(
+                lr=2e-3,
+                batch_size=2048,
+                n_hidden=512,
+                use_batch_norm=False)
+
+        if args.env_name == WALKER_EXPERT:
+            config.update(
+                lr=1.7e-3,
+                batch_size=2048,
+                n_hidden=512,
+                use_batch_norm=False)
+
+        if args.env_name == WALKER_MEDIUM_REPLAY:
+            config.update(
+                lr=1.5e-3,
+                batch_size=512,
+                n_hidden=512,
+                use_batch_norm=False)
+
+        if args.env_name == WALKER_MEDIUM_EXPERT:
+            config.update(
+                lr=1.4e-3,
+                batch_size=1024,
                 n_hidden=512,
                 use_batch_norm=False)
 
