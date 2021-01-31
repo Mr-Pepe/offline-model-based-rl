@@ -285,7 +285,7 @@ class EnvironmentModel(nn.Module):
                         aug_loss = probabilistic_loss(
                             aug_x, aug_x, self, debug=debug, no_reward=False, only_var_loss=True)
 
-                        loss -= 0.01*aug_loss
+                        # loss -= 0.01*aug_loss
 
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)
