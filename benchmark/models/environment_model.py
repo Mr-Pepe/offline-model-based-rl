@@ -93,7 +93,7 @@ class EnvironmentModel(nn.Module):
             logvars = 0
 
         else:
-            next_obs_logvars = pred_next_obs[:, :, self.obs_dim:]
+            next_obs_logvars = pred_obs_deltas[:, :, self.obs_dim:]
             reward_logvars = pred_rewards[:, :, 1].view(
                 (self.n_networks, -1, 1))
             logvars = torch.cat((next_obs_logvars, reward_logvars), dim=2)
