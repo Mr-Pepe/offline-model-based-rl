@@ -280,7 +280,7 @@ class EnvironmentModel(nn.Module):
                         aug_x = torch.rand_like(x)
 
                         aug_x *= (max_x - min_x)*1.5
-                        aug_x -= min_x + (max_x - min_x)*0.25
+                        aug_x += min_x - (max_x - min_x)*0.25
 
                         aug_loss = probabilistic_loss(
                             aug_x, aug_x, self, debug=debug, no_reward=False, only_var_loss=True)
