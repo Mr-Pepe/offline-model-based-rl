@@ -190,7 +190,7 @@ class EnvironmentModel(nn.Module):
                              val_split=0.2, patience=20, patience_value=0,
                              debug=False, max_n_train_batches=-1, lr_schedule=None, no_reward=False,
                              augmentation_fn=None, max_n_train_epochs=-1, checkpoint_dir=None,
-                             tuning=False, **_):
+                             tuning=False, augment_loss=False, **_):
 
         if type(patience) is list:
             if patience_value > 0 and len(patience) > patience_value:
@@ -296,10 +296,15 @@ class EnvironmentModel(nn.Module):
                         aug_x += self.min_obs_act - \
                             (self.max_obs_act - self.min_obs_act)*0.25
 
-                        aug_loss = probabilistic_loss(
-                            aug_x, aug_x, self, debug=debug, no_reward=False, only_var_loss=True)
+                        if augment_loss:
+                            aug_loss = probabilistic_loss(aug_x,
+                                                          aug_x,
+                                                          self,
+                                                          debug=debug,
+                                                          no_reward=False,
+                                                          only_var_loss=True)
 
-                        loss -= 0.01*aug_loss
+                            loss -= 0.01*aug_loss
 
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)
