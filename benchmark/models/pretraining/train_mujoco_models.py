@@ -13,7 +13,9 @@ from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, \
     HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, \
-    HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_REPLAY, HOPPER_RANDOM, WALKER_EXPERT, WALKER_MEDIUM, WALKER_MEDIUM_EXPERT, WALKER_MEDIUM_REPLAY, WALKER_RANDOM
+    HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_REPLAY, HOPPER_RANDOM, WALKER_EXPERT, \
+    WALKER_MEDIUM, WALKER_MEDIUM_EXPERT, WALKER_MEDIUM_REPLAY, WALKER_RANDOM
+from benchmark.utils.str2bool import str2bool
 import d4rl  # noqa
 
 
@@ -34,6 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('--env_name', type=str,
                         default=HALF_CHEETAH_MEDIUM_REPLAY)
     parser.add_argument('--level', type=int, default=0)
+    parser.add_argument('--augment_loss', type=str2bool, default=False)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
 
@@ -65,16 +68,24 @@ if __name__ == '__main__':
         "post_fn": post_fn,
         "debug": False,
         "no_reward": False,
+        "augment_loss": args.augment_loss,
         "lr": None,
         "batch_size": None,
         "n_hidden": None,
-        "use_batch_norm": None
+        "use_batch_norm": None,
     }
 
     if args.level == 0:
         # Perform training with tuned hyperparameters and save model
 
-        save_path = os.path.join(MODELS_DIR, args.env_name+'-model.pt')
+        save_name = args.env_name
+
+        if args.augment_loss:
+            save_name += 'aug-loss'
+
+        save_name += '-model.pt'
+
+        save_path = os.path.join(MODELS_DIR, save_name)
 
         config.update(
             max_n_train_epochs=-1,
@@ -220,9 +231,16 @@ if __name__ == '__main__':
             metric='val_loss',
             mode='min')
 
+        save_name = args.env_name
+
+        if args.augment_loss:
+            save_name += 'aug-loss'
+
+        save_name += '-model-tuning-lvl-' + str(args.level)
+
         analysis = tune.run(
             tune.with_parameters(training_function, data=buffer),
-            name=args.env_name + '-model-tuning-lvl-' + str(args.level),
+            name=save_name,
             config=config,
             scheduler=scheduler,
             search_alg=search_alg,
