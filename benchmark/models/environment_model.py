@@ -65,6 +65,9 @@ class EnvironmentModel(nn.Module):
 
         self.optim = None
 
+        self.max_obs_act = None
+        self.min_obs_act = None
+
         n_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
         print("Env model parameters: {}".format(n_params))
 
@@ -275,17 +278,28 @@ class EnvironmentModel(nn.Module):
                         loss = probabilistic_loss(
                             x, y, self, debug=debug, no_reward=no_reward)
 
-                        min_x = x.min(dim=0).values
-                        max_x = x.max(dim=0).values
+                        if self.max_obs_act is None:
+                            self.max_obs_act = x.max(dim=0).values
+                        else:
+                            self.max_obs_act += (x.max(dim=0).values -
+                                                 self.max_obs_act)*0.001
+
+                        if self.min_obs_act is None:
+                            self.min_obs_act = x.min(dim=0).values
+                        else:
+                            self.min_obs_act += (x.min(dim=0).values -
+                                                 self.min_obs_act)*0.001
+
                         aug_x = torch.rand_like(x)
 
-                        aug_x *= (max_x - min_x)*1.5
-                        aug_x += min_x - (max_x - min_x)*0.25
+                        aug_x *= (self.max_obs_act - self.min_obs_act)*1.5
+                        aug_x += self.min_obs_act - \
+                            (self.max_obs_act - self.min_obs_act)*0.25
 
                         aug_loss = probabilistic_loss(
                             aug_x, aug_x, self, debug=debug, no_reward=False, only_var_loss=True)
 
-                        # loss -= 0.01*aug_loss
+                        loss -= 0.01*aug_loss
 
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)
