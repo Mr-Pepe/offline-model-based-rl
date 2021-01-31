@@ -81,7 +81,7 @@ if __name__ == '__main__':
         save_name = args.env_name
 
         if args.augment_loss:
-            save_name += 'aug-loss'
+            save_name += '-aug-loss'
 
         save_name += '-model.pt'
 
@@ -234,7 +234,7 @@ if __name__ == '__main__':
         save_name = args.env_name
 
         if args.augment_loss:
-            save_name += 'aug-loss'
+            save_name += '-aug-loss'
 
         save_name += '-model-tuning-lvl-' + str(args.level)
 
