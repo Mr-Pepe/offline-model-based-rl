@@ -215,6 +215,7 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
                            color='green', marker='x', s=2)
                 ax.plot(x_true, y_true, color='black')
                 ax.plot(x_true, mean_plt[i_ax].view(-1), color='red')
+                ax.set_ylim([-3, 3])
 
             plt.draw()
             plt.pause(0.001)
