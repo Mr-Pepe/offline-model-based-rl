@@ -7,6 +7,7 @@ from ray.tune.suggest.hyperopt import HyperOptSearch
 from benchmark.utils.envs import HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HOPPER_MEDIUM_EXPERT, WALKER_MEDIUM_EXPERT
 from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
+from benchmark.utils.str2bool import str2bool
 import torch
 import os
 
@@ -27,6 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--seeds', type=int, default=1)
     parser.add_argument('--rollout_length', type=int, default=1)
+    parser.add_argument('--augment_loss', type=str2bool, default=False)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
 
@@ -34,6 +36,13 @@ if __name__ == '__main__':
 
     if args.device != '':
         device = args.device
+
+    pretrained_model_name = args.env_name
+
+    if args.augment_loss:
+        pretrained_model_name += '-aug-loss'
+
+    pretrained_model_name += '-model.pt'
 
     # None values must be filled for tuning and final training
     config = dict(
@@ -63,7 +72,7 @@ if __name__ == '__main__':
         use_model=True,
         pretrained_agent_path='',
         pretrained_model_path=os.path.join(
-            MODELS_DIR, args.env_name + '-model.pt'),
+            MODELS_DIR, pretrained_model_name),
         ood_threshold=-1,
         mode=args.mode,
         model_max_n_train_batches=-1,
