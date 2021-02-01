@@ -264,13 +264,14 @@ class EnvironmentModel(nn.Module):
                 if augmentation_fn is not None:
                     augmentation_fn(x, y)
 
+                mean = None
                 self.optim.zero_grad()
                 with torch.cuda.amp.autocast(enabled=use_amp):
                     if self.type == 'deterministic':
                         loss = deterministic_loss(x, y, self)
                     else:
-                        loss = probabilistic_loss(
-                            x, y, self, debug=debug, no_reward=no_reward)
+                        loss, mean = probabilistic_loss(
+                            x, y, self, debug=debug, no_reward=no_reward, return_mean=True)
 
                         if self.max_obs_act is None:
                             self.max_obs_act = x.max(dim=0).values
@@ -304,6 +305,9 @@ class EnvironmentModel(nn.Module):
                 scaler.scale(loss).backward(retain_graph=True)
                 scaler.step(self.optim)
                 scaler.update()
+
+                if mean is not None:
+                    self.max_logvar += (torch.log(mean.var(dim=1)) - self.max_logvar)*0.001
 
                 if lr_scheduler is not None:
                     lr_scheduler.step()
