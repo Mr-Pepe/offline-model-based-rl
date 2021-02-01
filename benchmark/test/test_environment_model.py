@@ -160,7 +160,7 @@ def test_raises_error_if_type_unknown():
 
 
 @pytest.mark.slow
-def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
+def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augment_loss=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     torch.manual_seed(0)
@@ -189,7 +189,8 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False):
 
     for i in range(steps):
         model.train_to_convergence(
-            buffer, lr=1e-4, debug=True, max_n_train_batches=100, batch_size=10)
+            buffer, lr=1e-4, debug=True, max_n_train_batches=100, batch_size=10,
+            augment_loss=augment_loss)
 
         if plot:
             _, mean_plt, logvar_plt, max_logvar_plt, _ = model(
