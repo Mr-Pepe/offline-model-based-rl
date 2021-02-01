@@ -4,7 +4,9 @@ from ray import tune
 import ray
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
 from ray.tune.suggest.hyperopt import HyperOptSearch
-from benchmark.utils.envs import HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HOPPER_MEDIUM_EXPERT, WALKER_MEDIUM_EXPERT
+from benchmark.utils.envs import \
+    HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, \
+    HOPPER_MEDIUM_EXPERT, WALKER_MEDIUM_EXPERT
 from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
 from benchmark.utils.str2bool import str2bool
@@ -124,13 +126,17 @@ if __name__ == '__main__':
         assert config['model_pessimism'] is not None
 
         for seed in range(args.seeds):
+            exp_name = args.env_name+'-' + \
+                config['mode']+'-' + str(config['max_rollout_length'])+'steps'
+
+            if args.augment_loss:
+                exp_name += '-aug-loss'
+
             config.update(
                 epochs=args.epochs,
                 seed=seed,
-                logger_kwargs=setup_logger_kwargs(
-                    args.env_name+'-'+config['mode']+'-' +
-                    str(config['max_rollout_length'])+'steps',
-                    seed=config['seed']),
+                logger_kwargs=setup_logger_kwargs(exp_name,
+                                                  seed=config['seed']),
             )
             training_function(config, tuning=False)
 
