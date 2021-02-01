@@ -8,11 +8,11 @@ ANTMAZE_UMAZE_ENVS = ['antmaze-umaze-v0',
 MAZE2D_UMAZE_ENVS = ['maze2d-umaze-v1']
 
 HOPPER_ORIGINAL = 'Hopper-v2'
-HOPPER_RANDOM = 'hopper-random-v1'
-HOPPER_MEDIUM = 'hopper-medium-v1'
-HOPPER_EXPERT = 'hopper-expert-v1'
-HOPPER_MEDIUM_REPLAY = 'hopper-medium-replay-v1'
-HOPPER_MEDIUM_EXPERT = 'hopper-medium-expert-v1'
+HOPPER_RANDOM = 'hopper-random-v0'
+HOPPER_MEDIUM = 'hopper-medium-v0'
+HOPPER_EXPERT = 'hopper-expert-v0'
+HOPPER_MEDIUM_REPLAY = 'hopper-medium-replay-v0'
+HOPPER_MEDIUM_EXPERT = 'hopper-medium-expert-v0'
 
 HOPPER_ENVS = [HOPPER_ORIGINAL,
                HOPPER_RANDOM,
@@ -22,11 +22,11 @@ HOPPER_ENVS = [HOPPER_ORIGINAL,
                HOPPER_MEDIUM_EXPERT]
 
 HALF_CHEETAH_ORIGINAL = 'HalfCheetah-v2'
-HALF_CHEETAH_RANDOM = 'halfcheetah-random-v1'
-HALF_CHEETAH_MEDIUM = 'halfcheetah-medium-v1'
-HALF_CHEETAH_EXPERT = 'halfcheetah-expert-v1'
-HALF_CHEETAH_MEDIUM_REPLAY = 'halfcheetah-medium-replay-v1'
-HALF_CHEETAH_MEDIUM_EXPERT = 'halfcheetah-medium-expert-v1'
+HALF_CHEETAH_RANDOM = 'halfcheetah-random-v0'
+HALF_CHEETAH_MEDIUM = 'halfcheetah-medium-v0'
+HALF_CHEETAH_EXPERT = 'halfcheetah-expert-v0'
+HALF_CHEETAH_MEDIUM_REPLAY = 'halfcheetah-medium-replay-v0'
+HALF_CHEETAH_MEDIUM_EXPERT = 'halfcheetah-medium-expert-v0'
 
 HALF_CHEETAH_ENVS = [HALF_CHEETAH_ORIGINAL,
                      HALF_CHEETAH_RANDOM,
@@ -36,11 +36,11 @@ HALF_CHEETAH_ENVS = [HALF_CHEETAH_ORIGINAL,
                      HALF_CHEETAH_MEDIUM_EXPERT]
 
 WALKER_ORIGINAL = 'Walker2d-v2'
-WALKER_RANDOM = 'walker2d-random-v1'
-WALKER_MEDIUM = 'walker2d-medium-v1'
-WALKER_EXPERT = 'walker2d-expert-v1'
-WALKER_MEDIUM_REPLAY = 'walker2d-medium-replay-v1'
-WALKER_MEDIUM_EXPERT = 'walker2d-medium-expert-v1'
+WALKER_RANDOM = 'walker2d-random-v0'
+WALKER_MEDIUM = 'walker2d-medium-v0'
+WALKER_EXPERT = 'walker2d-expert-v0'
+WALKER_MEDIUM_REPLAY = 'walker2d-medium-replay-v0'
+WALKER_MEDIUM_EXPERT = 'walker2d-medium-expert-v0'
 
 WALKER_ENVS = [WALKER_ORIGINAL,
                WALKER_RANDOM,
