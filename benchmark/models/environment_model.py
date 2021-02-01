@@ -307,7 +307,7 @@ class EnvironmentModel(nn.Module):
                 scaler.update()
 
                 if mean is not None:
-                    self.max_logvar += (torch.log(mean.detach().var(dim=1)*100) - self.max_logvar)*0.001
+                    self.max_logvar += (torch.log(mean.detach().var(dim=1)) + 3 - self.max_logvar)*0.001
 
                 if lr_scheduler is not None:
                     lr_scheduler.step()
