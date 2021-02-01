@@ -136,7 +136,7 @@ if __name__ == '__main__':
                 epochs=args.epochs,
                 seed=seed,
                 logger_kwargs=setup_logger_kwargs(exp_name,
-                                                  seed=config['seed']),
+                                                  seed=seed),
             )
             training_function(config, tuning=False)
 
