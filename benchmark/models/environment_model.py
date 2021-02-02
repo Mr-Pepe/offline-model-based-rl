@@ -305,7 +305,7 @@ class EnvironmentModel(nn.Module):
                                                           no_reward=False,
                                                           only_var_loss=True)
 
-                            loss -= 0.001*aug_loss
+                            loss -= 0.1*aug_loss
 
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)
