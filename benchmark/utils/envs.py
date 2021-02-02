@@ -14,12 +14,23 @@ HOPPER_EXPERT = 'hopper-expert-v0'
 HOPPER_MEDIUM_REPLAY = 'hopper-medium-replay-v0'
 HOPPER_MEDIUM_EXPERT = 'hopper-medium-expert-v0'
 
+HOPPER_RANDOM_V1 = 'hopper-random-v1'
+HOPPER_MEDIUM_V1 = 'hopper-medium-v1'
+HOPPER_EXPERT_V1 = 'hopper-expert-v1'
+HOPPER_MEDIUM_REPLAY_V1 = 'hopper-medium-replay-v1'
+HOPPER_MEDIUM_EXPERT_V1 = 'hopper-medium-expert-v1'
+
 HOPPER_ENVS = [HOPPER_ORIGINAL,
                HOPPER_RANDOM,
                HOPPER_MEDIUM,
                HOPPER_EXPERT,
                HOPPER_MEDIUM_REPLAY,
-               HOPPER_MEDIUM_EXPERT]
+               HOPPER_MEDIUM_EXPERT,
+               HOPPER_RANDOM_V1,
+               HOPPER_MEDIUM_V1,
+               HOPPER_EXPERT_V1,
+               HOPPER_MEDIUM_REPLAY_V1,
+               HOPPER_MEDIUM_EXPERT_V1]
 
 HALF_CHEETAH_ORIGINAL = 'HalfCheetah-v2'
 HALF_CHEETAH_RANDOM = 'halfcheetah-random-v0'
@@ -28,12 +39,23 @@ HALF_CHEETAH_EXPERT = 'halfcheetah-expert-v0'
 HALF_CHEETAH_MEDIUM_REPLAY = 'halfcheetah-medium-replay-v0'
 HALF_CHEETAH_MEDIUM_EXPERT = 'halfcheetah-medium-expert-v0'
 
+HALF_CHEETAH_RANDOM_V1 = 'halfcheetah-random-v1'
+HALF_CHEETAH_MEDIUM_V1 = 'halfcheetah-medium-v1'
+HALF_CHEETAH_EXPERT_V1 = 'halfcheetah-expert-v1'
+HALF_CHEETAH_MEDIUM_REPLAY_V1 = 'halfcheetah-medium-replay-v1'
+HALF_CHEETAH_MEDIUM_EXPERT_V1 = 'halfcheetah-medium-expert-v1'
+
 HALF_CHEETAH_ENVS = [HALF_CHEETAH_ORIGINAL,
                      HALF_CHEETAH_RANDOM,
                      HALF_CHEETAH_MEDIUM,
                      HALF_CHEETAH_EXPERT,
                      HALF_CHEETAH_MEDIUM_REPLAY,
-                     HALF_CHEETAH_MEDIUM_EXPERT]
+                     HALF_CHEETAH_MEDIUM_EXPERT,
+                     HALF_CHEETAH_RANDOM_V1,
+                     HALF_CHEETAH_MEDIUM_V1,
+                     HALF_CHEETAH_EXPERT_V1,
+                     HALF_CHEETAH_MEDIUM_REPLAY_V1,
+                     HALF_CHEETAH_MEDIUM_EXPERT_V1]
 
 WALKER_ORIGINAL = 'Walker2d-v2'
 WALKER_RANDOM = 'walker2d-random-v0'
@@ -42,12 +64,23 @@ WALKER_EXPERT = 'walker2d-expert-v0'
 WALKER_MEDIUM_REPLAY = 'walker2d-medium-replay-v0'
 WALKER_MEDIUM_EXPERT = 'walker2d-medium-expert-v0'
 
+WALKER_RANDOM_v1 = 'walker2d-random-v1'
+WALKER_MEDIUM_v1 = 'walker2d-medium-v1'
+WALKER_EXPERT_v1 = 'walker2d-expert-v1'
+WALKER_MEDIUM_REPLAY_V1 = 'walker2d-medium-replay-v1'
+WALKER_MEDIUM_EXPERT_V1 = 'walker2d-medium-expert-v1'
+
 WALKER_ENVS = [WALKER_ORIGINAL,
                WALKER_RANDOM,
                WALKER_MEDIUM,
                WALKER_EXPERT,
                WALKER_MEDIUM_REPLAY,
-               WALKER_MEDIUM_EXPERT]
+               WALKER_MEDIUM_EXPERT,
+               WALKER_RANDOM_v1,
+               WALKER_MEDIUM_v1,
+               WALKER_EXPERT_v1,
+               WALKER_MEDIUM_REPLAY_V1,
+               WALKER_MEDIUM_EXPERT_V1]
 
 ANTMAZE_MEDIUM_ENVS = ['antmaze-medium-diverse-v0',
                        'antmaze-medium-play-v0']
