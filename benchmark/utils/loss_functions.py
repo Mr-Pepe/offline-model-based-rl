@@ -40,8 +40,6 @@ def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, n
         var_loss = logvar.mean()
         var_bound_loss = 0.01 * max_logvar.mean() - 0.01 * min_logvar.mean()
 
-        model.max_logvar += (torch.log(mean.var(dim=1)) - model.max_logvar)*0.001
-
         if debug:
             print("LR: {:.5f}, MSE: {:.5f}, MSE + INV VAR: {:.5f} VAR: {:.5f}, BOUNDS: {:.5f}, MAX LOGVAR: {:.5f}, MIN LOGVAR: {:.5f}".format(
                 model.optim.param_groups[0]['lr'],
