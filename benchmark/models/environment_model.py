@@ -293,7 +293,7 @@ class EnvironmentModel(nn.Module):
 
                         aug_x = torch.rand_like(x)
 
-                        aug_x *= (self.max_obs_act - self.min_obs_act)*1.5
+                        aug_x *= (self.max_obs_act - self.min_obs_act)*2
                         aug_x += self.min_obs_act - \
                             (self.max_obs_act - self.min_obs_act)*0.5
 
