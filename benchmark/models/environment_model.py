@@ -292,7 +292,7 @@ class EnvironmentModel(nn.Module):
                                                  self.min_obs_act)*0.001
 
                         if augment_loss:
-                            for _ in range(1):
+                            for _ in range(10):
                                 aug_x = torch.rand_like(x)
 
                                 aug_x *= (self.max_obs_act -
