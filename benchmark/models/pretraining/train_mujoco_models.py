@@ -68,11 +68,11 @@ if __name__ == '__main__':
         "post_fn": post_fn,
         "debug": False,
         "no_reward": False,
+        "use_batch_norm": False,
         "augment_loss": args.augment_loss,
         "lr": None,
         "batch_size": None,
         "n_hidden": None,
-        "use_batch_norm": None,
     }
 
     if args.level == 0:
@@ -91,115 +91,9 @@ if __name__ == '__main__':
             max_n_train_epochs=-1,
             debug=True)
 
-        if args.env_name == HALF_CHEETAH_MEDIUM_REPLAY:
-            config.update(
-                lr=0.003,
-                batch_size=512,
-                n_hidden=256,
-                use_batch_norm=False)
-
-        if args.env_name == HALF_CHEETAH_EXPERT:
-            config.update(
-                lr=0.002,
-                batch_size=512,
-                n_hidden=512,
-                use_batch_norm=True)
-
-        if args.env_name == HALF_CHEETAH_MEDIUM:
-            config.update(
-                lr=0.001,
-                batch_size=512,
-                n_hidden=512,
-                use_batch_norm=False)
-
-        if args.env_name == HALF_CHEETAH_RANDOM:
-            config.update(
-                lr=0.0007,
-                batch_size=512,
-                n_hidden=512,
-                use_batch_norm=False)
-
-        if args.env_name == HALF_CHEETAH_MEDIUM_EXPERT:
-            config.update(
-                lr=0.004,
-                batch_size=2048,
-                n_hidden=512,
-                use_batch_norm=False)
-
-        if args.env_name == HOPPER_RANDOM:
-            config.update(
-                lr=1e-4,
-                batch_size=512,
-                n_hidden=512,
-                use_batch_norm=False)
-
-        if args.env_name == HOPPER_MEDIUM:
-            config.update(
-                lr=6e-4,
-                batch_size=512,
-                n_hidden=512,
-                use_batch_norm=False)
-
-        if args.env_name == HOPPER_MEDIUM_REPLAY:
-            config.update(
-                lr=1e-3,
-                batch_size=2048,
-                n_hidden=512,
-                use_batch_norm=False)
-
-        if args.env_name == HOPPER_MEDIUM_EXPERT:
-            config.update(
-                lr=7e-4,
-                batch_size=2048,
-                n_hidden=512,
-                use_batch_norm=False)
-
-        if args.env_name == HOPPER_EXPERT:
-            config.update(
-                lr=4e-4,
-                batch_size=256,
-                n_hidden=512,
-                use_batch_norm=False)
-
-        if args.env_name == WALKER_RANDOM:
-            config.update(
-                lr=5e-4,
-                batch_size=256,
-                n_hidden=512,
-                use_batch_norm=True)
-
-        if args.env_name == WALKER_MEDIUM:
-            config.update(
-                lr=2e-3,
-                batch_size=2048,
-                n_hidden=512,
-                use_batch_norm=False)
-
-        if args.env_name == WALKER_EXPERT:
-            config.update(
-                lr=1.7e-3,
-                batch_size=2048,
-                n_hidden=512,
-                use_batch_norm=False)
-
-        if args.env_name == WALKER_MEDIUM_REPLAY:
-            config.update(
-                lr=1.5e-3,
-                batch_size=512,
-                n_hidden=512,
-                use_batch_norm=False)
-
-        if args.env_name == WALKER_MEDIUM_EXPERT:
-            config.update(
-                lr=1.4e-3,
-                batch_size=1024,
-                n_hidden=512,
-                use_batch_norm=False)
-
         assert config['lr'] is not None
         assert config['batch_size'] is not None
         assert config['n_hidden'] is not None
-        assert config['use_batch_norm'] is not None
 
         training_function(
             config=config,
@@ -212,13 +106,11 @@ if __name__ == '__main__':
             config.update(
                 lr=tune.loguniform(1e-5, 1e-2),
                 batch_size=tune.choice([256, 512, 1024, 2048]),
-                n_hidden=tune.choice([64, 128, 256, 512]),
-                use_batch_norm=tune.choice([True, False]))
+                n_hidden=tune.choice([64, 128, 256, 512]))
 
         assert config['lr'] is not None
         assert config['batch_size'] is not None
         assert config['n_hidden'] is not None
-        assert config['use_batch_norm'] is not None
 
         ray.init()
         scheduler = ASHAScheduler(
