@@ -300,12 +300,12 @@ class EnvironmentModel(nn.Module):
                                 aug_x += self.min_obs_act - \
                                     (self.max_obs_act - self.min_obs_act)*0.5
 
-                                loss -= probabilistic_loss(aug_x,
-                                                           aug_x,
-                                                           self,
-                                                           debug=debug,
-                                                           no_reward=False,
-                                                           only_var_loss=True)
+                                loss -= 10*probabilistic_loss(aug_x,
+                                                              aug_x,
+                                                              self,
+                                                              debug=debug,
+                                                              no_reward=False,
+                                                              only_var_loss=True)
 
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)
