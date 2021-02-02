@@ -291,21 +291,22 @@ class EnvironmentModel(nn.Module):
                             self.min_obs_act += (x.min(dim=0).values -
                                                  self.min_obs_act)*0.001
 
-                        aug_x = torch.rand_like(x)
-
-                        aug_x *= (self.max_obs_act - self.min_obs_act)*2
-                        aug_x += self.min_obs_act - \
-                            (self.max_obs_act - self.min_obs_act)*0.5
-
                         if augment_loss:
-                            aug_loss = probabilistic_loss(aug_x,
-                                                          aug_x,
-                                                          self,
-                                                          debug=debug,
-                                                          no_reward=False,
-                                                          only_var_loss=True)
+                            for _ in range(2):
+                                aug_x = torch.rand_like(x)
 
-                            loss -= 0.1*aug_loss
+                                aug_x *= (self.max_obs_act - self.min_obs_act)*2
+                                aug_x += self.min_obs_act - \
+                                    (self.max_obs_act - self.min_obs_act)*0.5
+
+                                aug_loss = probabilistic_loss(aug_x,
+                                                            aug_x,
+                                                            self,
+                                                            debug=debug,
+                                                            no_reward=False,
+                                                            only_var_loss=True)
+
+                                loss -= aug_loss
 
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)
