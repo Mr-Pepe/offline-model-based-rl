@@ -69,10 +69,10 @@ if __name__ == '__main__':
         "debug": False,
         "no_reward": False,
         "use_batch_norm": False,
+        "n_hidden": 200,
         "augment_loss": args.augment_loss,
         "lr": None,
         "batch_size": None,
-        "n_hidden": None,
     }
 
     if args.level == 0:
@@ -93,7 +93,6 @@ if __name__ == '__main__':
 
         assert config['lr'] is not None
         assert config['batch_size'] is not None
-        assert config['n_hidden'] is not None
 
         training_function(
             config=config,
@@ -105,12 +104,10 @@ if __name__ == '__main__':
         if args.level == 1:
             config.update(
                 lr=tune.loguniform(1e-5, 1e-2),
-                batch_size=tune.choice([256, 512, 1024, 2048]),
-                n_hidden=tune.choice([64, 128, 256, 512]))
+                batch_size=tune.choice([256, 512, 1024, 2048]))
 
         assert config['lr'] is not None
         assert config['batch_size'] is not None
-        assert config['n_hidden'] is not None
 
         ray.init()
         scheduler = ASHAScheduler(
