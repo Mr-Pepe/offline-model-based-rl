@@ -91,6 +91,11 @@ if __name__ == '__main__':
             max_n_train_epochs=-1,
             debug=True)
 
+        config.update(
+            lr=1e-3,
+            batch_size=256
+        )
+
         assert config['lr'] is not None
         assert config['batch_size'] is not None
 
