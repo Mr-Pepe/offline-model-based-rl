@@ -29,6 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--mode', type=str, default='mopo')
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--seeds', type=int, default=1)
+    parser.add_argument('--start_seed', type=int, default=0)
     parser.add_argument('--rollout_length', type=int, default=1)
     parser.add_argument('--augment_loss', type=str2bool, default=False)
     parser.add_argument('--device', type=str, default='')
@@ -125,7 +126,7 @@ if __name__ == '__main__':
         assert config['max_rollout_length'] is not None
         assert config['model_pessimism'] is not None
 
-        for seed in range(args.seeds):
+        for seed in range(args.start_seed, args.start_seed+args.seeds):
             exp_name = args.env_name+'-' + \
                 config['mode']+'-' + str(config['max_rollout_length'])+'steps'
 
