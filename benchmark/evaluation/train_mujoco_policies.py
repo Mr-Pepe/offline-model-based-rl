@@ -29,6 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--mode', type=str, default='mopo')
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--seeds', type=int, default=1)
+    parser.add_argument('--pessimism', type=float, default=1)
     parser.add_argument('--start_seed', type=int, default=0)
     parser.add_argument('--rollout_length', type=int, default=1)
     parser.add_argument('--augment_loss', type=str2bool, default=False)
@@ -109,7 +110,7 @@ if __name__ == '__main__':
                             ),
             rollouts_per_step=100,
             max_rollout_length=args.rollout_length,
-            model_pessimism=1
+            model_pessimism=args.pessimism
         )
 
         if args.env_name in [HALF_CHEETAH_MEDIUM_EXPERT,
