@@ -33,7 +33,7 @@ def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, n
     if only_mse:
         return torch.square(mean - y).mean()
     elif only_var_loss:
-        return logvar.mean()
+        return logvar[:, :, -1].mean()
     else:
         mse_loss = torch.square(mean - y)
         mse_inv_var_loss = (mse_loss * inv_var).mean()
