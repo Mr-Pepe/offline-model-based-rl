@@ -30,6 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--seeds', type=int, default=1)
     parser.add_argument('--pessimism', type=float, default=1)
+    parser.add_argument('--ood_threshold', type=float, default=0.5)
     parser.add_argument('--start_seed', type=int, default=0)
     parser.add_argument('--rollout_length', type=int, default=1)
     parser.add_argument('--augment_loss', type=str2bool, default=False)
@@ -60,6 +61,7 @@ if __name__ == '__main__':
         rollouts_per_step=None,
         max_rollout_length=None,
         model_pessimism=None,
+        ood_threshold=None,
         model_kwargs=dict(),
         dataset_path='',
         seed=0,
@@ -77,7 +79,6 @@ if __name__ == '__main__':
         pretrained_agent_path='',
         pretrained_model_path=os.path.join(
             MODELS_DIR, pretrained_model_name),
-        ood_threshold=-1,
         mode=args.mode,
         model_max_n_train_batches=-1,
         rollout_schedule=[1, 1, 20, 100],
@@ -110,7 +111,8 @@ if __name__ == '__main__':
                             ),
             rollouts_per_step=100,
             max_rollout_length=args.rollout_length,
-            model_pessimism=args.pessimism
+            model_pessimism=args.pessimism,
+            ood_threshold=args.ood_threshold
         )
 
         if args.env_name in [HALF_CHEETAH_MEDIUM_EXPERT,
@@ -126,6 +128,7 @@ if __name__ == '__main__':
         assert config['rollouts_per_step'] is not None
         assert config['max_rollout_length'] is not None
         assert config['model_pessimism'] is not None
+        assert config['ood_threshold'] is not None
 
         for seed in range(args.start_seed, args.start_seed+args.seeds):
             exp_name = args.env_name+'-' + \
@@ -168,6 +171,7 @@ if __name__ == '__main__':
         assert config['rollouts_per_step'] is not None
         assert config['max_rollout_length'] is not None
         assert config['model_pessimism'] is not None
+        assert config['ood_threshold'] is not None
 
         ray.init()
         scheduler = ASHAScheduler(

@@ -119,7 +119,7 @@ class EnvironmentModel(nn.Module):
             self.min_logvar
 
     def get_prediction(self, raw_obs_act, i_network=-1,
-                       pessimism=0, mode='mopo', ood_threshold=-1):
+                       pessimism=0, mode='mopo', ood_threshold=10000):
 
         device = next(self.layers.parameters()).device
 
@@ -171,10 +171,10 @@ class EnvironmentModel(nn.Module):
                 prediction[:, -2] = means[:, :, -1].mean(dim=0) - pessimism * \
                     torch.exp(logvars[:, :, -1]).max(dim=0).values.to(device)
             elif mode == 'morel':
-                max_disc = torch.cdist(
-                    torch.transpose(means[:, :, :-1], 0, 1),
-                    torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
-                prediction[max_disc > ood_threshold, -2] = -pessimism
+                ood_idx = logvars[:, :, -1].max(dim=0).values > ood_threshold
+                prediction[ood_idx, -2] = -self.max_reward
+                prediction[ood_idx, -1] = 1
+
             elif mode == 'pepe':
                 prediction[:, -2] = predictions[:, :, -2].min(dim=0).values
 
