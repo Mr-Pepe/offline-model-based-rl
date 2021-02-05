@@ -68,6 +68,7 @@ class EnvironmentModel(nn.Module):
 
         self.max_obs_act = None
         self.min_obs_act = None
+        self.max_reward = None
 
         n_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
         print("Env model parameters: {}".format(n_params))
@@ -267,6 +268,11 @@ class EnvironmentModel(nn.Module):
                     data.sample_train_batch(batch_size,
                                             val_split),
                     device)
+
+                if self.max_reward is None:
+                    self.max_reward = y[:, -1].max()
+                else:
+                    self.max_reward = torch.max(self.max_reward, y[:, -1].max())
 
                 if augmentation_fn is not None:
                     augmentation_fn(x, y)
