@@ -34,6 +34,7 @@ if __name__ == '__main__':
     parser.add_argument('--start_seed', type=int, default=0)
     parser.add_argument('--rollout_length', type=int, default=1)
     parser.add_argument('--augment_loss', type=str2bool, default=False)
+    parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
 
@@ -112,7 +113,8 @@ if __name__ == '__main__':
             rollouts_per_step=100,
             max_rollout_length=args.rollout_length,
             model_pessimism=args.pessimism,
-            ood_threshold=args.ood_threshold
+            ood_threshold=args.ood_threshold,
+            pretrained_agent_path=args.pretrained_agent_path
         )
 
         if args.env_name in [HALF_CHEETAH_MEDIUM_EXPERT,
