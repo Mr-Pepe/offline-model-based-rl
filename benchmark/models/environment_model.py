@@ -53,10 +53,18 @@ class EnvironmentModel(nn.Module):
 
         # Taken from https://github.com/kchua/handful-of-trials/blob/master/
         # dmbrl/modeling/models/BNN.py
-        self.max_logvar = Parameter(torch.ones(
+        self.obs_max_logvar = Parameter(torch.ones(
             n_networks,
-            (self.out_dim))*1,
+            (self.obs_dim))*0.5,
+            requires_grad=True)
+
+        self.rew_max_logvar = Parameter(torch.ones(
+            n_networks,
+            (1))*1,
             requires_grad=bounds_trainable)
+
+        self.max_logvar = torch.cat((self.obs_max_logvar, self.rew_max_logvar), dim=1)
+
         self.min_logvar = Parameter(torch.ones(
             n_networks,
             (self.out_dim))*-10,
