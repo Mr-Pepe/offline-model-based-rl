@@ -63,14 +63,14 @@ class EnvironmentModel(nn.Module):
             (1))*1,
             requires_grad=bounds_trainable)
 
-        self.max_logvar = torch.cat((self.obs_max_logvar, self.rew_max_logvar), dim=1)
-
         self.min_logvar = Parameter(torch.ones(
             n_networks,
             (self.out_dim))*-10,
             requires_grad=bounds_trainable)
 
         self.to(device)
+
+        self.max_logvar = torch.cat((self.obs_max_logvar, self.rew_max_logvar), dim=1)
 
         self.optim = None
 
@@ -110,6 +110,8 @@ class EnvironmentModel(nn.Module):
             reward_logvars = pred_rewards[:, :, 1].view(
                 (self.n_networks, -1, 1))
             logvars = torch.cat((next_obs_logvars, reward_logvars), dim=2)
+
+            self.max_logvar = torch.cat((self.obs_max_logvar, self.rew_max_logvar), dim=1)
 
             max_logvar = self.max_logvar.unsqueeze(1)
             min_logvar = self.min_logvar.unsqueeze(1)
@@ -280,7 +282,8 @@ class EnvironmentModel(nn.Module):
                 if self.max_reward is None:
                     self.max_reward = y[:, -1].max()
                 else:
-                    self.max_reward = torch.max(self.max_reward, y[:, -1].max())
+                    self.max_reward = torch.max(
+                        self.max_reward, y[:, -1].max())
 
                 if augmentation_fn is not None:
                     augmentation_fn(x, y)

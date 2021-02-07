@@ -5,7 +5,9 @@ from benchmark.utils.str2bool import str2bool
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--augment_loss', type=str2bool, default=True)
+parser.add_argument('--bounds_trainable', type=str2bool, default=False)
 args = parser.parse_args()
 
 test_probabilistic_model_trains_on_toy_dataset(steps=50000, plot=True,
-                                               augment_loss=args.augment_loss)
+                                               augment_loss=args.augment_loss,
+                                               bounds_trainable=args.bounds_trainable)

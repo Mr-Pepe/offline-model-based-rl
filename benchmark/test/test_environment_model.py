@@ -160,7 +160,8 @@ def test_raises_error_if_type_unknown():
 
 
 @pytest.mark.slow
-def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augment_loss=False):
+def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augment_loss=False,
+                                                   bounds_trainable=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     torch.manual_seed(0)
@@ -181,7 +182,8 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
     model = EnvironmentModel(
         1, 1, hidden=[200, 200, 200, 200], type='probabilistic',
         n_networks=n_networks,
-        device=device)
+        device=device,
+        bounds_trainable=bounds_trainable)
 
     x_true = torch.arange(-3*PI, 3*PI, 0.01)
     y_true = torch.sin(x_true)
@@ -198,6 +200,8 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
             mean_plt = mean_plt[:, :, 0].detach().cpu()
             logvar_plt = logvar_plt[:, :, 0].detach().cpu()
             max_std = torch.exp(0.5*max_logvar_plt[:, 0].detach().cpu())
+
+            print(max_logvar_plt)
 
             std = torch.exp(0.5*logvar_plt)
 
