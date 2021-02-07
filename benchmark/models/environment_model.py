@@ -181,6 +181,7 @@ class EnvironmentModel(nn.Module):
                 prediction[:, -2] = means[:, :, -1].mean(dim=0) - pessimism * \
                     torch.exp(logvars[:, :, -1]).max(dim=0).values.to(device)
             elif mode == 'morel':
+                prediction[:, -2] = means[:, :, -1].mean(dim=0)
                 ood_idx = logvars[:, :, -1].max(dim=0).values > ood_threshold
                 prediction[ood_idx, -2] = -self.max_reward
                 prediction[ood_idx, -1] = 1
