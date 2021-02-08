@@ -71,7 +71,8 @@ class EnvironmentModel(nn.Module):
 
         self.to(device)
 
-        self.max_logvar = torch.cat((self.obs_max_logvar, self.rew_max_logvar), dim=1)
+        self.max_logvar = torch.cat(
+            (self.obs_max_logvar, self.rew_max_logvar), dim=1)
 
         self.optim = None
 
@@ -112,7 +113,8 @@ class EnvironmentModel(nn.Module):
                 (self.n_networks, -1, 1))
             logvars = torch.cat((next_obs_logvars, reward_logvars), dim=2)
 
-            self.max_logvar = torch.cat((self.obs_max_logvar, self.rew_max_logvar), dim=1)
+            self.max_logvar = torch.cat(
+                (self.obs_max_logvar, self.rew_max_logvar), dim=1)
 
             max_logvar = self.max_logvar.unsqueeze(1)
             min_logvar = self.min_logvar.unsqueeze(1)
@@ -319,12 +321,12 @@ class EnvironmentModel(nn.Module):
                                 aug_x += self.min_obs_act - \
                                     (self.max_obs_act - self.min_obs_act)*0.5
 
-                                loss -= probabilistic_loss(aug_x,
-                                                           aug_x,
-                                                           self,
-                                                           debug=debug,
-                                                           no_reward=False,
-                                                           only_var_loss=True)
+                                loss -= 10 * probabilistic_loss(aug_x,
+                                                                aug_x,
+                                                                self,
+                                                                debug=debug,
+                                                                no_reward=False,
+                                                                only_var_loss=True)
 
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)
