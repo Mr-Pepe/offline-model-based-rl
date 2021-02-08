@@ -198,9 +198,9 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
         if plot:
             _, mean_plt, logvar_plt, max_logvar_plt, _ = model(
                 torch.cat((x_true.unsqueeze(-1), torch.zeros_like(x_true.unsqueeze(-1))), dim=1))
-            mean_plt = mean_plt[:, :, 0].detach().cpu()
-            logvar_plt = logvar_plt[:, :, 0].detach().cpu()
-            max_std = torch.exp(0.5*max_logvar_plt[:, 0].detach().cpu())
+            mean_plt = mean_plt[:, :, 1].detach().cpu()
+            logvar_plt = logvar_plt[:, :, 1].detach().cpu()
+            max_std = torch.exp(0.5*max_logvar_plt[:, 1].detach().cpu())
 
             print(max_logvar_plt)
 
