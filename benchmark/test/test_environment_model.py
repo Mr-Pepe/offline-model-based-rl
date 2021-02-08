@@ -17,6 +17,7 @@ import d4rl  # noqa
 import gym
 import numpy as np
 from math import pi as PI
+from matplotlib.pyplot import cm
 
 gym.logger.set_level(40)
 
@@ -161,7 +162,7 @@ def test_raises_error_if_type_unknown():
 
 @pytest.mark.slow
 def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augment_loss=False,
-                                                   bounds_trainable=True):
+                                                   r_bounds_trainable=True, steps_per_plot=100):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     torch.manual_seed(0)
@@ -183,15 +184,15 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
         1, 1, hidden=[200, 200, 200, 200], type='probabilistic',
         n_networks=n_networks,
         device=device,
-        bounds_trainable=bounds_trainable)
+        r_bounds_trainable=r_bounds_trainable)
 
     x_true = torch.arange(-3*PI, 3*PI, 0.01)
     y_true = torch.sin(x_true)
-    f, axs = plt.subplots(n_networks, 1)
+    f, ax = plt.subplots(1, 1)
 
     for i in range(steps):
         model.train_to_convergence(
-            buffer, lr=1e-4, debug=True, max_n_train_batches=100, batch_size=10,
+            buffer, lr=1e-4, debug=True, max_n_train_batches=steps_per_plot, batch_size=10,
             augment_loss=augment_loss)
 
         if plot:
@@ -208,18 +209,21 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
             x_plt = x.cpu()
             y_plt = y.cpu()
 
-            for i_ax, ax in enumerate(axs):
-                ax.clear()
+            # ax = axs[0]
+            ax.clear()
+            ax.scatter(x_plt[800:1200], y_plt[800:1200],
+                       color='green', marker='x', s=5)
+            ax.plot(x_true, y_true, color='black')
 
-                ax.fill_between(x_true, (mean_plt[i_ax]+max_std[i_ax]).view(-1),
-                                (mean_plt[i_ax]-max_std[i_ax]).view(-1),
-                                color='grey', zorder=-2)
-                ax.fill_between(x_true, (mean_plt[i_ax]+std[i_ax]).view(-1), (mean_plt[i_ax]-std[i_ax]).view(-1),
-                                color='lightcoral')
-                ax.scatter(x_plt[800:1200], y_plt[800:1200],
-                           color='green', marker='x', s=2)
-                ax.plot(x_true, y_true, color='black')
-                ax.plot(x_true, mean_plt[i_ax].view(-1), color='red')
+            color = cm.rainbow(np.linspace(0, 1, n_networks))
+            for i_network, c in zip(range(n_networks),color):
+
+                # ax.fill_between(x_true, (mean_plt[i_network]+max_std[i_network]).view(-1),
+                #                 (mean_plt[i_network]-max_std[i_network]).view(-1),
+                #                 color='grey', zorder=-2)
+                ax.fill_between(x_true, (mean_plt[i_network]+std[i_network]).view(-1), (mean_plt[i_network]-std[i_network]).view(-1),
+                                color=c, alpha=0.2)
+                ax.plot(x_true, mean_plt[i_network].view(-1), color=c)
                 ax.set_ylim([-3, 3])
 
             plt.draw()
