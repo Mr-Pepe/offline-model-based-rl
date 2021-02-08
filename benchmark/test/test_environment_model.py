@@ -162,7 +162,7 @@ def test_raises_error_if_type_unknown():
 
 @pytest.mark.slow
 def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augment_loss=False,
-                                                   r_bounds_trainable=True, steps_per_plot=100):
+                                                   bounds_trainable=True, steps_per_plot=100):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     torch.manual_seed(0)
@@ -184,7 +184,7 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
         1, 1, hidden=[200, 200, 200, 200], type='probabilistic',
         n_networks=n_networks,
         device=device,
-        r_bounds_trainable=r_bounds_trainable)
+        obs_bounds_trainable=bounds_trainable)
 
     x_true = torch.arange(-3*PI, 3*PI, 0.01)
     y_true = torch.sin(x_true)
@@ -198,8 +198,8 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
         if plot:
             _, mean_plt, logvar_plt, max_logvar_plt, _ = model(
                 torch.cat((x_true.unsqueeze(-1), torch.zeros_like(x_true.unsqueeze(-1))), dim=1))
-            mean_plt = mean_plt[:, :, 1].detach().cpu()
-            logvar_plt = logvar_plt[:, :, 1].detach().cpu()
+            mean_plt = mean_plt[:, :, 0].detach().cpu()
+            logvar_plt = logvar_plt[:, :, 0].detach().cpu()
             max_std = torch.exp(0.5*max_logvar_plt[:, 1].detach().cpu())
 
             print(max_logvar_plt)
