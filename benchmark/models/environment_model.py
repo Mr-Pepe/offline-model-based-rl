@@ -25,7 +25,8 @@ class EnvironmentModel(nn.Module):
                  post_fn=None,
                  rew_fn=None,
                  use_batch_norm=False,
-                 bounds_trainable=True,
+                 obs_bounds_trainable=True,
+                 r_bounds_trainable=True,
                  **_):
         """
             type (string): deterministic or probabilistic
@@ -56,17 +57,17 @@ class EnvironmentModel(nn.Module):
         self.obs_max_logvar = Parameter(torch.ones(
             n_networks,
             (self.obs_dim))*0.5,
-            requires_grad=True)
+            requires_grad=obs_bounds_trainable)
 
         self.rew_max_logvar = Parameter(torch.ones(
             n_networks,
             (1))*1,
-            requires_grad=bounds_trainable)
+            requires_grad=r_bounds_trainable)
 
         self.min_logvar = Parameter(torch.ones(
             n_networks,
             (self.out_dim))*-10,
-            requires_grad=bounds_trainable)
+            requires_grad=obs_bounds_trainable)
 
         self.to(device)
 

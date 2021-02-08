@@ -37,7 +37,8 @@ if __name__ == '__main__':
                         default=HALF_CHEETAH_MEDIUM_REPLAY)
     parser.add_argument('--level', type=int, default=0)
     parser.add_argument('--augment_loss', type=str2bool, default=False)
-    parser.add_argument('--bounds_trainable', type=str2bool, default=True)
+    parser.add_argument('--obs_bounds_trainable', type=str2bool, default=True)
+    parser.add_argument('--r_bounds_trainable', type=str2bool, default=True)
     parser.add_argument('--patience', type=int, default=30)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
@@ -63,7 +64,8 @@ if __name__ == '__main__':
         "obs_dim": obs_dim,
         "act_dim": act_dim,
         "max_n_train_epochs": 50,
-        "bounds_trainable": args.bounds_trainable,
+        "obs_bounds_trainable": args.obs_bounds_trainable,
+        "r_bounds_trainable": args.r_bounds_trainable,
         "patience": args.patience,
         "type": "probabilistic",
         "n_networks": 7,
