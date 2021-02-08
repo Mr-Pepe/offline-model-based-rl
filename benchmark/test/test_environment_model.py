@@ -162,13 +162,18 @@ def test_raises_error_if_type_unknown():
 
 @pytest.mark.slow
 def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augment_loss=False,
-                                                   bounds_trainable=True, steps_per_plot=100):
+                                                   bounds_trainable=True, steps_per_plot=100,
+                                                   add_points_between=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     torch.manual_seed(0)
 
     x = torch.rand((1000,)) * PI - 2*PI
     x = torch.cat((x, torch.rand((1000,)) * PI + PI)).to(device)
+
+    if add_points_between:
+        x = torch.cat((x, torch.rand((100,)) * 0.5 - 0.25)).to(device)
+
     y = torch.sin(x) + torch.normal(0, 0.225 *
                                     torch.abs(torch.sin(1.5*x + PI/8)))\
         .to(device)
@@ -194,7 +199,7 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
 
     for i in range(steps):
         model.train_to_convergence(
-            buffer, lr=1e-4, debug=True, max_n_train_batches=steps_per_plot, batch_size=10,
+            buffer, lr=1e-4, debug=True, max_n_train_batches=steps_per_plot, batch_size=128,
             augment_loss=augment_loss)
 
         if plot:
@@ -213,7 +218,7 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
 
             # ax = axs[0]
             ax.clear()
-            ax.scatter(x_plt[800:1200], y_plt[800:1200],
+            ax.scatter(x_plt, y_plt,
                        color='green', marker='x', s=5)
             ax.plot(x_true, y_true, color='black')
 
