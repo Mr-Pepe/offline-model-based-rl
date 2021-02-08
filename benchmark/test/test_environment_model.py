@@ -169,10 +169,12 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
     torch.manual_seed(0)
 
     x = torch.rand((1000,)) * PI - 2*PI
-    x = torch.cat((x, torch.rand((1000,)) * PI + PI)).to(device)
+    x = torch.cat((x, torch.rand((1000,)) * PI + PI))
 
     if add_points_between:
-        x = torch.cat((x, torch.rand((100,)) * 0.5 - 0.25)).to(device)
+        x = torch.cat((x, torch.rand((100,)) * 0.5 - 0.25))
+
+    x = x.to(device)
 
     y = torch.sin(x) + torch.normal(0, 0.225 *
                                     torch.abs(torch.sin(1.5*x + PI/8)))\
