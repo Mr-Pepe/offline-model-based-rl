@@ -179,21 +179,25 @@ class EnvironmentModel(nn.Module):
 
         predictions = torch.cat((pred_next_obs, pred_rewards, dones), dim=2)
         prediction = predictions[i_network]
-        uncertainty = uncertainty.max(dim=0).values
 
         if pessimism != 0:
 
             if mode == 'mopo':
                 prediction[:, -2] = means[:, :, -1].mean(dim=0) - pessimism * \
                     torch.exp(logvars[:, :, -1]).max(dim=0).values.to(device)
+
             elif mode == 'morel':
-                prediction[:, -2] = means[:, :, -1].mean(dim=0)
-                ood_idx = logvars[:, :, -1].max(dim=0).values > ood_threshold
+                max_disc = torch.cdist(
+                    torch.transpose(means[:, :, :-1], 0, 1),
+                    torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
+                ood_idx = max_disc > ood_threshold
                 prediction[ood_idx, -2] = -self.max_reward
                 prediction[ood_idx, -1] = 1
 
             elif mode == 'pepe':
-                prediction[:, -2] = predictions[:, :, -2].min(dim=0).values
+                ood_idx = uncertainty[:, :, -1].mean(dim=0).values > ood_threshold
+                prediction[ood_idx, -2] = -self.max_reward
+                prediction[ood_idx, -1] = 1
 
         if with_uncertainty:
             return prediction, uncertainty
