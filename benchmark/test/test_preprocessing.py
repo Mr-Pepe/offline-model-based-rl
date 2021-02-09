@@ -10,7 +10,7 @@ import gym
 import d4rl  # noqa
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_antmaze_medium_preprocessing():
     n_samples = 100
 
@@ -136,7 +136,7 @@ def test_antmaze_umaze_preprocessing():
         preprocessed)
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_cheetah_medium_replay_preprocessing():
     torch.manual_seed(0)
 
@@ -163,7 +163,7 @@ def test_cheetah_medium_replay_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_cheetah_medium_preprocessing():
     torch.manual_seed(0)
 
@@ -190,7 +190,7 @@ def test_cheetah_medium_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_cheetah_expert_preprocessing():
     torch.manual_seed(0)
 
@@ -217,7 +217,7 @@ def test_cheetah_expert_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_cheetah_random_preprocessing():
     torch.manual_seed(0)
 
@@ -244,7 +244,7 @@ def test_cheetah_random_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_cheetah_medium_expert_preprocessing():
     torch.manual_seed(0)
 
@@ -271,7 +271,7 @@ def test_cheetah_medium_expert_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_hopper_random_preprocessing():
     torch.manual_seed(0)
 
@@ -298,7 +298,7 @@ def test_hopper_random_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_hopper_medium_preprocessing():
     torch.manual_seed(0)
 
@@ -325,7 +325,7 @@ def test_hopper_medium_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_hopper_medium_replay_preprocessing():
     torch.manual_seed(0)
 
@@ -352,7 +352,7 @@ def test_hopper_medium_replay_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_hopper_medium_expert_preprocessing():
     torch.manual_seed(0)
 
@@ -379,7 +379,7 @@ def test_hopper_medium_expert_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_hopper_expert_preprocessing():
     torch.manual_seed(0)
 
@@ -406,7 +406,7 @@ def test_hopper_expert_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_walker_random_preprocessing():
     torch.manual_seed(0)
 
@@ -433,7 +433,7 @@ def test_walker_random_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_walker_medium_preprocessing():
     torch.manual_seed(0)
 
@@ -460,7 +460,7 @@ def test_walker_medium_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_walker_expert_preprocessing():
     torch.manual_seed(0)
 
@@ -487,7 +487,7 @@ def test_walker_expert_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_walker_medium_replay_preprocessing():
     torch.manual_seed(0)
 
@@ -514,7 +514,7 @@ def test_walker_medium_replay_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_walker_medium_expert_preprocessing():
     torch.manual_seed(0)
 
@@ -541,7 +541,7 @@ def test_walker_medium_expert_preprocessing():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_cheetah_medium_replay_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -568,7 +568,7 @@ def test_cheetah_medium_replay_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_cheetah_medium_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -595,7 +595,7 @@ def test_cheetah_medium_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_cheetah_expert_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -622,7 +622,7 @@ def test_cheetah_expert_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_cheetah_random_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -649,7 +649,7 @@ def test_cheetah_random_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_cheetah_medium_expert_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -676,7 +676,7 @@ def test_cheetah_medium_expert_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_hopper_random_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -703,7 +703,7 @@ def test_hopper_random_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_hopper_medium_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -730,7 +730,7 @@ def test_hopper_medium_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_hopper_medium_replay_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -757,7 +757,7 @@ def test_hopper_medium_replay_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_hopper_medium_expert_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -784,7 +784,7 @@ def test_hopper_medium_expert_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_hopper_expert_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -811,7 +811,7 @@ def test_hopper_expert_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_walker_random_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -838,7 +838,7 @@ def test_walker_random_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_walker_medium_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -865,7 +865,7 @@ def test_walker_medium_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_walker_expert_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -892,7 +892,7 @@ def test_walker_expert_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_walker_medium_replay_preprocessing_v1():
     torch.manual_seed(0)
 
@@ -919,7 +919,7 @@ def test_walker_medium_replay_preprocessing_v1():
     assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
 
 
-@pytest.mark.medium
+@pytest.mark.slow
 def test_walker_medium_expert_preprocessing_v1():
     torch.manual_seed(0)
 
