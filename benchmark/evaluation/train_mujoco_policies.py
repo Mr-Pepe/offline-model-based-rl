@@ -33,7 +33,6 @@ if __name__ == '__main__':
     parser.add_argument('--ood_threshold', type=float, default=0.5)
     parser.add_argument('--start_seed', type=int, default=0)
     parser.add_argument('--rollout_length', type=int, default=1)
-    parser.add_argument('--augment_loss', type=str2bool, default=False)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
@@ -43,12 +42,7 @@ if __name__ == '__main__':
     if args.device != '':
         device = args.device
 
-    pretrained_model_name = args.env_name
-
-    if args.augment_loss:
-        pretrained_model_name += '-aug-loss'
-
-    pretrained_model_name += '-model.pt'
+    pretrained_model_name = args.env_name + '-model.pt'
 
     # None values must be filled for tuning and final training
     config = dict(
@@ -136,8 +130,14 @@ if __name__ == '__main__':
             exp_name = args.env_name+'-' + \
                 config['mode']+'-' + str(config['max_rollout_length'])+'steps'
 
-            if args.augment_loss:
-                exp_name += '-aug-loss'
+            if config['mode'] == 'mopo':
+                exp_name += '-' + str(config.pessimism) + 'pessimism'
+
+            if config['mode'] == 'morel':
+                exp_name += '-' + str(config.ood_threshold) + 'threshold'
+
+            if config['mode'] == 'pepe':
+                exp_name += '-' + str(config.ood_threshold) + 'threshold'
 
             config.update(
                 epochs=args.epochs,
