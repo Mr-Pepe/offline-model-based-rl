@@ -131,13 +131,13 @@ if __name__ == '__main__':
                 config['mode']+'-' + str(config['max_rollout_length'])+'steps'
 
             if config['mode'] == 'mopo':
-                exp_name += '-' + str(config.pessimism) + 'pessimism'
+                exp_name += '-' + str(config['model_pessimism']) + 'pessimism'
 
             if config['mode'] == 'morel':
-                exp_name += '-' + str(config.ood_threshold) + 'threshold'
+                exp_name += '-' + str(config['ood_threshold']) + 'threshold'
 
             if config['mode'] == 'pepe':
-                exp_name += '-' + str(config.ood_threshold) + 'threshold'
+                exp_name += '-' + str(config['ood_threshold']) + 'threshold'
 
             config.update(
                 epochs=args.epochs,
