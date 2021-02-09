@@ -96,7 +96,7 @@ class EnvironmentModel(nn.Module):
         pred_obs_deltas, pred_rewards = self.layers(obs_act)
 
         pred_next_obs = pred_obs_deltas[:, :, :self.obs_dim] + \
-            obs_act[:, :self.obs_dim]
+            raw_obs_act[:, :self.obs_dim]
 
         means = torch.cat((pred_next_obs,
                            pred_rewards[:, :, 0].view((self.n_networks, -1, 1))),
@@ -124,10 +124,6 @@ class EnvironmentModel(nn.Module):
             std = torch.exp(0.5*logvars)
 
             predictions = torch.normal(means, std)
-
-        if self.pre_fn:
-            predictions = self.pre_fn(predictions, reverse=True)
-            means = self.pre_fn(means, reverse=True)
 
         return predictions, \
             means, \

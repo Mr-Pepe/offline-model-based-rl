@@ -219,9 +219,8 @@ def preprocess_hopper_medium(obs_act):
     return obs_act
 
 
-def preprocess_hopper_medium_replay(obs_act, reverse=False, only_std=False):
-    if not reverse:
-        obs_act = obs_act.detach().clone()
+def preprocess_hopper_medium_replay(obs_act):
+    obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.1503,  0.0089, -0.4596, -0.1805,  0.2150,  1.9202, -0.3828,  0.0643,
                             -0.8867, -0.0255, -0.0799,  0.0293,  0.2271, -0.0550],
@@ -234,13 +233,8 @@ def preprocess_hopper_medium_replay(obs_act, reverse=False, only_std=False):
     # This allows to preprocess an observation without action
     length = obs_act.shape[-1]
 
-    if reverse:
-        obs_act *= std[:length]
-        if not only_std:
-            obs_act += mean[:length]
-    else:
-        obs_act -= mean[:length]
-        obs_act /= std[:length]
+    obs_act -= mean[:length]
+    obs_act /= std[:length]
 
     return obs_act
 
