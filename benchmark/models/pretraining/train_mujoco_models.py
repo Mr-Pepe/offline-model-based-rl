@@ -40,6 +40,7 @@ if __name__ == '__main__':
     parser.add_argument('--obs_bounds_trainable', type=str2bool, default=True)
     parser.add_argument('--r_bounds_trainable', type=str2bool, default=True)
     parser.add_argument('--patience', type=int, default=30)
+    parser.add_argument('--n_hidden', type=int, default=200)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
 
@@ -74,7 +75,7 @@ if __name__ == '__main__':
         "debug": False,
         "no_reward": False,
         "use_batch_norm": False,
-        "n_hidden": 200,
+        "n_hidden": args.n_hidden,
         "augment_loss": args.augment_loss,
         "lr": None,
         "batch_size": None,
