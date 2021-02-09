@@ -2,7 +2,7 @@ import torch
 
 
 def deterministic_loss(x, y, model, i_network=-1):
-    y_pred, _, _, _, _ = model(x)
+    y_pred, _, _, _, _, _ = model(x)
 
     if i_network == -1:
         return torch.square(y_pred - y.unsqueeze(0)).mean()
@@ -12,7 +12,7 @@ def deterministic_loss(x, y, model, i_network=-1):
 
 def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, no_reward=False,
                        only_var_loss=False):
-    _, mean, logvar, max_logvar, min_logvar = model(x)
+    _, mean, logvar, max_logvar, min_logvar, uncertainty = model(x)
 
     if no_reward:
         x = x[:, :-1]

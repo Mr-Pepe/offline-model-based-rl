@@ -51,13 +51,31 @@ class MultiHeadMlp(nn.Module):
                                non_linearity='linear')
         )
 
+        self.uncertainty_layers = nn.Sequential(
+            EnsembleDenseLayer(obs_dim + act_dim,
+                               64,
+                               n_networks),
+            EnsembleDenseLayer(64,
+                               64,
+                               n_networks),
+            EnsembleDenseLayer(64,
+                               64,
+                               n_networks),
+            EnsembleDenseLayer(64,
+                               1,
+                               n_networks,
+                               non_linearity='linear'),
+            nn.Sigmoid()
+        )
+
     def forward(self, x):
         stacked_x = torch.stack(self.n_networks * [x])
 
         obs = self.obs_layers(stacked_x)
         reward = self.reward_layers(stacked_x)
+        uncertainty = self.uncertainty_layers(stacked_x)
 
-        return obs, reward
+        return obs, reward, uncertainty
 
 
 class BatchNorm(nn.Module):

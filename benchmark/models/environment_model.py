@@ -93,7 +93,7 @@ class EnvironmentModel(nn.Module):
         else:
             obs_act = raw_obs_act.detach().clone()
 
-        pred_obs_deltas, pred_rewards = self.layers(obs_act)
+        pred_obs_deltas, pred_rewards, uncertainty = self.layers(obs_act)
 
         pred_next_obs = pred_obs_deltas[:, :, :self.obs_dim] + \
             raw_obs_act[:, :self.obs_dim]
@@ -106,6 +106,7 @@ class EnvironmentModel(nn.Module):
 
             predictions = means
             logvars = 0
+            uncertainty = torch.zeros_like(uncertainty)
 
         else:
             next_obs_logvars = pred_obs_deltas[:, :, self.obs_dim:]
@@ -129,10 +130,11 @@ class EnvironmentModel(nn.Module):
             means, \
             logvars, \
             self.max_logvar, \
-            self.min_logvar
+            self.min_logvar, \
+            uncertainty
 
     def get_prediction(self, raw_obs_act, i_network=-1,
-                       pessimism=0, mode='mopo', ood_threshold=10000):
+                       pessimism=0, mode='mopo', ood_threshold=10000, with_uncertainty=False):
 
         device = next(self.layers.parameters()).device
 
@@ -144,7 +146,7 @@ class EnvironmentModel(nn.Module):
         self.check_prediction_arguments(mode, pessimism)
 
         with torch.no_grad():
-            predictions, means, logvars, _, _ = \
+            predictions, means, logvars, _, _, uncertainty = \
                 self.forward(raw_obs_act)
 
         pred_next_obs = predictions[:, :, :-1]
@@ -177,6 +179,7 @@ class EnvironmentModel(nn.Module):
 
         predictions = torch.cat((pred_next_obs, pred_rewards, dones), dim=2)
         prediction = predictions[i_network]
+        uncertainty = uncertainty.max(dim=0).values
 
         if pessimism != 0:
 
@@ -192,7 +195,10 @@ class EnvironmentModel(nn.Module):
             elif mode == 'pepe':
                 prediction[:, -2] = predictions[:, :, -2].min(dim=0).values
 
-        return prediction
+        if with_uncertainty:
+            return prediction, uncertainty
+        else:
+            return prediction
 
     def check_device_and_shape(self, x, device):
         x = x.to(device)
