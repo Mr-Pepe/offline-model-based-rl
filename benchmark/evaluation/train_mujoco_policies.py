@@ -33,6 +33,7 @@ if __name__ == '__main__':
     parser.add_argument('--ood_threshold', type=float, default=0.5)
     parser.add_argument('--start_seed', type=int, default=0)
     parser.add_argument('--rollout_length', type=int, default=1)
+    parser.add_argument('--n_rollouts', type=int, default=100)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
@@ -104,7 +105,7 @@ if __name__ == '__main__':
                             pi_lr=3e-4,
                             q_lr=3e-4,
                             ),
-            rollouts_per_step=100,
+            rollouts_per_step=args.n_rollouts,
             max_rollout_length=args.rollout_length,
             model_pessimism=args.pessimism,
             ood_threshold=args.ood_threshold,
