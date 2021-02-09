@@ -195,7 +195,7 @@ class EnvironmentModel(nn.Module):
                 prediction[ood_idx, -1] = 1
 
             elif mode == 'pepe':
-                ood_idx = uncertainty[:, :, -1].mean(dim=0).values > ood_threshold
+                ood_idx = uncertainty[:, :, -1].mean(dim=0) > ood_threshold
                 prediction[ood_idx, -2] = -self.max_reward
                 prediction[ood_idx, -1] = 1
 
