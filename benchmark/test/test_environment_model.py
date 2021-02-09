@@ -271,6 +271,9 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
                 axes[1].plot(
                     x_true, uncertainty[i_network].detach().cpu().numpy(), color=c)
 
+            axes[1].plot(x_true, uncertainty.mean(
+                dim=0).detach().cpu().numpy(), color='black')
+
             plt.draw()
             plt.pause(0.001)
 

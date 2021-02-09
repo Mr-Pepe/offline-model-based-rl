@@ -318,7 +318,7 @@ class EnvironmentModel(nn.Module):
                             self.min_obs_act += (x.min(dim=0).values -
                                                  self.min_obs_act)*0.001
 
-                        for _ in range(20):
+                        for _ in range(1):
                             aug_x = torch.rand_like(x)
 
                             aug_x *= (self.max_obs_act -
@@ -326,10 +326,10 @@ class EnvironmentModel(nn.Module):
                             aug_x += self.min_obs_act - \
                                 (self.max_obs_act - self.min_obs_act)*0.5
 
-                            loss -= 0.001*probabilistic_loss(aug_x,
-                                                             aug_x,
-                                                             self,
-                                                             only_uncertainty=True)
+                            loss -= probabilistic_loss(aug_x,
+                                                       aug_x,
+                                                       self,
+                                                       only_uncertainty=True)
 
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)
