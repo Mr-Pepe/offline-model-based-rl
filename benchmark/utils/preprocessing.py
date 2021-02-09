@@ -354,8 +354,9 @@ def preprocess_walker_expert(obs_act):
     return obs_act
 
 
-def preprocess_walker_medium_replay(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_walker_medium_replay(obs_act, reverse=False, only_std=False):
+    if not reverse:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.1747,  0.0508, -0.2330, -0.0532,  0.5123, -0.1224, -0.2795,  0.2216,
                             0.7779, -0.2434, -0.0226, -0.3072, -0.4010,  0.0151, -0.3755, -0.3263,
@@ -370,8 +371,13 @@ def preprocess_walker_medium_replay(obs_act):
     # This allows to preprocess an observation without action
     length = obs_act.shape[-1]
 
-    obs_act -= mean[:length]
-    obs_act /= std[:length]
+    if reverse:
+        obs_act *= std[:length]
+        if not only_std:
+            obs_act += mean[:length]
+    else:
+        obs_act -= mean[:length]
+        obs_act /= std[:length]
 
     return obs_act
 
