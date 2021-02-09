@@ -129,7 +129,8 @@ if __name__ == '__main__':
 
         for seed in range(args.start_seed, args.start_seed+args.seeds):
             exp_name = args.env_name+'-' + \
-                config['mode']+'-' + str(config['max_rollout_length'])+'steps'
+                config['mode'] + '-' + str(config['rollouts_per_step']) + \
+                'rollouts' + '-' + str(config['max_rollout_length'])+'steps'
 
             if config['mode'] == 'mopo':
                 exp_name += '-' + str(config['model_pessimism']) + 'pessimism'
