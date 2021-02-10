@@ -34,6 +34,7 @@ if __name__ == '__main__':
     parser.add_argument('--start_seed', type=int, default=0)
     parser.add_argument('--rollout_length', type=int, default=1)
     parser.add_argument('--n_rollouts', type=int, default=100)
+    parser.add_argument('--n_hidden', type=int, default=128)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
@@ -100,7 +101,7 @@ if __name__ == '__main__':
         config.update(
             steps_per_epoch=4000,
             sac_kwargs=dict(batch_size=256,
-                            agent_hidden=128,
+                            agent_hidden=args.n_hidden,
                             gamma=0.99,
                             pi_lr=3e-4,
                             q_lr=3e-4,
