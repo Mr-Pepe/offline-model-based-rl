@@ -26,6 +26,7 @@ class ReplayBuffer:
         self.val_idxs = []
 
         self.possible_idxs = None
+        self.has_changed = False
 
         self.obs_dim = obs_dim
         self.act_dim = act_dim
@@ -39,6 +40,8 @@ class ReplayBuffer:
         self.done_buf[self.ptr] = done
         self.ptr = (self.ptr+1) % self.max_size
         self.size = min(self.size+1, self.max_size)
+
+        self.has_changed = True
 
     def store_batch(self, obs, act, rew, next_obs, done):
         remaining_batch_size = len(obs)
@@ -85,8 +88,10 @@ class ReplayBuffer:
         self.ptr += remaining_batch_size
         self.size = min(self.size+remaining_batch_size, self.max_size)
 
+        self.has_changed = True
+
     def sample_batch(self, batch_size=32, non_terminals_only=False):
-        if self.possible_idxs is not None:
+        if self.possible_idxs is not None and not self.has_changed:
             possible_idxs = self.possible_idxs
         else:
             if non_terminals_only and self.done_buf.sum() < self.size:
@@ -94,6 +99,9 @@ class ReplayBuffer:
                     (self.done_buf == 0), as_tuple=False)
             else:
                 possible_idxs = torch.arange(self.size)
+
+            self.possible_idxs = possible_idxs
+            self.has_changed = False
 
         idxs = possible_idxs[torch.randint(
             0, possible_idxs.numel(), (batch_size,))].flatten()
