@@ -181,7 +181,7 @@ if __name__ == '__main__':
                 config.update(
                     rollouts_per_step=tune.randint(1, 100),
                     max_rollout_length=tune.randint(1, 50),
-                    ood_threshold=tune.grid_search(
+                    ood_threshold=tune.choice(
                         [mean_value + x*std_value for x in np.linspace(0, (max_value-mean_value)/std_value, 5)]),
                     model_pessimism=0
                 )
@@ -216,7 +216,7 @@ if __name__ == '__main__':
             '-tuning-lvl-'+str(args.level),
             scheduler=scheduler,
             search_alg=search_alg,
-            num_samples=5,
+            num_samples=30,
             config=config,
             resources_per_trial={"gpu": 0.5}
         )
