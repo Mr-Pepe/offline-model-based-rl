@@ -1,3 +1,4 @@
+from benchmark.utils.modes import ALEATORIC_PARTITIONING, EPISTEMIC_PARTITIONING, EXPLICIT_PARTITIONING, MODES, ALEATORIC_PENALTY
 import os
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
@@ -134,7 +135,8 @@ class EnvironmentModel(nn.Module):
             uncertainty
 
     def get_prediction(self, raw_obs_act, i_network=-1,
-                       pessimism=0, mode='mopo', ood_threshold=10000, with_uncertainty=False):
+                       pessimism=0, mode=ALEATORIC_PENALTY, ood_threshold=10000,
+                       with_uncertainty=False):
 
         device = next(self.layers.parameters()).device
 
@@ -182,11 +184,11 @@ class EnvironmentModel(nn.Module):
 
         if pessimism != 0:
 
-            if mode == 'mopo':
+            if mode == ALEATORIC_PENALTY:
                 prediction[:, -2] = means[:, :, -1].mean(dim=0) - pessimism * \
                     torch.exp(logvars[:, :, -1]).max(dim=0).values.to(device)
 
-            elif mode == 'morel':
+            elif mode == EPISTEMIC_PARTITIONING:
                 max_disc = torch.cdist(
                     torch.transpose(means[:, :, :-1], 0, 1),
                     torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
@@ -194,7 +196,7 @@ class EnvironmentModel(nn.Module):
                 prediction[ood_idx, -2] = -self.max_reward
                 prediction[ood_idx, -1] = 1
 
-            elif mode == 'pepe':
+            elif mode == EXPLICIT_PARTITIONING:
                 ood_idx = uncertainty[:, :, -1].mean(dim=0) > ood_threshold
                 prediction[ood_idx, -2] = -self.max_reward
                 prediction[ood_idx, -1] = 1
@@ -417,11 +419,11 @@ class EnvironmentModel(nn.Module):
         return avg_val_losses, batches_trained
 
     def check_prediction_arguments(self, mode, pessimism):
-        if not (mode == 'mopo' or mode == 'morel' or mode == 'pepe'):
+        if mode not in MODES:
             raise ValueError(
                 "Unknown mode: {}".format(mode))
 
-        if pessimism != 0 and mode == 'mopo' and \
+        if pessimism != 0 and (mode == ALEATORIC_PENALTY or mode == ALEATORIC_PARTITIONING) and \
                 self.type == 'deterministic':
             raise ValueError(
-                "Can not use MOPO with deterministic ensemble.")
+                "Can not use aleatoric methods with deterministic ensemble.")

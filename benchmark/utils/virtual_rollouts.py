@@ -1,10 +1,11 @@
+from benchmark.utils.modes import ALEATORIC_PENALTY
 import torch
 
 
 def generate_virtual_rollouts(model, agent, buffer, steps,
                               n_rollouts=1, stop_on_terminal=True, pessimism=0, ood_threshold=-1,
                               random_action=False, prev_obs=None,
-                              max_rollout_length=-1, mode='mopo'):
+                              max_rollout_length=-1, mode=ALEATORIC_PENALTY):
 
     model_is_training = model.training
     agent_is_training = agent.training

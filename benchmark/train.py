@@ -14,6 +14,7 @@ from benchmark.utils.value_from_schedule import \
 from benchmark.utils.virtual_rollouts import generate_virtual_rollouts
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.utils.evaluate_policy import test_agent
+from benchmark.utils.modes import ALEATORIC_PENALTY
 import time
 
 import torch
@@ -47,7 +48,7 @@ class Trainer():
                  pretrained_model_path='',
                  model_pessimism=0,
                  ood_threshold=-1,
-                 mode='mopo',
+                 mode=ALEATORIC_PENALTY,
                  model_max_n_train_batches=-1,
                  rollouts_per_step=10,
                  rollout_schedule=[1, 1, 20, 100],

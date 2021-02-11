@@ -1,3 +1,4 @@
+from benchmark.utils.modes import ALEATORIC_PENALTY
 from benchmark.utils.envs import HALF_CHEETAH_RANDOM, HOPPER_RANDOM
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.replay_buffer import ReplayBuffer
@@ -52,8 +53,8 @@ def test_uncertainty_is_always_zero_for_deterministic_model():
     input = torch.rand(tensor_size)
     output, uncertainty = model.get_prediction(input, with_uncertainty=True)
 
-    np.testing.assert_array_equal(uncertainty.shape, (3, 1))
-    for x in uncertainty:
+    np.testing.assert_array_equal(uncertainty.shape, (1, 3, 1))
+    for x in uncertainty[0]:
         assert x < 1e-10
 
 
@@ -68,8 +69,8 @@ def test_uncertainty_is_between_one_and_zero_for_probabilistic_model():
     input = torch.rand(tensor_size)
     output, uncertainty = model.get_prediction(input, with_uncertainty=True)
 
-    np.testing.assert_array_equal(uncertainty.shape, (3, 1))
-    for x in uncertainty:
+    np.testing.assert_array_equal(uncertainty.shape, (1, 3, 1))
+    for x in uncertainty[0]:
         assert x > 0
         assert x < 1
 
@@ -535,7 +536,7 @@ def test_aleatoric_pessimism_throws_error_if_model_not_probabilistic():
     input = torch.rand(tensor_size)
 
     with pytest.raises(ValueError):
-        model.get_prediction(input, pessimism=1, mode='mopo')
+        model.get_prediction(input, pessimism=1, mode=ALEATORIC_PENALTY)
 
 
 @pytest.mark.fast

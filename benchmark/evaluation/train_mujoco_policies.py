@@ -46,6 +46,9 @@ if __name__ == '__main__':
 
     pretrained_model_name = args.env_name + '-model.pt'
 
+    if args.mode not in MODES:
+        raise ValueError("Unknown mode: {}".format(args.mode))
+
     # None values must be filled for tuning and final training
     config = dict(
         env_name=args.env_name,
@@ -131,15 +134,12 @@ if __name__ == '__main__':
         for seed in range(args.start_seed, args.start_seed+args.seeds):
             exp_name = args.env_name+'-' + \
                 config['mode'] + '-' + str(config['rollouts_per_step']) + \
-                'rollouts' + '-' + str(config['max_rollout_length'])+'steps'
+                'rollouts' + '-' + str(config['max_rollout_length']) + 'steps'
 
-            if config['mode'] == 'mopo':
+            if config['mode'] in PENALTY_MODES:
                 exp_name += '-' + str(config['model_pessimism']) + 'pessimism'
 
-            if config['mode'] == 'morel':
-                exp_name += '-' + str(config['ood_threshold']) + 'threshold'
-
-            if config['mode'] == 'pepe':
+            if config['mode'] in PARTITIONING_MODES:
                 exp_name += '-' + str(config['ood_threshold']) + 'threshold'
 
             config.update(
