@@ -1,4 +1,4 @@
-from benchmark.utils.modes import ALEATORIC_PARTITIONING, EPISTEMIC_PARTITIONING, EXPLICIT_PARTITIONING, MODES, ALEATORIC_PENALTY
+from benchmark.utils.modes import ALEATORIC_PARTITIONING, EPISTEMIC_PARTITIONING, EPISTEMIC_PENALTY, EXPLICIT_PARTITIONING, EXPLICIT_PENALTY, MODES, ALEATORIC_PENALTY, PARTITIONING_MODES, PENALTY_MODES
 import os
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
@@ -135,8 +135,8 @@ class EnvironmentModel(nn.Module):
             uncertainty
 
     def get_prediction(self, raw_obs_act, i_network=-1,
-                       pessimism=0, mode=ALEATORIC_PENALTY, ood_threshold=10000,
-                       with_uncertainty=False):
+                       pessimism=0, mode='', ood_threshold=10000,
+                       with_uncertainty=False, debug=False):
 
         device = next(self.layers.parameters()).device
 
@@ -145,10 +145,8 @@ class EnvironmentModel(nn.Module):
 
         self.eval()
 
-        self.check_prediction_arguments(mode, pessimism)
-
         with torch.no_grad():
-            predictions, means, logvars, _, _, uncertainty = \
+            predictions, means, logvars, _, _, explicit_uncertainty = \
                 self.forward(raw_obs_act)
 
         pred_next_obs = predictions[:, :, :-1]
@@ -182,27 +180,44 @@ class EnvironmentModel(nn.Module):
         predictions = torch.cat((pred_next_obs, pred_rewards, dones), dim=2)
         prediction = predictions[i_network]
 
-        if pessimism != 0:
+        if mode != '':
 
-            if mode == ALEATORIC_PENALTY:
-                prediction[:, -2] = means[:, :, -1].mean(dim=0) - pessimism * \
-                    torch.exp(logvars[:, :, -1]).max(dim=0).values.to(device)
+            self.check_prediction_arguments(mode, pessimism)
 
-            elif mode == EPISTEMIC_PARTITIONING:
-                max_disc = torch.cdist(
-                    torch.transpose(means[:, :, :-1], 0, 1),
-                    torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
-                ood_idx = max_disc > ood_threshold
+            epistemic_uncertainty = torch.cdist(
+                torch.transpose(means[:, :, :-1], 0, 1),
+                torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
+
+            aleatoric_uncertainty = torch.exp(
+                logvars[:, :, :-1]).max(dim=0).values.max(dim=1).values.to(device)
+
+            explicit_uncertainty = explicit_uncertainty[:, :, -1].mean(dim=0)
+
+            if mode in PENALTY_MODES:
+                if mode == ALEATORIC_PENALTY:
+                    uncertainty = aleatoric_uncertainty
+                elif mode == EPISTEMIC_PENALTY:
+                    uncertainty = epistemic_uncertainty
+                elif mode == EXPLICIT_PENALTY:
+                    uncertainty = explicit_uncertainty
+
+                prediction[:, -2] = means[:, :, -1].mean(dim=0) - pessimism * uncertainty
+
+            elif mode in PARTITIONING_MODES:
+                if mode == ALEATORIC_PARTITIONING:
+                    ood_idx = aleatoric_uncertainty > ood_threshold
+                elif mode == EPISTEMIC_PARTITIONING:
+                    ood_idx = epistemic_uncertainty > ood_threshold
+                elif mode == EXPLICIT_PARTITIONING:
+                    ood_idx = explicit_uncertainty > ood_threshold
+
                 prediction[ood_idx, -2] = -self.max_reward
                 prediction[ood_idx, -1] = 1
 
-            elif mode == EXPLICIT_PARTITIONING:
-                ood_idx = uncertainty[:, :, -1].mean(dim=0) > ood_threshold
-                prediction[ood_idx, -2] = -self.max_reward
-                prediction[ood_idx, -1] = 1
-
+        if debug:
+            return prediction, means, logvars, explicit_uncertainty, epistemic_uncertainty, aleatoric_uncertainty
         if with_uncertainty:
-            return prediction, uncertainty
+            return prediction, explicit_uncertainty
         else:
             return prediction
 

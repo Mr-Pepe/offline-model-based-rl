@@ -582,7 +582,8 @@ def test_get_prediction_from_pessimistic_model():
     torch.random.manual_seed(0)
 
     pessimistic_output = model.get_prediction(input,
-                                              pessimism=1)
+                                              pessimism=1,
+                                              mode=ALEATORIC_PENALTY)
 
     np.testing.assert_array_equal(optimistic_output1,
                                   optimistic_output2)
