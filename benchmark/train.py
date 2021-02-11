@@ -186,8 +186,7 @@ class Trainer():
         self.model_kwargs = model_kwargs
 
         if pretrained_model_path != '':
-            self.env_model = torch.load(pretrained_model_path)
-            self.env_model.to(device)
+            self.env_model = torch.load(pretrained_model_path, map_location=device)
             self.env_model.pre_fn = self.pre_fn
             self.env_model.post_fn = self.post_fn
             if self.rew_fn:
