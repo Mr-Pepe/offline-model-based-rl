@@ -271,6 +271,8 @@ class Trainer():
 
         prev_obs = None
 
+        running_avg = 0
+
         for epoch in range(-self.pretrain_epochs+1, self.epochs + 1):
 
             agent_update_performed = False
@@ -462,7 +464,8 @@ class Trainer():
                 # self.logger.add_to_pytorch_saver({'eval_buffer': eval_buffer})
 
             if tuning:
-                tune.report(avg_test_return=test_return,
+                running_avg += (test_return - running_avg)*0.2
+                tune.report(avg_test_return=running_avg,
                             rollouts_per_step=self.rollouts_per_step,
                             max_rollout_length=self.max_rollout_length)
 
