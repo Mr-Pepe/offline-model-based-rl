@@ -53,8 +53,9 @@ def test_uncertainty_is_always_zero_for_deterministic_model():
     input = torch.rand(tensor_size)
     output, uncertainty = model.get_prediction(input, with_uncertainty=True)
 
-    np.testing.assert_array_equal(uncertainty.shape, (1, 3, 1))
-    for x in uncertainty[0]:
+    assert uncertainty.numel() == 3
+
+    for x in uncertainty:
         assert x < 1e-10
 
 
@@ -69,8 +70,9 @@ def test_uncertainty_is_between_one_and_zero_for_probabilistic_model():
     input = torch.rand(tensor_size)
     output, uncertainty = model.get_prediction(input, with_uncertainty=True)
 
-    np.testing.assert_array_equal(uncertainty.shape, (1, 3, 1))
-    for x in uncertainty[0]:
+    assert uncertainty.numel() == 3
+
+    for x in uncertainty:
         assert x > 0
         assert x < 1
 

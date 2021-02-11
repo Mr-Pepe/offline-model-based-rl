@@ -1,8 +1,9 @@
+from benchmark.utils.modes import ALEATORIC_PENALTY
 from matplotlib import cm
 import numpy as np
 from benchmark.utils.replay_buffer import ReplayBuffer
 from benchmark.user_config import MODELS_DIR
-from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_EXPERT_V1, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_MEDIUM_REPLAY_V1, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_REPLAY, HOPPER_MEDIUM_REPLAY_V1, HOPPER_MEDIUM_V1, HOPPER_RANDOM, WALKER_MEDIUM, WALKER_MEDIUM_REPLAY
+from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_EXPERT_V1, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_MEDIUM_REPLAY_V1, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_EXPERT_V1, HOPPER_MEDIUM_REPLAY, HOPPER_MEDIUM_REPLAY_V1, HOPPER_MEDIUM_V1, HOPPER_RANDOM, WALKER_MEDIUM, WALKER_MEDIUM_REPLAY
 import torch
 import gym
 import d4rl  # noqa
@@ -13,7 +14,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-env_name = WALKER_MEDIUM_REPLAY
+env_name = HOPPER_MEDIUM_REPLAY
 env = gym.make(env_name)
 
 model = torch.load(os.path.join(MODELS_DIR, env_name +
@@ -28,7 +29,8 @@ virtual_buffer = ReplayBuffer(obs_dim, act_dim, size=100000)
 
 steps = 200
 n_rollouts = 50
-mode = 'mopo'
+pessimism = 1
+mode = ALEATORIC_PENALTY
 
 for i_rollout in range(n_rollouts):
     (rollouts, info) = generate_virtual_rollouts(model,
@@ -42,9 +44,11 @@ for i_rollout in range(n_rollouts):
 
     env.reset()
     real_rew = None
-    r_means = None
-    r_logvars = None
-    uncertainties = None
+    means = None
+    logvars = None
+    explicit_uncertainties = None
+    epistemic_uncertainties = None
+    aleatoric_uncertainties = None
 
     for i in range(rollouts['rew'].shape[0]):
         obs = rollouts['obs'][i].cpu()
@@ -52,33 +56,30 @@ for i_rollout in range(n_rollouts):
 
         obs_act = torch.cat((obs, act))
 
-        predictions, means, logvars, _, _, uncertainty = model(obs_act)
-
-        this_r_means = means[:, :, -1]
-        this_r_logvars = logvars[:, :, -1]
-
-        if uncertainties is None:
-            uncertainties = uncertainty
-        else:
-            uncertainties = torch.cat((uncertainties, uncertainty), dim=1)
-
-        if r_means is None:
-            r_means = this_r_means
-        else:
-            r_means = torch.cat((r_means, this_r_means), dim=1)
-
-        if r_logvars is None:
-            r_logvars = this_r_logvars
-        else:
-            r_logvars = torch.cat((r_logvars, this_r_logvars), dim=1)
+        predictions, this_means, this_logvars, this_explicit_uncertainty, \
+            this_epistemic_uncertainty, this_aleatoric_uncertainty = model.get_prediction(
+                obs_act, mode=mode, pessimism=pessimism, debug=True)
 
         env.set_state(
             torch.cat((torch.as_tensor([0]), obs[:env.model.nq-1])), obs[env.model.nq-1:])
         _, r, _, _ = env.step(act.numpy())
 
-        if real_rew is None:
+        if explicit_uncertainties is None:
+            means = this_means
+            logvars = this_logvars
+            explicit_uncertainties = this_explicit_uncertainty
+            epistemic_uncertainties = this_epistemic_uncertainty
+            aleatoric_uncertainties = this_aleatoric_uncertainty
             real_rew = torch.as_tensor(r).unsqueeze(0)
         else:
+            means = torch.cat((means, this_means), dim=1)
+            logvars = torch.cat((logvars, this_logvars), dim=1)
+            explicit_uncertainties = torch.cat(
+                (explicit_uncertainties, this_explicit_uncertainty), dim=1)
+            epistemic_uncertainties = torch.cat(
+                (epistemic_uncertainties, this_epistemic_uncertainty))
+            aleatoric_uncertainties = torch.cat(
+                (aleatoric_uncertainties, this_aleatoric_uncertainty))
             real_rew = torch.cat(
                 (real_rew, torch.as_tensor(r).unsqueeze(0)))
 
@@ -86,10 +87,10 @@ for i_rollout in range(n_rollouts):
         steps,
         ((real_rew - rollouts['rew'].cpu()) < 0).sum().float() / real_rew.numel() * 100))
 
-    r_means = r_means.detach().cpu()
-    r_logvars = r_logvars.detach().cpu()
+    r_means = means[:, :, -1].detach().cpu()
+    r_logvars = logvars[:, :, -1].detach().cpu()
 
-    f, axes = plt.subplots(2, 1)
+    f, axes = plt.subplots(4, 1)
 
     for i in range(r_means.shape[0]):
         axes[0].fill_between(range(r_means.shape[-1]), r_means[i]+torch.exp(
@@ -103,8 +104,19 @@ for i_rollout in range(n_rollouts):
 
     color = cm.rainbow(np.linspace(0, 1, model.n_networks))
     for i_network, c in zip(range(model.n_networks), color):
-        axes[1].plot(uncertainties[i_network].detach().cpu().numpy(), color=c)
+        axes[1].plot(
+            explicit_uncertainties[i_network].detach().cpu().numpy(), color=c)
     axes[1].set_ylim([-0.1, 1.1])
-    axes[1].plot(uncertainties.mean(dim=0).detach().cpu().numpy(), color='black')
+    axes[1].plot(explicit_uncertainties.mean(dim=0).detach().cpu(), color='black')
+    axes[1].set_ylabel("Explicit", fontsize=12)
+
+    axes[2].plot(epistemic_uncertainties.detach().cpu())
+    axes[2].set_ylabel("Epistemic", fontsize=12)
+
+    axes[3].plot(aleatoric_uncertainties.detach().cpu())
+    axes[3].set_ylabel("Aleatoric", fontsize=12)
+
+    axes[3].set_xlabel("Steps", fontsize=12)
+
     plt.tight_layout()
     plt.show()

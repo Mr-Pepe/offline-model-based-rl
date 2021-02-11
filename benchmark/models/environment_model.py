@@ -106,7 +106,7 @@ class EnvironmentModel(nn.Module):
         if self.type == 'deterministic':
 
             predictions = means
-            logvars = 0
+            logvars = torch.zeros((self.n_networks, obs_act.shape[0], obs_act.shape[1]+1))
             uncertainty = torch.zeros_like(uncertainty)
 
         else:
@@ -146,7 +146,7 @@ class EnvironmentModel(nn.Module):
         self.eval()
 
         with torch.no_grad():
-            predictions, means, logvars, _, _, explicit_uncertainty = \
+            predictions, means, logvars, _, _, explicit_uncertainties = \
                 self.forward(raw_obs_act)
 
         pred_next_obs = predictions[:, :, :-1]
@@ -180,18 +180,18 @@ class EnvironmentModel(nn.Module):
         predictions = torch.cat((pred_next_obs, pred_rewards, dones), dim=2)
         prediction = predictions[i_network]
 
+        epistemic_uncertainty = torch.cdist(
+            torch.transpose(means[:, :, :-1], 0, 1),
+            torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
+
+        aleatoric_uncertainty = torch.exp(
+            logvars[:, :, :-1]).max(dim=0).values.max(dim=1).values.to(device)
+
+        explicit_uncertainty = explicit_uncertainties[:, :, -1].mean(dim=0)
+
         if mode != '':
 
             self.check_prediction_arguments(mode, pessimism)
-
-            epistemic_uncertainty = torch.cdist(
-                torch.transpose(means[:, :, :-1], 0, 1),
-                torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
-
-            aleatoric_uncertainty = torch.exp(
-                logvars[:, :, :-1]).max(dim=0).values.max(dim=1).values.to(device)
-
-            explicit_uncertainty = explicit_uncertainty[:, :, -1].mean(dim=0)
 
             if mode in PENALTY_MODES:
                 if mode == ALEATORIC_PENALTY:
@@ -215,7 +215,7 @@ class EnvironmentModel(nn.Module):
                 prediction[ood_idx, -1] = 1
 
         if debug:
-            return prediction, means, logvars, explicit_uncertainty, epistemic_uncertainty, aleatoric_uncertainty
+            return prediction, means, logvars, explicit_uncertainties, epistemic_uncertainty, aleatoric_uncertainty
         if with_uncertainty:
             return prediction, explicit_uncertainty
         else:
