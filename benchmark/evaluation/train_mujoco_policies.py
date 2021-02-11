@@ -201,8 +201,8 @@ if __name__ == '__main__':
             time_attr='training_iteration',
             metric='avg_test_return',
             mode='max',
-            max_t=30,
-            grace_period=10,
+            max_t=10,
+            grace_period=5,
             reduction_factor=3,
             brackets=1)
 
