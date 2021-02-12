@@ -94,6 +94,23 @@ ENV_CATEGORIES = {
     'antmaze_medium': ANTMAZE_MEDIUM_ENVS,
 }
 
+REWARD_SPANS = {
+    HOPPER_MEDIUM: 5.2582
+}
+
+# (max, mean, std)
+ALEATORIC_UNCERTAINTIES = {
+    HOPPER_MEDIUM: (2.497604, 0.165585, 0.403048)
+}
+
+EPISTEMIC_UNCERTAINTIES = {
+    HOPPER_MEDIUM: (7.977843, 0.303133, 0.482348)
+}
+
+EXPLICIT_UNCERTAINTIES = {
+    HOPPER_MEDIUM: (0.388037, 0.000025, 0.001877)
+}
+
 
 def antmaze_umaze_test_env():
     env = gym.make('antmaze-umaze-v0')

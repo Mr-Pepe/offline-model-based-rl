@@ -1,14 +1,14 @@
 import argparse
 import numpy as np
-from benchmark.utils.modes import ALEATORIC_PARTITIONING, ALEATORIC_PENALTY, EPISTEMIC_PARTITIONING, EXPLICIT_PARTITIONING, MODES, PARTITIONING_MODES, PENALTY_MODES
+from benchmark.utils.modes import ALEATORIC_MODES, ALEATORIC_PARTITIONING, ALEATORIC_PENALTY, EPISTEMIC_MODES, EPISTEMIC_PARTITIONING, EXPLICIT_MODES, EXPLICIT_PARTITIONING, MODES, PARTITIONING_MODES, PENALTY_MODES
 from benchmark.utils.run_utils import setup_logger_kwargs
 from ray import tune
 import ray
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
 from ray.tune.suggest.hyperopt import HyperOptSearch
 from benchmark.utils.envs import \
-    HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HOPPER_MEDIUM, \
-    HOPPER_MEDIUM_EXPERT, WALKER_MEDIUM_EXPERT
+    ALEATORIC_UNCERTAINTIES, EPISTEMIC_UNCERTAINTIES, EXPLICIT_UNCERTAINTIES, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HOPPER_MEDIUM, \
+    HOPPER_MEDIUM_EXPERT, REWARD_SPANS, WALKER_MEDIUM_EXPERT
 from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
 from benchmark.utils.str2bool import str2bool
@@ -160,26 +160,7 @@ if __name__ == '__main__':
                                 ),
             )
 
-            if args.mode in PARTITIONING_MODES:
-
-                if args.env_name == HOPPER_MEDIUM:
-
-                    if args.mode == ALEATORIC_PARTITIONING:
-                        max_value = 2.4976
-                        mean_value = 0.1656
-                        std_value = 0.4030
-
-                    if args.mode == EPISTEMIC_PARTITIONING:
-                        max_value = 7.9778
-                        mean_value = 0.3031
-                        std_value = 0.4823
-
-                    if args.mode == EXPLICIT_PARTITIONING:
-                        max_value = 2.4976
-                        mean_value = 0.1656
-                        std_value = 0.4030
-
-                parameters = [
+            parameters = [
                     {
                         "name": "rollouts_per_step",
                         "type": "range",
@@ -193,17 +174,43 @@ if __name__ == '__main__':
                         "bounds": [0, 51],
                         "value_type": "int",
                         "log_scale": False,
-                    },
+                    }]
+
+            if args.mode in ALEATORIC_MODES:
+                max_uncertainty, mean_uncertainty, std_uncertainty = ALEATORIC_UNCERTAINTIES[args.env_name]
+            elif args.mode in EPISTEMIC_MODES:
+                max_uncertainty, mean_uncertainty, std_uncertainty = EPISTEMIC_UNCERTAINTIES[args.env_name]
+            elif args.mode in EXPLICIT_MODES:
+                max_uncertainty, mean_uncertainty, std_uncertainty = EXPLICIT_UNCERTAINTIES[args.env_name]
+
+            if args.mode in PARTITIONING_MODES:
+                parameters += [
                     {
                         "name": "ood_threshold",
                         "type": "range",
-                        "bounds": [mean_value, max_value],
+                        "bounds": [mean_uncertainty, max_uncertainty],
                         "value_type": "float",
                         "log_scale": True,
-                    }, ]
+                    }]
 
                 config.update(
                     model_pessimism=0
+                )
+
+            elif args.mode in PENALTY_MODES:
+                reward_span = REWARD_SPANS[args.env_name]
+
+                parameters += [
+                    {
+                        "name": "model_pessimism",
+                        "type": "range",
+                        "bounds": [0, reward_span/max_uncertainty],
+                        "value_type": "float",
+                        "log_scale": False,
+                    }]
+
+                config.update(
+                    ood_threshold=0
                 )
 
         assert config['sac_kwargs']['batch_size'] is not None
@@ -211,10 +218,6 @@ if __name__ == '__main__':
         assert config['sac_kwargs']['gamma'] is not None
         assert config['sac_kwargs']['pi_lr'] is not None
         assert config['sac_kwargs']['q_lr'] is not None
-        # assert config['rollouts_per_step'] is not None
-        # assert config['max_rollout_length'] is not None
-        assert config['model_pessimism'] is not None
-        # assert config['ood_threshold'] is not None
 
         ray.init()
         scheduler = ASHAScheduler(
