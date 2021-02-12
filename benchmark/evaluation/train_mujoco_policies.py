@@ -30,7 +30,7 @@ if __name__ == '__main__':
                         default=HALF_CHEETAH_MEDIUM_REPLAY)
     parser.add_argument('--level', type=int, default=0)
     parser.add_argument('--mode', type=str, default=ALEATORIC_PENALTY)
-    parser.add_argument('--epochs', type=int, default=200)
+    parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--seeds', type=int, default=1)
     parser.add_argument('--pessimism', type=float, default=1)
     parser.add_argument('--ood_threshold', type=float, default=0.5)
@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
         # Basic config
         config.update(
-            steps_per_epoch=4000,
+            steps_per_epoch=5000,
             sac_kwargs=dict(batch_size=256,
                             agent_hidden=args.n_hidden,
                             gamma=0.99,
