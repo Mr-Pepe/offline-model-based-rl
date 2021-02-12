@@ -466,8 +466,7 @@ class Trainer():
             if tuning:
                 running_avg += (test_return - running_avg)*0.2
                 tune.report(avg_test_return=running_avg,
-                            rollouts_per_step=self.rollouts_per_step,
-                            max_rollout_length=self.max_rollout_length)
+                            test_return=test_return)
 
             test_performances.append([epoch, test_return])
 
