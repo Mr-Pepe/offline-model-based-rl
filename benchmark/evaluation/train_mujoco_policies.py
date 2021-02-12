@@ -12,6 +12,7 @@ from benchmark.utils.envs import \
 from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
 from benchmark.utils.str2bool import str2bool
+from ray.tune.suggest.ax import AxSearch
 import torch
 import os
 
@@ -178,11 +179,30 @@ if __name__ == '__main__':
                         mean_value = 0.1656
                         std_value = 0.4030
 
+                parameters = [
+                    {
+                        "name": "rollouts_per_step",
+                        "type": "range",
+                        "bounds": [1, 101],
+                        "value_type": "int",
+                        "log_scale": False,
+                    },
+                    {
+                        "name": "max_rollout_length",
+                        "type": "range",
+                        "bounds": [0, 51],
+                        "value_type": "int",
+                        "log_scale": False,
+                    },
+                    {
+                        "name": "ood_threshold",
+                        "type": "range",
+                        "bounds": [mean_value, max_value],
+                        "value_type": "float",
+                        "log_scale": True,
+                    }, ]
+
                 config.update(
-                    rollouts_per_step=tune.randint(1, 100),
-                    max_rollout_length=tune.randint(1, 50),
-                    ood_threshold=tune.choice(
-                        [mean_value + x*std_value for x in np.linspace(0, (max_value-mean_value)/std_value, 5)]),
                     model_pessimism=0
                 )
 
@@ -191,10 +211,10 @@ if __name__ == '__main__':
         assert config['sac_kwargs']['gamma'] is not None
         assert config['sac_kwargs']['pi_lr'] is not None
         assert config['sac_kwargs']['q_lr'] is not None
-        assert config['rollouts_per_step'] is not None
-        assert config['max_rollout_length'] is not None
+        # assert config['rollouts_per_step'] is not None
+        # assert config['max_rollout_length'] is not None
         assert config['model_pessimism'] is not None
-        assert config['ood_threshold'] is not None
+        # assert config['ood_threshold'] is not None
 
         ray.init()
         scheduler = ASHAScheduler(
@@ -206,7 +226,8 @@ if __name__ == '__main__':
             reduction_factor=3,
             brackets=1)
 
-        search_alg = HyperOptSearch(
+        search_alg = AxSearch(
+            space=parameters,
             metric='avg_test_return',
             mode='max')
 
