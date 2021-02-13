@@ -292,7 +292,7 @@ class Trainer():
 
                 self.real_replay_buffer.set_curriculum(self.selector)
 
-            print("Epoch {}\tRollout length: {}".format(epoch, rollout_length))
+            print("Epoch {}\tMax rollout length: {}".format(epoch, self.max_rollout_length))
 
             for step_epoch in range(self.steps_per_epoch):
                 actions_this_step = [0 for i in range(len(Actions))]
