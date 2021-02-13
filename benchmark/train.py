@@ -347,7 +347,7 @@ class Trainer():
                     actions_this_step[Actions.TRAIN_MODEL] = 1
                     print('')
 
-                if (step_epoch + 1) % 10 == 0:
+                if (step_epoch + 1) % 10 == 0 and not tuning:
                     print("Epoch {}, step {}/{}".format(epoch,
                                                         step_epoch+1,
                                                         self.steps_per_epoch),
