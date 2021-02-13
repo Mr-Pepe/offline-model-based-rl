@@ -242,6 +242,7 @@ if __name__ == '__main__':
             search_alg=search_alg,
             num_samples=30,
             config=config,
+            max_failures=3,
             resources_per_trial={"gpu": 0.5}
         )
 
