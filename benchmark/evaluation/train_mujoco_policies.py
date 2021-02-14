@@ -8,7 +8,7 @@ from ray.tune.schedulers.async_hyperband import ASHAScheduler
 from ray.tune.suggest.hyperopt import HyperOptSearch
 from benchmark.utils.envs import \
     ALEATORIC_UNCERTAINTIES, EPISTEMIC_UNCERTAINTIES, EXPLICIT_UNCERTAINTIES, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HOPPER_MEDIUM, \
-    HOPPER_MEDIUM_EXPERT, REWARD_SPANS, WALKER_MEDIUM_EXPERT
+    HOPPER_MEDIUM_EXPERT, HYPERPARAMS, REWARD_SPANS, WALKER_MEDIUM_EXPERT
 from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
 from benchmark.utils.str2bool import str2bool
@@ -22,7 +22,29 @@ def training_function(config, tuning=True):
     config["sac_kwargs"].update(
         {"hidden": 4*[config["sac_kwargs"]["agent_hidden"]]})
     trainer = Trainer(**config)
-    trainer.train(tuning=tuning)
+    return trainer.train(tuning=tuning)
+
+
+@ray.remote(num_gpus=0.5)
+def training_wrapper(config, seed):
+    print("hi")
+    exp_name = args.env_name+'-' + \
+        config['mode'] + '-' + str(config['rollouts_per_step']) + \
+        'rollouts' + '-' + str(config['max_rollout_length']) + 'steps'
+
+    if config['mode'] in PENALTY_MODES:
+        exp_name += '-' + str(config['model_pessimism']) + 'pessimism'
+
+    if config['mode'] in PARTITIONING_MODES:
+        exp_name += '-' + str(config['ood_threshold']) + 'threshold'
+
+    config.update(
+        epochs=args.epochs,
+        seed=seed,
+        logger_kwargs=setup_logger_kwargs(exp_name,
+                                          seed=seed),
+    )
+    return training_function(config, tuning=False)
 
 
 if __name__ == '__main__':
@@ -30,6 +52,7 @@ if __name__ == '__main__':
     parser.add_argument('--env_name', type=str,
                         default=HALF_CHEETAH_MEDIUM_REPLAY)
     parser.add_argument('--level', type=int, default=0)
+    parser.add_argument('--tuned_params', type=str2bool, default=True)
     parser.add_argument('--mode', type=str, default=ALEATORIC_PENALTY)
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--seeds', type=int, default=1)
@@ -104,6 +127,21 @@ if __name__ == '__main__':
 
     if args.level == 0:
 
+        if args.tuned_params:
+            if args.mode in PARTITIONING_MODES:
+                (rollouts_per_step, max_rollout_length,
+                 ood_threshold) = HYPERPARAMS[args.mode][args.env_name]
+                model_pessimism = 0
+            elif args.mode in PENALTY_MODES:
+                (rollouts_per_step, max_rollout_length,
+                 model_pessimism) = HYPERPARAMS[args.mode][args.env_name]
+                ood_threshold = 0
+        else:
+            rollouts_per_step = args.n_rollouts,
+            max_rollout_length = args.rollout_length,
+            model_pessimism = args.pessimism,
+            ood_threshold = args.ood_threshold,
+
         # Basic config
         config.update(
             steps_per_epoch=5000,
@@ -113,10 +151,10 @@ if __name__ == '__main__':
                             pi_lr=3e-4,
                             q_lr=3e-4,
                             ),
-            rollouts_per_step=args.n_rollouts,
-            max_rollout_length=args.rollout_length,
-            model_pessimism=args.pessimism,
-            ood_threshold=args.ood_threshold,
+            rollouts_per_step=rollouts_per_step,
+            max_rollout_length=max_rollout_length,
+            model_pessimism=model_pessimism,
+            ood_threshold=ood_threshold,
             pretrained_agent_path=args.pretrained_agent_path
         )
 
@@ -130,24 +168,9 @@ if __name__ == '__main__':
         assert config['model_pessimism'] is not None
         assert config['ood_threshold'] is not None
 
-        for seed in range(args.start_seed, args.start_seed+args.seeds):
-            exp_name = args.env_name+'-' + \
-                config['mode'] + '-' + str(config['rollouts_per_step']) + \
-                'rollouts' + '-' + str(config['max_rollout_length']) + 'steps'
-
-            if config['mode'] in PENALTY_MODES:
-                exp_name += '-' + str(config['model_pessimism']) + 'pessimism'
-
-            if config['mode'] in PARTITIONING_MODES:
-                exp_name += '-' + str(config['ood_threshold']) + 'threshold'
-
-            config.update(
-                epochs=args.epochs,
-                seed=seed,
-                logger_kwargs=setup_logger_kwargs(exp_name,
-                                                  seed=seed),
-            )
-            training_function(config, tuning=False)
+        ray.init()
+        ray.get([training_wrapper.remote(config, seed) for seed in range(
+            args.start_seed, args.start_seed+args.seeds)])
 
     else:
         if args.level == 1:
@@ -162,27 +185,30 @@ if __name__ == '__main__':
             )
 
             parameters = [
-                    {
-                        "name": "rollouts_per_step",
-                        "type": "range",
-                        "bounds": [1, 101],
-                        "value_type": "int",
-                        "log_scale": False,
-                    },
-                    {
-                        "name": "max_rollout_length",
-                        "type": "range",
-                        "bounds": [0, 51],
-                        "value_type": "int",
-                        "log_scale": False,
-                    }]
+                {
+                    "name": "rollouts_per_step",
+                    "type": "range",
+                    "bounds": [1, 101],
+                    "value_type": "int",
+                    "log_scale": False,
+                },
+                {
+                    "name": "max_rollout_length",
+                    "type": "range",
+                    "bounds": [0, 51],
+                    "value_type": "int",
+                    "log_scale": False,
+                }]
 
             if args.mode in ALEATORIC_MODES:
-                max_uncertainty, mean_uncertainty, std_uncertainty = ALEATORIC_UNCERTAINTIES[args.env_name]
+                max_uncertainty, mean_uncertainty, std_uncertainty = ALEATORIC_UNCERTAINTIES[
+                    args.env_name]
             elif args.mode in EPISTEMIC_MODES:
-                max_uncertainty, mean_uncertainty, std_uncertainty = EPISTEMIC_UNCERTAINTIES[args.env_name]
+                max_uncertainty, mean_uncertainty, std_uncertainty = EPISTEMIC_UNCERTAINTIES[
+                    args.env_name]
             elif args.mode in EXPLICIT_MODES:
-                max_uncertainty, mean_uncertainty, std_uncertainty = EXPLICIT_UNCERTAINTIES[args.env_name]
+                max_uncertainty, mean_uncertainty, std_uncertainty = EXPLICIT_UNCERTAINTIES[
+                    args.env_name]
 
             if args.mode in PARTITIONING_MODES:
                 parameters += [
