@@ -13,6 +13,7 @@ from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
 from benchmark.utils.str2bool import str2bool
 from ray.tune.suggest.ax import AxSearch
+from ax.service.ax_client import AxClient
 import torch
 import os
 
@@ -230,6 +231,7 @@ if __name__ == '__main__':
             brackets=1)
 
         search_alg = AxSearch(
+            ax_client=AxClient(enforce_sequential_optimization=False),
             space=parameters,
             metric='avg_test_return',
             mode='max')
