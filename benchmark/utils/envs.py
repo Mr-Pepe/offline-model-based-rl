@@ -133,6 +133,9 @@ HYPERPARAMS = {
     },
     EPISTEMIC_PENALTY: {
         HOPPER_MEDIUM: (39, 41, 0.29138)
+    },
+    EXPLICIT_PENALTY: {
+        HOPPER_MEDIUM: (10, 31, 13.551)
     }
 }
 
