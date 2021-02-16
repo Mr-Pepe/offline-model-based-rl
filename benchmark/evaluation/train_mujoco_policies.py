@@ -25,7 +25,7 @@ def training_function(config, tuning=True):
     return trainer.train(tuning=tuning)
 
 
-@ray.remote(num_gpus=0.5)
+@ray.remote(num_gpus=0.5, max_retries=3)
 def training_wrapper(config, seed):
     print("hi")
     exp_name = args.env_name+'-' + \
