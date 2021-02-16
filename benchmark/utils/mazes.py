@@ -25,7 +25,7 @@ def get_antmaze_umaze_walls(device='cpu', no_outside=False):
 
                 walls.append([minx, maxx, miny, maxy])
 
-    device = 'cuda' if torch.cuda.is_available() and device == 'cuda' else 'cpu'
+    device = 'cpu'
 
     return torch.as_tensor(walls, device=device)
 
@@ -53,7 +53,7 @@ def get_antmaze_medium_walls(device='cpu', no_outside=False):
 
                 walls.append([minx, maxx, miny, maxy])
 
-    device = 'cuda' if torch.cuda.is_available() and device == 'cuda' else 'cpu'
+    device = 'cpu'
 
     return torch.as_tensor(walls, device=device)
 
