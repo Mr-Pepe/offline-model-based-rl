@@ -173,8 +173,8 @@ if __name__ == '__main__':
         assert config['ood_threshold'] is not None
 
         ray.init()
-        ray.get([training_wrapper.remote(config, seed) for seed in range(
-            args.start_seed, args.start_seed+args.seeds)])
+        for seed in range(args.start_seed, args.start_seed+args.seeds):
+            ray.get(training_wrapper.remote(config, seed))
 
     else:
         if args.level == 1:
