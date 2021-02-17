@@ -8,7 +8,7 @@ from ray.tune.schedulers.async_hyperband import ASHAScheduler
 from ray.tune.suggest.hyperopt import HyperOptSearch
 from benchmark.utils.envs import \
     ALEATORIC_UNCERTAINTIES, EPISTEMIC_UNCERTAINTIES, EXPLICIT_UNCERTAINTIES, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HOPPER_MEDIUM, \
-    HOPPER_MEDIUM_EXPERT, HYPERPARAMS, REWARD_SPANS, WALKER_MEDIUM_EXPERT
+    HOPPER_MEDIUM_EXPERT, HYPERPARAMS, REWARD_SPANS, WALKER_ENVS, WALKER_MEDIUM_EXPERT
 from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
 from benchmark.utils.str2bool import str2bool
@@ -157,6 +157,10 @@ if __name__ == '__main__':
             ood_threshold=ood_threshold,
             pretrained_agent_path=args.pretrained_agent_path
         )
+
+        # According to appendix in COMBO paper
+        if args.env_name in WALKER_ENVS:
+            config['sac_kwargs'].update(pi_lr=1e-5, q_lr=1e-4)
 
         assert config['sac_kwargs']['batch_size'] is not None
         assert config['sac_kwargs']['agent_hidden'] is not None
