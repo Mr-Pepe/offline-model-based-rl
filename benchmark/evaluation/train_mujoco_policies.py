@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
         ray.init()
         for seed in range(args.start_seed, args.start_seed+args.seeds):
-            ray.get(training_wrapper.remote(config, seed))
+            training_wrapper.remote(config, seed)
 
     else:
         if args.level == 1:
