@@ -173,8 +173,14 @@ if __name__ == '__main__':
         assert config['ood_threshold'] is not None
 
         ray.init()
+        unfinished_jobs = []
+
         for seed in range(args.start_seed, args.start_seed+args.seeds):
-            training_wrapper.remote(config, seed)
+            job_id = training_wrapper.remote(config, seed)
+            unfinished_jobs.append(job_id)
+
+        while unfinished_jobs:
+            _, unfinished_jobs = ray.wait(unfinished_jobs)
 
     else:
         if args.level == 1:
