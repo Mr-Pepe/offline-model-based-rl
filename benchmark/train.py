@@ -244,7 +244,7 @@ class Trainer():
         self.save_freq = save_freq
         self.render = render
 
-    def train(self, tuning=False):
+    def train(self, tuning=False, silent=False):
 
         start_time = time.time()
         o, ep_ret, ep_len = self.env.reset(), 0, 0
@@ -292,7 +292,8 @@ class Trainer():
 
                 self.real_replay_buffer.set_curriculum(self.selector)
 
-            print("Epoch {}\tMax rollout length: {}".format(epoch, self.max_rollout_length))
+            if not silent:
+                print("Epoch {}\tMax rollout length: {}".format(epoch, self.max_rollout_length))
 
             for step_epoch in range(self.steps_per_epoch):
                 actions_this_step = [0 for i in range(len(Actions))]
@@ -347,7 +348,7 @@ class Trainer():
                     actions_this_step[Actions.TRAIN_MODEL] = 1
                     print('')
 
-                if (step_epoch + 1) % 10 == 0 and not tuning:
+                if (step_epoch + 1) % 10 == 0 and not tuning and not silent:
                     print("Epoch {}, step {}/{}".format(epoch,
                                                         step_epoch+1,
                                                         self.steps_per_epoch),

@@ -22,7 +22,7 @@ def training_function(config, tuning=True):
     config["sac_kwargs"].update(
         {"hidden": 4*[config["sac_kwargs"]["agent_hidden"]]})
     trainer = Trainer(**config)
-    return trainer.train(tuning=tuning)
+    return trainer.train(tuning=tuning, silent=True)
 
 
 @ray.remote(num_gpus=0.5, max_retries=3)
