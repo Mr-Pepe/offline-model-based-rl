@@ -1,4 +1,4 @@
-from benchmark.utils.modes import MODES
+from benchmark.utils.modes import MODES, PENALTY_MODES
 from benchmark.utils.envs import HALF_CHEETAH_ENVS, HOPPER_ENVS, WALKER_ENVS
 import os
 import os.path as osp
@@ -85,7 +85,14 @@ for exp_name in exp_names:
     if last_env_name != env_name:
         print('')
 
-    print("{} {}: \t{:.2f} +- {:.2f}".format(env_name,
-                                             mode, mean_performance, std_performance))
+    tab = '\t'
+    if mode in PENALTY_MODES:
+        tab += '\t'
+
+    print("{} {}:  {}{:.2f} +- {:.2f}".format(env_name,
+                                             mode,
+                                             tab,
+                                             mean_performance,
+                                             std_performance))
 
     last_env_name = env_name
