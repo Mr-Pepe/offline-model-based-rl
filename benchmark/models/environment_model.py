@@ -181,9 +181,14 @@ class EnvironmentModel(nn.Module):
         predictions = torch.cat((pred_next_obs, pred_rewards, dones), dim=2)
         prediction = predictions[i_network]
 
+        if self.pre_fn is not None:
+            norm_means = self.pre_fn(means[:, :, :-1], detach=False)
+        else:
+            norm_means = means[:, :, :-1]
+
         epistemic_uncertainty = torch.cdist(
-            torch.transpose(means[:, :, :-1], 0, 1),
-            torch.transpose(means[:, :, :-1], 0, 1)).max(-1).values.max(-1).values
+            torch.transpose(norm_means, 0, 1),
+            torch.transpose(norm_means, 0, 1)).max(-1).values.max(-1).values
 
         aleatoric_uncertainty = torch.exp(
             logvars[:, :, :-1]).max(dim=0).values.max(dim=1).values.to(device)
