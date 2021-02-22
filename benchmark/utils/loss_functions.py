@@ -11,8 +11,12 @@ def deterministic_loss(x, y, model, i_network=-1):
 
 
 def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, no_reward=False,
-                       only_uncertainty=False):
+                       only_uncertainty=False, pre_fn=None):
     _, mean, logvar, max_logvar, min_logvar, uncertainty = model(x)
+
+    if pre_fn is not None:
+        mean[:, :, :-1] = pre_fn(mean[:, :, :-1], detach=False)
+        y = pre_fn(y)
 
     if no_reward:
         x = x[:, :-1]

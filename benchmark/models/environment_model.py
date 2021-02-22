@@ -7,7 +7,7 @@ from torch.optim.adamw import AdamW
 from benchmark.models.multi_head_mlp import MultiHeadMlp
 import torch.nn as nn
 import torch
-from torch.nn.functional import softplus
+from torch.nn.functional import normalize, softplus
 from torch.nn.parameter import Parameter
 from ray import tune
 
@@ -106,7 +106,8 @@ class EnvironmentModel(nn.Module):
         if self.type == 'deterministic':
 
             predictions = means
-            logvars = torch.zeros((self.n_networks, obs_act.shape[0], obs_act.shape[1]+1))
+            logvars = torch.zeros(
+                (self.n_networks, obs_act.shape[0], obs_act.shape[1]+1))
             uncertainty = torch.zeros_like(uncertainty)
 
         else:
@@ -201,7 +202,8 @@ class EnvironmentModel(nn.Module):
                 elif mode == EXPLICIT_PENALTY:
                     uncertainty = explicit_uncertainty
 
-                prediction[:, -2] = means[:, :, -1].mean(dim=0) - pessimism * uncertainty
+                prediction[:, -2] = means[:, :, -
+                                          1].mean(dim=0) - pessimism * uncertainty
 
             elif mode in PARTITIONING_MODES:
                 if mode == ALEATORIC_PARTITIONING:
@@ -233,7 +235,7 @@ class EnvironmentModel(nn.Module):
                              val_split=0.2, patience=20, patience_value=0,
                              debug=False, max_n_train_batches=-1, lr_schedule=None, no_reward=False,
                              augmentation_fn=None, max_n_train_epochs=-1, checkpoint_dir=None,
-                             tuning=False, **_):
+                             tuning=False, in_normalized_space=False, **_):
 
         if type(patience) is list:
             if patience_value > 0 and len(patience) > patience_value:
@@ -324,8 +326,12 @@ class EnvironmentModel(nn.Module):
                     if self.type == 'deterministic':
                         loss = deterministic_loss(x, y, self)
                     else:
-                        loss = probabilistic_loss(
-                            x, y, self, debug=debug, no_reward=no_reward)
+                        if in_normalized_space:
+                            loss = probabilistic_loss(
+                                x, y, self, debug=debug, no_reward=no_reward, pre_fn=self.pre_fn)
+                        else:
+                            loss = probabilistic_loss(
+                                x, y, self, debug=debug, no_reward=no_reward)
 
                         if self.max_obs_act is None:
                             self.max_obs_act = x.max(dim=0).values
@@ -388,13 +394,22 @@ class EnvironmentModel(nn.Module):
                             self,
                             i_network).item()
                     else:
-                        avg_val_losses[i_network] += probabilistic_loss(
-                            x,
-                            y,
-                            self,
-                            i_network,
-                            only_mse=True,
-                            no_reward=no_reward).item()
+                        if in_normalized_space:
+                            avg_val_losses[i_network] += probabilistic_loss(
+                                x,
+                                y,
+                                self,
+                                i_network,
+                                only_mse=True,
+                                no_reward=no_reward,
+                                pre_fn=self.pre_fn).item()
+                        else:
+                            avg_val_losses[i_network] += probabilistic_loss(
+                                x,
+                                y,
+                                self,
+                                i_network,
+                                only_mse=True).item()
 
                 avg_val_losses[i_network] /= n_val_batches
 

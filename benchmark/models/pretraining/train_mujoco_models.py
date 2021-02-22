@@ -34,7 +34,7 @@ def training_function(config, data, save_path=None, tuning=True):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--env_name', type=str,
-                        default=HALF_CHEETAH_MEDIUM_REPLAY)
+                        default=WALKER_MEDIUM_REPLAY)
     parser.add_argument('--level', type=int, default=0)
     parser.add_argument('--patience', type=int, default=30)
     parser.add_argument('--n_hidden', type=int, default=200)
@@ -75,6 +75,7 @@ if __name__ == '__main__':
         "n_hidden": args.n_hidden,
         "lr": None,
         "batch_size": None,
+        "in_normalized_space": True,
     }
 
     if args.level == 0:
