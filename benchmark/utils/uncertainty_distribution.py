@@ -48,7 +48,7 @@ def get_uncertainty_distribution(env_name, mode):
 
     explicit_uncertainties = explicit_uncertainties.mean(dim=0)
 
-    rew_span = buffer.rew_buf.max() - buffer.rew_buf.min()
+    rew_span = (buffer.rew_buf.max() - buffer.rew_buf.min()).item()
 
     print("\nEnvironment: {}\n".format(env_name))
     print("Reward span: {}".format(rew_span))
@@ -57,11 +57,11 @@ def get_uncertainty_distribution(env_name, mode):
     print("Explicit  max, mean, std: ({:.6f}, {:.6f}, {:.6f})".format(explicit_uncertainties.max(), explicit_uncertainties.mean(), explicit_uncertainties.std()))
 
     if mode in ALEATORIC_MODES:
-        return rew_span, aleatoric_uncertainties.max(), aleatoric_uncertainties.mean(), aleatoric_uncertainties.std()
+        return rew_span, aleatoric_uncertainties.max().item(), aleatoric_uncertainties.mean().item(), aleatoric_uncertainties.std().item()
     elif mode in EPISTEMIC_MODES:
-        return rew_span, epistemic_uncertainties.max(), epistemic_uncertainties.mean(), epistemic_uncertainties.std()
+        return rew_span, epistemic_uncertainties.max().item(), epistemic_uncertainties.mean().item(), epistemic_uncertainties.std().item()
     elif mode in EXPLICIT_MODES:
-        return rew_span, explicit_uncertainties.max(), explicit_uncertainties.mean(), explicit_uncertainties.std()
+        return rew_span, explicit_uncertainties.max().item(), explicit_uncertainties.mean().item(), explicit_uncertainties.std().item()
 
 
 if __name__ == '__main__':
