@@ -137,10 +137,10 @@ if __name__ == '__main__':
                  model_pessimism) = HYPERPARAMS[args.mode][args.env_name]
                 ood_threshold = 0
         else:
-            rollouts_per_step = args.n_rollouts,
-            max_rollout_length = args.rollout_length,
-            model_pessimism = args.pessimism,
-            ood_threshold = args.ood_threshold,
+            rollouts_per_step = args.n_rollouts
+            max_rollout_length = args.rollout_length
+            model_pessimism = args.pessimism
+            ood_threshold = args.ood_threshold
 
         # Basic config
         config.update(
