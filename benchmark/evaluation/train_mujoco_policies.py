@@ -1,4 +1,5 @@
 import argparse
+from benchmark.utils.uncertainty_distribution import get_uncertainty_distribution
 import numpy as np
 from benchmark.utils.modes import ALEATORIC_MODES, ALEATORIC_PARTITIONING, ALEATORIC_PENALTY, EPISTEMIC_MODES, EPISTEMIC_PARTITIONING, EXPLICIT_MODES, EXPLICIT_PARTITIONING, MODES, PARTITIONING_MODES, PENALTY_MODES
 from benchmark.utils.run_utils import setup_logger_kwargs
@@ -210,15 +211,7 @@ if __name__ == '__main__':
                     "log_scale": False,
                 }]
 
-            if args.mode in ALEATORIC_MODES:
-                max_uncertainty, mean_uncertainty, std_uncertainty = ALEATORIC_UNCERTAINTIES[
-                    args.env_name]
-            elif args.mode in EPISTEMIC_MODES:
-                max_uncertainty, mean_uncertainty, std_uncertainty = EPISTEMIC_UNCERTAINTIES[
-                    args.env_name]
-            elif args.mode in EXPLICIT_MODES:
-                max_uncertainty, mean_uncertainty, std_uncertainty = EXPLICIT_UNCERTAINTIES[
-                    args.env_name]
+            reward_span, max_uncertainty, mean_uncertainty, std_uncertainty = get_uncertainty_distribution(args.env_name, args.mode)
 
             if args.mode in PARTITIONING_MODES:
                 parameters += [
@@ -235,8 +228,6 @@ if __name__ == '__main__':
                 )
 
             elif args.mode in PENALTY_MODES:
-                reward_span = REWARD_SPANS[args.env_name]
-
                 parameters += [
                     {
                         "name": "model_pessimism",
