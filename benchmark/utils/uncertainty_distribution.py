@@ -1,17 +1,12 @@
-from benchmark.utils.modes import ALEATORIC_MODES, ALEATORIC_PARTITIONING, ALEATORIC_PENALTY, EPISTEMIC_MODES, EXPLICIT_MODES
-from matplotlib import cm
-import numpy as np
-from benchmark.utils.replay_buffer import ReplayBuffer
+from benchmark.utils.modes import ALEATORIC_MODES, ALEATORIC_PARTITIONING, EPISTEMIC_MODES, EXPLICIT_MODES
 from benchmark.user_config import MODELS_DIR
 from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_EXPERT_V1, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_MEDIUM_REPLAY_V1, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_EXPERT_V1, HOPPER_MEDIUM_REPLAY, HOPPER_MEDIUM_REPLAY_V1, HOPPER_MEDIUM_V1, HOPPER_RANDOM, WALKER_MEDIUM, WALKER_MEDIUM_REPLAY
 import torch
 import gym
 import d4rl  # noqa
 from benchmark.utils.load_dataset import load_dataset_from_env
-from benchmark.utils.virtual_rollouts import generate_virtual_rollouts
-from benchmark.actors.sac import SAC
-import matplotlib.pyplot as plt
 import os
+
 
 def get_uncertainty_distribution(env_name, mode):
     env = gym.make(env_name)

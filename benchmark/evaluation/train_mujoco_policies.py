@@ -1,15 +1,13 @@
 import argparse
 from benchmark.utils.uncertainty_distribution import get_uncertainty_distribution
-import numpy as np
-from benchmark.utils.modes import ALEATORIC_MODES, ALEATORIC_PARTITIONING, ALEATORIC_PENALTY, EPISTEMIC_MODES, EPISTEMIC_PARTITIONING, EXPLICIT_MODES, EXPLICIT_PARTITIONING, MODES, PARTITIONING_MODES, PENALTY_MODES
+from benchmark.utils.modes import ALEATORIC_PENALTY, PARTITIONING_MODES, PENALTY_MODES, MODES
 from benchmark.utils.run_utils import setup_logger_kwargs
 from ray import tune
 import ray
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
-from ray.tune.suggest.hyperopt import HyperOptSearch
 from benchmark.utils.envs import \
-    ALEATORIC_UNCERTAINTIES, EPISTEMIC_UNCERTAINTIES, EXPLICIT_UNCERTAINTIES, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HOPPER_MEDIUM, \
-    HOPPER_MEDIUM_EXPERT, HYPERPARAMS, REWARD_SPANS, WALKER_ENVS, WALKER_MEDIUM_EXPERT
+    HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HOPPER_MEDIUM, \
+    HOPPER_MEDIUM_EXPERT, HYPERPARAMS, WALKER_ENVS, WALKER_MEDIUM_EXPERT
 from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
 from benchmark.utils.str2bool import str2bool

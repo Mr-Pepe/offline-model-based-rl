@@ -7,7 +7,7 @@ from torch.optim.adamw import AdamW
 from benchmark.models.multi_head_mlp import MultiHeadMlp
 import torch.nn as nn
 import torch
-from torch.nn.functional import normalize, softplus
+from torch.nn.functional import softplus
 from torch.nn.parameter import Parameter
 from ray import tune
 
