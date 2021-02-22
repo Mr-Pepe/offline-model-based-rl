@@ -2,8 +2,9 @@ from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_EXPERT_V1, HA
 import torch
 
 
-def preprocess_antmaze_umaze(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_antmaze_umaze(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([
         5.1114e+00,  3.2357e+00,  5.4443e-01,  8.2719e-01, -1.6899e-04,
@@ -32,8 +33,9 @@ def preprocess_antmaze_umaze(obs_act):
     return obs_act
 
 
-def preprocess_antmaze_medium_diverse(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_antmaze_medium_diverse(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([
         1.2001e+01,  1.2906e+01,  4.8439e-01,  5.4019e-01,  1.9542e-02,
@@ -63,8 +65,9 @@ def preprocess_antmaze_medium_diverse(obs_act):
     return obs_act
 
 
-def preprocess_half_cheetah_medium_replay(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_half_cheetah_medium_replay(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([-1.6007e-01,  8.2988e-01,  1.3947e-02,  8.8892e-02,  5.1835e-02,
                             2.8807e-03, -1.2516e-01, -1.7123e-01,  2.6785e+00, -4.8868e-02,
@@ -87,8 +90,9 @@ def preprocess_half_cheetah_medium_replay(obs_act):
     return obs_act
 
 
-def preprocess_half_cheetah_medium(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_half_cheetah_medium(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([-0.1100,  0.1568,  0.1038,  0.1469,  0.0784, -0.2011, -0.0822, -0.2802,
                             4.4634, -0.0758, -0.0926,  0.4187, -0.4117,  0.1163, -0.0600, -0.0974,
@@ -109,8 +113,9 @@ def preprocess_half_cheetah_medium(obs_act):
     return obs_act
 
 
-def preprocess_half_cheetah_expert(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_half_cheetah_expert(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([-5.8326e-02,  1.4509e-01,  1.6762e-01, -1.2980e-01,  8.3118e-02,
                             -7.2668e-03, -2.3488e-02, -3.7352e-02,  1.2543e+01, -7.0531e-02,
@@ -133,8 +138,9 @@ def preprocess_half_cheetah_expert(obs_act):
     return obs_act
 
 
-def preprocess_half_cheetah_random(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_half_cheetah_random(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([-2.0335e-01,  1.0081e+00,  7.3662e-04,  1.6249e-02,  8.5222e-03,
                             4.1635e-02,  1.5025e-03, -4.7313e-03, -7.1623e-02, -1.1384e-02,
@@ -157,8 +163,9 @@ def preprocess_half_cheetah_random(obs_act):
     return obs_act
 
 
-def preprocess_half_cheetah_medium_expert(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_half_cheetah_medium_expert(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([-0.0842,  0.1509,  0.1357,  0.0085,  0.0807, -0.1042, -0.0529, -0.1588,
                             8.5028, -0.0732, -0.0586,  0.2998, -0.2969, -0.0966, -0.0906,  0.0438,
@@ -179,8 +186,9 @@ def preprocess_half_cheetah_medium_expert(obs_act):
     return obs_act
 
 
-def preprocess_hopper_random(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_hopper_random(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.0563,  0.0434, -0.6026, -0.0565,  0.3985,  1.6184, -0.6042,  0.0728,
                             -1.4327, -0.1136, -0.8023,  0.0198,  0.2046, -0.0766],
@@ -199,8 +207,9 @@ def preprocess_hopper_random(obs_act):
     return obs_act
 
 
-def preprocess_hopper_medium(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_hopper_medium(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.3002,  0.0151, -0.2698, -0.3320,  0.0439,  2.1277, -0.2084,  0.0049,
                             -0.4474, -0.1559, -0.3525,  0.1067,  0.1152, -0.1525],
@@ -219,8 +228,9 @@ def preprocess_hopper_medium(obs_act):
     return obs_act
 
 
-def preprocess_hopper_medium_replay(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_hopper_medium_replay(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.1503,  0.0089, -0.4596, -0.1805,  0.2150,  1.9202, -0.3828,  0.0643,
                             -0.8867, -0.0255, -0.0799,  0.0293,  0.2271, -0.0550],
@@ -239,8 +249,9 @@ def preprocess_hopper_medium_replay(obs_act):
     return obs_act
 
 
-def preprocess_hopper_medium_expert(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_hopper_medium_expert(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.3449, -0.0382, -0.3909, -0.2107,  0.1478,  2.5069, -0.0658,  0.0054,
                             -0.1971, -0.0100,  0.0384,  0.0220,  0.1344,  0.0254],
@@ -259,8 +270,9 @@ def preprocess_hopper_medium_expert(obs_act):
     return obs_act
 
 
-def preprocess_hopper_expert(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_hopper_expert(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.3835e+00, -4.7635e-02, -3.7702e-01, -2.1669e-01,  1.3437e-01,
                             2.6250e+00, -2.0022e-03, -6.4167e-03, -5.8366e-02, -6.8434e-03,
@@ -280,8 +292,9 @@ def preprocess_hopper_expert(obs_act):
     return obs_act
 
 
-def preprocess_walker_random(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_walker_random(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.2029e+00, -3.5071e-01, -2.1724e-01, -3.0310e-01,  2.4935e-01,
                             -2.1661e-01, -3.0244e-01,  2.4625e-01, -9.2649e-01, -9.5596e-01,
@@ -304,8 +317,9 @@ def preprocess_walker_random(obs_act):
     return obs_act
 
 
-def preprocess_walker_medium(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_walker_medium(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.1666,  0.1836, -0.2578, -0.5593,  0.3340, -0.1588, -0.3359,  0.3263,
                             1.6481, -0.2386, -0.1795, -0.6965, -1.0953, -0.4000, -0.5029, -0.3354,
@@ -326,8 +340,9 @@ def preprocess_walker_medium(obs_act):
     return obs_act
 
 
-def preprocess_walker_expert(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_walker_expert(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.0590,  0.0613, -0.4804, -0.9892,  0.2857, -0.5005, -0.9018,  0.1510,
                             3.7265, -0.0673, -0.0931, -0.2748, -0.3010, -0.0783, -0.4372, -0.6675,
@@ -371,8 +386,9 @@ def preprocess_walker_medium_replay(obs_act, detach=True):
     return obs_act
 
 
-def preprocess_walker_medium_expert(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_walker_medium_expert(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.1133,  0.1224, -0.3695, -0.7745,  0.3094, -0.3295, -0.6188,  0.2384,
                             2.6870, -0.1530, -0.1363, -0.4857, -0.6983, -0.2392, -0.4701, -0.5014,
@@ -393,8 +409,9 @@ def preprocess_walker_medium_expert(obs_act):
     return obs_act
 
 
-def preprocess_half_cheetah_medium_replay_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_half_cheetah_medium_replay_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([-0.1288,  0.3736, -0.1500, -0.2348, -0.2842, -0.1310, -0.2016, -0.0652,
                             3.4770, -0.0278, -0.0149,  0.0767,  0.0126,  0.0275,  0.0237,  0.0099,
@@ -415,8 +432,9 @@ def preprocess_half_cheetah_medium_replay_v1(obs_act):
     return obs_act
 
 
-def preprocess_half_cheetah_medium_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_half_cheetah_medium_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([-7.0458e-02,  3.9261e-02, -1.8216e-01, -2.7503e-01, -3.3857e-01,
                             -9.1859e-02, -2.1238e-01, -8.6914e-02,  5.1485e+00, -4.2427e-02,
@@ -439,8 +457,9 @@ def preprocess_half_cheetah_medium_v1(obs_act):
     return obs_act
 
 
-def preprocess_half_cheetah_expert_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_half_cheetah_expert_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([-0.0451,  0.1598,  0.0303, -0.1751, -0.2191, -0.0780,  0.0971, -0.0416,
                             10.0858, -0.0790, -0.2494,  0.3359,  0.4061,  0.3639,  0.7805, -0.3103,
@@ -461,8 +480,9 @@ def preprocess_half_cheetah_expert_v1(obs_act):
     return obs_act
 
 
-def preprocess_half_cheetah_random_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_half_cheetah_random_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([-1.5909e-01,  7.0300e-01,  3.0358e-03,  1.8578e-02, -3.0842e-03,
                             3.5867e-02, -1.9903e-02, -2.0291e-02, -8.9374e-02, -1.3927e-02,
@@ -485,8 +505,9 @@ def preprocess_half_cheetah_random_v1(obs_act):
     return obs_act
 
 
-def preprocess_half_cheetah_medium_expert_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_half_cheetah_medium_expert_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([-0.0578,  0.0995, -0.0760, -0.2251, -0.2788, -0.0849, -0.0576, -0.0643,
                             7.6171, -0.0607, -0.1426,  0.2383,  0.2323,  0.2279,  0.4244, -0.1533,
@@ -507,8 +528,9 @@ def preprocess_half_cheetah_medium_expert_v1(obs_act):
     return obs_act
 
 
-def preprocess_hopper_random_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_hopper_random_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.2273e+00, -6.1983e-02, -4.3004e-02, -6.2249e-02,  4.3225e-02,
                             -1.5939e-01, -2.4343e-01, -1.1214e+00, -7.7519e-01, -8.6454e-01,
@@ -528,8 +550,9 @@ def preprocess_hopper_random_v1(obs_act):
     return obs_act
 
 
-def preprocess_hopper_medium_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_hopper_medium_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.0285e+00, -1.0670e-01, -1.5392e-03, -1.1538e+00,  7.2936e-01,
                             5.0019e-01, -4.3483e-01, -1.2107e-02, -7.5291e-03, -1.7051e+00,
@@ -549,8 +572,9 @@ def preprocess_hopper_medium_v1(obs_act):
     return obs_act
 
 
-def preprocess_hopper_medium_replay_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_hopper_medium_replay_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.2451,  0.0231, -0.2818, -0.3319,  0.1226,  2.0493, -0.1399,  0.0193,
                             -0.2790, -0.2019,  0.0021,  0.0442,  0.0486, -0.1263],
@@ -569,8 +593,9 @@ def preprocess_hopper_medium_replay_v1(obs_act):
     return obs_act
 
 
-def preprocess_hopper_medium_expert_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_hopper_medium_expert_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.1419, -0.0446, -0.1921, -0.7269,  0.3994,  1.4767, -0.2804, -0.0044,
                             -0.1252, -0.9139,  0.2974,  0.3045,  0.0276,  0.2545],
@@ -589,8 +614,9 @@ def preprocess_hopper_medium_expert_v1(obs_act):
     return obs_act
 
 
-def preprocess_hopper_expert_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_hopper_expert_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.2560,  0.0175, -0.3803, -0.2997,  0.0681,  2.4628, -0.1259,  0.0033,
                             -0.2430, -0.1225,  0.0812,  0.0026,  0.0458, -0.1586],
@@ -609,8 +635,9 @@ def preprocess_hopper_expert_v1(obs_act):
     return obs_act
 
 
-def preprocess_walker_random_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_walker_random_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.2005e+00, -3.5051e-01, -2.1683e-01, -3.0372e-01,  2.5575e-01,
                             -2.1869e-01, -2.9801e-01,  2.5205e-01, -8.8394e-01, -9.4614e-01,
@@ -633,8 +660,9 @@ def preprocess_walker_random_v1(obs_act):
     return obs_act
 
 
-def preprocess_walker_medium_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_walker_medium_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.2242,  0.1637, -0.0389, -0.1410,  0.5397, -0.0314, -0.4620,  0.0300,
                             2.4538, -0.0333,  0.0511, -0.0246, -0.1057,  0.0936, -0.0042, -0.1246,
@@ -655,8 +683,9 @@ def preprocess_walker_medium_v1(obs_act):
     return obs_act
 
 
-def preprocess_walker_expert_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_walker_expert_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.2384e+00,  1.9592e-01, -1.0488e-01, -1.8577e-01,  2.3020e-01,
                             2.2739e-02, -3.7382e-01,  3.3736e-01,  3.9236e+00, -4.7796e-03,
@@ -679,8 +708,9 @@ def preprocess_walker_expert_v1(obs_act):
     return obs_act
 
 
-def preprocess_walker_medium_replay_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_walker_medium_replay_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.2094,  0.1326, -0.1437, -0.2047,  0.5578, -0.0323, -0.2785,  0.1913,
                             1.4700, -0.1251,  0.0564, -0.1001, -0.3400,  0.0353, -0.0893, -0.2996,
@@ -701,8 +731,9 @@ def preprocess_walker_medium_replay_v1(obs_act):
     return obs_act
 
 
-def preprocess_walker_medium_expert_v1(obs_act):
-    obs_act = obs_act.detach().clone()
+def preprocess_walker_medium_expert_v1(obs_act, detach=True):
+    if detach:
+        obs_act = obs_act.detach().clone()
 
     mean = torch.as_tensor([1.2321e+00,  1.7979e-01, -7.1895e-02, -1.6340e-01,  3.8396e-01,
                             -4.3268e-03, -4.1909e-01,  1.8357e-01,  3.1913e+00, -1.9048e-02,
