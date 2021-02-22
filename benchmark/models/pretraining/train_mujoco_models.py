@@ -38,6 +38,7 @@ if __name__ == '__main__':
     parser.add_argument('--level', type=int, default=0)
     parser.add_argument('--patience', type=int, default=30)
     parser.add_argument('--n_hidden', type=int, default=200)
+    parser.add_argument('--lr', type=float, default=1e-4)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
 
@@ -88,7 +89,7 @@ if __name__ == '__main__':
             debug=True)
 
         config.update(
-            lr=1e-4,
+            lr=args.lr,
             batch_size=256
         )
 
