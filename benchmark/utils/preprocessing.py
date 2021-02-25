@@ -59,9 +59,6 @@ def preprocess(mean, std, obs_act, detach=True):
     if detach:
         obs_act = obs_act.detach().clone()
 
-    mean.to(obs_act.device)
-    std.to(obs_act.device)
-
     # This allows to preprocess an observation without action
     length = obs_act.shape[-1]
 
@@ -71,7 +68,7 @@ def preprocess(mean, std, obs_act, detach=True):
     return obs_act
 
 
-def get_preprocessing_function(env_name):
+def get_preprocessing_function(env_name, device=''):
     if env_name not in envs_with_preprocessing_functions:
         return None
 
@@ -82,5 +79,9 @@ def get_preprocessing_function(env_name):
 
     mean = obs_act.mean(dim=0)
     std = obs_act.std(dim=0)
+
+    if device != '':
+        mean = mean.to(device)
+        std = std.to(device)
 
     return partial(preprocess, mean, std)

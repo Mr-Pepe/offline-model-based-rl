@@ -148,7 +148,7 @@ class Trainer():
                                                   size=virtual_buffer_size,
                                                   device=device)
 
-        self.pre_fn = get_preprocessing_function(env_name)
+        self.pre_fn = get_preprocessing_function(env_name, device)
 
         if use_model:
             self.post_fn = get_postprocessing_function(env_name)
