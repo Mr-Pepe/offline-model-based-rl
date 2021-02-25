@@ -52,7 +52,7 @@ if __name__ == '__main__':
     buffer, obs_dim, act_dim = load_dataset_from_env(env,
                                                      buffer_device=device)
 
-    pre_fn = get_preprocessing_function(args.env_name)
+    pre_fn = get_preprocessing_function(args.env_name, device)
     assert pre_fn is not None
     post_fn = get_postprocessing_function(args.env_name)
     assert post_fn is not None
