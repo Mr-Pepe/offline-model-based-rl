@@ -209,7 +209,7 @@ if __name__ == '__main__':
                     "log_scale": False,
                 }]
 
-            reward_span, max_uncertainty, mean_uncertainty, std_uncertainty = get_uncertainty_distribution(args.env_name, args.mode)
+            r_max, max_uncertainty, mean_uncertainty, std_uncertainty = get_uncertainty_distribution(args.env_name, args.mode)
 
             if args.mode in PARTITIONING_MODES:
                 parameters += [
@@ -230,7 +230,7 @@ if __name__ == '__main__':
                     {
                         "name": "model_pessimism",
                         "type": "range",
-                        "bounds": [0, reward_span/max_uncertainty],
+                        "bounds": [0, r_max/max_uncertainty],
                         "value_type": "float",
                         "log_scale": False,
                     }]

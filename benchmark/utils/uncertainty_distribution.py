@@ -48,7 +48,7 @@ def get_uncertainty_distribution(env_name, mode):
 
     explicit_uncertainties = explicit_uncertainties.mean(dim=0)
 
-    rew_span = (buffer.rew_buf.max() - buffer.rew_buf.min()).item()
+    rew_span = max(buffer.rew_buf.max().abs().item(), buffer.rew_buf.min().abs().item())
 
     print("\nEnvironment: {}\n".format(env_name))
     print("Reward span: {}".format(rew_span))
