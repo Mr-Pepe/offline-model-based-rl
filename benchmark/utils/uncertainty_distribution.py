@@ -31,7 +31,7 @@ def get_uncertainty_distribution(env_name, mode):
         obs_act = torch.cat((obs, act), dim=1)
 
         predictions, this_means, this_logvars, this_explicit_uncertainty, \
-            this_epistemic_uncertainty, this_aleatoric_uncertainty = model.get_prediction(
+            this_epistemic_uncertainty, this_aleatoric_uncertainty, _ = model.get_prediction(
                 obs_act, mode=ALEATORIC_PARTITIONING, debug=True)
 
         if explicit_uncertainties is None:
