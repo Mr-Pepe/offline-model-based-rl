@@ -59,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument('--ood_threshold', type=float, default=0.5)
     parser.add_argument('--start_seed', type=int, default=0)
     parser.add_argument('--rollout_length', type=int, default=100)
-    parser.add_argument('--n_rollouts', type=int, default=100)
+    parser.add_argument('--n_rollouts', type=int, default=50)
     parser.add_argument('--n_hidden', type=int, default=128)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument('--device', type=str, default='')
@@ -84,10 +84,10 @@ if __name__ == '__main__':
                         pi_lr=None,
                         q_lr=None,
                         ),
-        rollouts_per_step=None,
         max_rollout_length=None,
         model_pessimism=None,
         ood_threshold=None,
+        rollouts_per_step=args.n_rollouts,
         model_kwargs=dict(),
         dataset_path='',
         seed=0,
@@ -194,13 +194,6 @@ if __name__ == '__main__':
             )
 
             parameters = [
-                {
-                    "name": "rollouts_per_step",
-                    "type": "range",
-                    "bounds": [1, 101],
-                    "value_type": "int",
-                    "log_scale": False,
-                },
                 {
                     "name": "max_rollout_length",
                     "type": "range",
