@@ -1,6 +1,6 @@
 import argparse
 from benchmark.utils.uncertainty_distribution import get_uncertainty_distribution
-from benchmark.utils.modes import ALEATORIC_PENALTY, PARTITIONING_MODES, PENALTY_MODES, MODES
+from benchmark.utils.modes import ALEATORIC_PENALTY, PARTITIONING_MODES, PENALTY_MODES, MODES, UNDERESTIMATION
 from benchmark.utils.run_utils import setup_logger_kwargs
 from ray import tune
 import ray

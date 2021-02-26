@@ -1,4 +1,4 @@
-from benchmark.utils.modes import ALEATORIC_PARTITIONING, EPISTEMIC_PARTITIONING, EPISTEMIC_PENALTY, EXPLICIT_PARTITIONING, EXPLICIT_PENALTY, MODES, ALEATORIC_PENALTY, PARTITIONING_MODES, PENALTY_MODES
+from benchmark.utils.modes import ALEATORIC_PARTITIONING, EPISTEMIC_PARTITIONING, EPISTEMIC_PENALTY, EXPLICIT_PARTITIONING, EXPLICIT_PENALTY, MODES, ALEATORIC_PENALTY, PARTITIONING_MODES, PENALTY_MODES, UNDERESTIMATION
 import os
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
@@ -195,6 +195,8 @@ class EnvironmentModel(nn.Module):
 
         explicit_uncertainty = explicit_uncertainties[:, :, -1].mean(dim=0)
 
+        underestimated_reward = torch.clamp_min(pred_rewards.min(dim=0).values, -self.max_reward*1.00001).view(-1)
+
         if mode != '':
 
             self.check_prediction_arguments(mode, pessimism)
@@ -221,8 +223,12 @@ class EnvironmentModel(nn.Module):
                 prediction[ood_idx, -2] = -self.max_reward
                 prediction[ood_idx, -1] = 1
 
+            elif mode == UNDERESTIMATION:
+                prediction[:, -2] = underestimated_reward
+                prediction[underestimated_reward < -self.max_reward, -1] = 1
+
         if debug:
-            return prediction, means, logvars, explicit_uncertainties, epistemic_uncertainty, aleatoric_uncertainty
+            return prediction, means, logvars, explicit_uncertainties, epistemic_uncertainty, aleatoric_uncertainty, underestimated_reward
         if with_uncertainty:
             return prediction, explicit_uncertainty
         else:
