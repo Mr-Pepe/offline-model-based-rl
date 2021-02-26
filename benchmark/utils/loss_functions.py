@@ -46,9 +46,10 @@ def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, n
         uncertainty_loss = uncertainty.mean()
 
         if debug:
-            print("LR: {:.5f}, MSE: {:.5f}, MSE + INV VAR: {:.5f} VAR: {:.5f}, BOUNDS: {:.5f}, MAX LOGVAR: {:.5f}, MIN LOGVAR: {:.5f}, UNCERTAINTY: {:.5f}".format(
+            print("LR: {:.5f}, State MSE: {:.5f}, Rew MSE: {:.5f}, MSE + INV VAR: {:.5f} VAR: {:.5f}, BOUNDS: {:.5f}, MAX LOGVAR: {:.5f}, MIN LOGVAR: {:.5f}, UNCERTAINTY: {:.5f}".format(
                 model.optim.param_groups[0]['lr'],
-                mse_loss.mean().item(),
+                mse_loss[:, :, :-1].mean().item(),
+                mse_loss[:, :, -1].mean().item(),
                 mse_inv_var_loss.item(),
                 var_loss.item(),
                 var_bound_loss.item(),
