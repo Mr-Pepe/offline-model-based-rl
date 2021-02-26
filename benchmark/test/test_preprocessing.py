@@ -10,7 +10,6 @@ import gym
 import d4rl  # noqa
 
 
-@pytest.mark.current
 @pytest.mark.slow
 def test_preprocessing():
     for env_name in envs_with_preprocessing_functions:
@@ -36,4 +35,3 @@ def test_preprocessing():
 
         assert preprocessed.mean(dim=0).abs().sum() < 0.15
         assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
-

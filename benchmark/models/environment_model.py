@@ -195,7 +195,10 @@ class EnvironmentModel(nn.Module):
 
         explicit_uncertainty = explicit_uncertainties[:, :, -1].mean(dim=0)
 
-        underestimated_reward = torch.clamp_min(pred_rewards.min(dim=0).values, -self.max_reward*1.00001).view(-1)
+        underestimated_reward = pred_rewards.min(dim=0).values.view(-1)
+
+        if self.max_reward is not None:
+            underestimated_reward = torch.clamp_min(underestimated_reward, -self.max_reward*1.00001)
 
         if mode != '':
 
