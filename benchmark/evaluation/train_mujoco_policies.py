@@ -61,6 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--rollout_length', type=int, default=100)
     parser.add_argument('--n_rollouts', type=int, default=50)
     parser.add_argument('--n_hidden', type=int, default=128)
+    parser.add_argument('--n_trials', type=int, default=20)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
@@ -262,7 +263,7 @@ if __name__ == '__main__':
             '-tuning-lvl-'+str(args.level),
             scheduler=scheduler,
             search_alg=search_alg,
-            num_samples=30,
+            num_samples=args.n_trials,
             config=config,
             max_failures=3,
             resources_per_trial={"gpu": 0.5}
