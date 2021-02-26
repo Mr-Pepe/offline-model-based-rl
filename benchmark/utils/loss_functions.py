@@ -16,7 +16,7 @@ def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, n
 
     if pre_fn is not None:
         mean[:, :, :-1] = pre_fn(mean[:, :, :-1], detach=False)
-        y = pre_fn(y)
+        y[:, :-1] = pre_fn(y[:, :-1])
 
     if no_reward:
         x = x[:, :-1]
