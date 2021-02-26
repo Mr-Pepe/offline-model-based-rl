@@ -204,6 +204,8 @@ if __name__ == '__main__':
 
             r_max, max_uncertainty, mean_uncertainty, std_uncertainty = get_uncertainty_distribution(args.env_name, args.mode)
 
+            print("R_max: {}, Max uncertainty: {}, Mean uncertainty: {}".format(r_max, max_uncertainty, mean_uncertainty))
+
             if args.mode in PARTITIONING_MODES:
                 parameters += [
                     {
