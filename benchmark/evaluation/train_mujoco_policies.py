@@ -7,7 +7,7 @@ import ray
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
 from benchmark.utils.envs import \
     HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_REPLAY, HOPPER_MEDIUM, \
-    HOPPER_MEDIUM_EXPERT, HYPERPARAMS, WALKER_ENVS, WALKER_MEDIUM_EXPERT
+    HOPPER_MEDIUM_EXPERT, HYPERPARAMS, WALKER_ENVS, WALKER_MEDIUM_EXPERT, WALKER_MEDIUM_REPLAY, WALKER_MEDIUM_REPLAY_V2
 from benchmark.user_config import MODELS_DIR
 from benchmark.train import Trainer
 from benchmark.utils.str2bool import str2bool
@@ -49,10 +49,10 @@ def training_wrapper(config, seed):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--env_name', type=str,
-                        default=HALF_CHEETAH_MEDIUM_REPLAY)
+                        default=WALKER_MEDIUM_REPLAY_V2)
     parser.add_argument('--level', type=int, default=0)
-    parser.add_argument('--tuned_params', type=str2bool, default=True)
-    parser.add_argument('--mode', type=str, default=ALEATORIC_PENALTY)
+    parser.add_argument('--tuned_params', type=str2bool, default=False)
+    parser.add_argument('--mode', type=str, default=UNDERESTIMATION)
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--seeds', type=int, default=1)
     parser.add_argument('--pessimism', type=float, default=1)
@@ -159,8 +159,8 @@ if __name__ == '__main__':
         )
 
         # According to appendix in COMBO paper
-        if args.env_name in WALKER_ENVS:
-            config['sac_kwargs'].update(pi_lr=1e-5, q_lr=1e-4)
+        # if args.env_name in WALKER_ENVS:
+        #     config['sac_kwargs'].update(pi_lr=1e-5, q_lr=1e-4)
 
         assert config['sac_kwargs']['batch_size'] is not None
         assert config['sac_kwargs']['agent_hidden'] is not None
