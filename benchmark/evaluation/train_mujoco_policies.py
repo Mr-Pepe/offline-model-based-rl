@@ -198,7 +198,7 @@ if __name__ == '__main__':
                 {
                     "name": "max_rollout_length",
                     "type": "range",
-                    "bounds": [1, 51],
+                    "bounds": [1, 20],
                     "value_type": "int",
                     "log_scale": False,
                 }]
