@@ -3,7 +3,7 @@ from matplotlib import cm
 import numpy as np
 from benchmark.utils.replay_buffer import ReplayBuffer
 from benchmark.user_config import MODELS_DIR
-from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_EXPERT_V1, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_MEDIUM_REPLAY_V1, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_EXPERT_V1, HOPPER_MEDIUM_REPLAY, HOPPER_MEDIUM_REPLAY_V1, HOPPER_MEDIUM_V1, HOPPER_RANDOM, WALKER_MEDIUM, WALKER_MEDIUM_REPLAY
+from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_EXPERT_V1, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_MEDIUM_REPLAY_V1, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_EXPERT_V1, HOPPER_MEDIUM_REPLAY, HOPPER_MEDIUM_REPLAY_V1, HOPPER_MEDIUM_V1, HOPPER_RANDOM, WALKER_MEDIUM, WALKER_MEDIUM_EXPERT_V2, WALKER_MEDIUM_REPLAY, WALKER_MEDIUM_REPLAY_V2, WALKER_MEDIUM_v2
 import torch
 import gym
 import d4rl  # noqa
@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-env_name = HOPPER_MEDIUM_REPLAY
+env_name = WALKER_MEDIUM_EXPERT_V2
 env = gym.make(env_name)
 
 model = torch.load(os.path.join(MODELS_DIR, env_name +
@@ -42,13 +42,13 @@ for i_rollout in range(n_rollouts):
                                                  mode=mode,
                                                  random_action=True)
 
-    env.reset()
     real_rew = None
     means = None
     logvars = None
     explicit_uncertainties = None
     epistemic_uncertainties = None
     aleatoric_uncertainties = None
+    underestimated_rewards = None
 
     for i in range(rollouts['rew'].shape[0]):
         obs = rollouts['obs'][i].cpu()
@@ -57,11 +57,14 @@ for i_rollout in range(n_rollouts):
         obs_act = torch.cat((obs, act))
 
         predictions, this_means, this_logvars, this_explicit_uncertainty, \
-            this_epistemic_uncertainty, this_aleatoric_uncertainty = model.get_prediction(
+            this_epistemic_uncertainty, this_aleatoric_uncertainty, this_underestimated_reward = model.get_prediction(
                 obs_act, mode=mode, pessimism=pessimism, debug=True)
 
+        env = gym.make(env_name)
+        env.reset()
         env.set_state(
             torch.cat((torch.as_tensor([0]), obs[:env.model.nq-1])), obs[env.model.nq-1:])
+        # env.render()
         _, r, _, _ = env.step(act.numpy())
 
         if explicit_uncertainties is None:
@@ -70,6 +73,7 @@ for i_rollout in range(n_rollouts):
             explicit_uncertainties = this_explicit_uncertainty
             epistemic_uncertainties = this_epistemic_uncertainty
             aleatoric_uncertainties = this_aleatoric_uncertainty
+            underestimated_rewards = this_underestimated_reward
             real_rew = torch.as_tensor(r).unsqueeze(0)
         else:
             means = torch.cat((means, this_means), dim=1)
@@ -80,12 +84,14 @@ for i_rollout in range(n_rollouts):
                 (epistemic_uncertainties, this_epistemic_uncertainty))
             aleatoric_uncertainties = torch.cat(
                 (aleatoric_uncertainties, this_aleatoric_uncertainty))
+            underestimated_rewards = torch.cat(
+                (underestimated_rewards, this_underestimated_reward))
             real_rew = torch.cat(
                 (real_rew, torch.as_tensor(r).unsqueeze(0)))
 
     print("Reward overestimation percentage for rollout length {}: {:.2f}%".format(
         steps,
-        ((real_rew - rollouts['rew'].cpu()) < 0).sum().float() / real_rew.numel() * 100))
+        ((real_rew - underestimated_rewards.cpu()) < 0).sum().float() / real_rew.numel() * 100))
 
     r_means = means[:, :, -1].detach().cpu()
     r_logvars = logvars[:, :, -1].detach().cpu()
@@ -96,7 +102,7 @@ for i_rollout in range(n_rollouts):
         axes[0].fill_between(range(r_means.shape[-1]), r_means[i]+torch.exp(
             r_logvars[i]), r_means[i]-torch.exp(r_logvars[i]), alpha=0.5)
     axes[0].plot(real_rew, label='Ground truth')
-    axes[0].plot(rollouts['rew'].cpu(), label=mode)
+    axes[0].plot(underestimated_rewards.cpu(), label='Underestimated reward')
     axes[0].legend(fontsize=12)
     axes[0].set_ylim([buffer.rew_buf.min().cpu(), buffer.rew_buf.max().cpu()])
     axes[0].set_ylabel("Reward", fontsize=12)
