@@ -1,4 +1,4 @@
-from benchmark.utils.envs import HOPPER_ORIGINAL, HOPPER_RANDOM, WALKER_ORIGINAL
+from benchmark.utils.envs import HALF_CHEETAH_MEDIUM_REPLAY_V2, HOPPER_MEDIUM_REPLAY_V2, HOPPER_ORIGINAL, HOPPER_RANDOM, WALKER_MEDIUM_REPLAY_V2, WALKER_ORIGINAL
 from benchmark.utils.actions import Actions
 from benchmark.train import Trainer
 import pytest
@@ -240,15 +240,15 @@ def test_throws_error_if_using_model_but_no_postprocessing_fn_available():
 
 @pytest.mark.medium
 def test_trainer_picks_correct_postprocessing_functions():
-    trainer = Trainer(HOPPER_ORIGINAL, use_model=True)
+    trainer = Trainer(HOPPER_MEDIUM_REPLAY_V2, use_model=True)
 
     assert trainer.post_fn == postprocessing_functions['hopper']
 
-    trainer = Trainer('HalfCheetah-v2', use_model=True)
+    trainer = Trainer(HALF_CHEETAH_MEDIUM_REPLAY_V2, use_model=True)
 
     assert trainer.post_fn == postprocessing_functions['half_cheetah']
 
-    trainer = Trainer(WALKER_ORIGINAL, use_model=True)
+    trainer = Trainer(WALKER_MEDIUM_REPLAY_V2, use_model=True)
 
     assert trainer.post_fn == postprocessing_functions['walker2d']
 
