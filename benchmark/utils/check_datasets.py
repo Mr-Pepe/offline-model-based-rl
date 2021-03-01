@@ -28,6 +28,7 @@ for dataset_name in dataset_names:
 
     raw_dataset = env.get_dataset()
     obs = raw_dataset['observations']
+    act = raw_dataset['actions']
     obs2 = raw_dataset['next_observations']
     dones = raw_dataset['terminals']
     rew = raw_dataset['rewards']
@@ -39,6 +40,22 @@ for dataset_name in dataset_names:
     per_trajectory_rews.append(per_trajectory_rew)
 
     print('\tPer trajectory reward:', per_trajectory_rew)
+
+    for i in range(len(obs)):
+        if i % 100 == 0:
+            print("{}/{}".format(i, len(obs)), end='\r')
+        env.reset()
+
+        env.set_state(
+            torch.cat((torch.as_tensor([0]), torch.as_tensor(obs[i][:env.model.nq-1]))), obs[i][env.model.nq-1:])
+        real_obs2, r, _, _ = env.step(act[i])
+
+        if abs(r - rew[i]) > 0.01:
+            print(abs(r - rew[i]))
+            a = 1
+
+        if max(abs(obs2[i] - real_obs2)) > 0.01:
+            a = 1
 
     post_dones = post_fn(torch.as_tensor(obs2).unsqueeze(0))['dones']
 
