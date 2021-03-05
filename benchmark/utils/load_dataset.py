@@ -6,7 +6,8 @@ from benchmark.utils.replay_buffer import ReplayBuffer
 def load_dataset_from_env(env,
                           n_samples=-1,
                           buffer_size=-1,
-                          buffer_device='cpu'):
+                          buffer_device='cpu',
+                          with_timeouts=False):
     dataset = d4rl.qlearning_dataset(env)
 
     if n_samples == -1:
@@ -37,5 +38,8 @@ def load_dataset_from_env(env,
                        rewards,
                        next_observations,
                        dones)
+
+    if with_timeouts and 'timeouts' in dataset:
+        buffer.timeouts = dataset['timeouts']
 
     return buffer, observations.shape[1], actions.shape[1]

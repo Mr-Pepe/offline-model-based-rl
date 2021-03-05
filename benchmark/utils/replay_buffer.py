@@ -20,6 +20,8 @@ class ReplayBuffer:
         self.done_buf = torch.zeros(size, dtype=torch.bool, device=device)
         self.ptr, self.size, self.max_size = 0, 0, size
 
+        self.timeouts = None
+
         self.split_at_size = -1
         self.split_with_val_split = -1
         self.train_idxs = []
