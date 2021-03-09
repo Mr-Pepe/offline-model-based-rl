@@ -1,5 +1,5 @@
 from benchmark.utils.envs import HOPPER_ORIGINAL
-from benchmark.utils.random_agent import RandomAgent
+from benchmark.actors.random_agent import RandomAgent
 import gym
 from numpy.testing import assert_raises, assert_array_equal
 import pytest

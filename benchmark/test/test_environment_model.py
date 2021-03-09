@@ -2,7 +2,7 @@ from benchmark.utils.modes import ALEATORIC_PENALTY
 from benchmark.utils.envs import HALF_CHEETAH_RANDOM, HOPPER_RANDOM
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.replay_buffer import ReplayBuffer
-from benchmark.utils.random_agent import RandomAgent
+from benchmark.actors.random_agent import RandomAgent
 from benchmark.utils.virtual_rollouts import generate_virtual_rollouts
 from benchmark.utils.loss_functions import deterministic_loss, \
     probabilistic_loss

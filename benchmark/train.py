@@ -13,7 +13,7 @@ from benchmark.utils.value_from_schedule import \
     get_value_from_schedule
 from benchmark.utils.virtual_rollouts import generate_virtual_rollouts
 from benchmark.models.environment_model import EnvironmentModel
-from benchmark.utils.evaluate_policy import test_agent
+from benchmark.evaluation.evaluate_policy import test_agent
 from benchmark.utils.modes import ALEATORIC_PENALTY
 import time
 
