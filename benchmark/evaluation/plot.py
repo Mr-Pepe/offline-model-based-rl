@@ -1,5 +1,6 @@
 # Based on https://spinningup.openai.com
-
+from benchmark.utils.modes import ALEATORIC_PARTITIONING, ALEATORIC_PENALTY, EPISTEMIC_PARTITIONING, EPISTEMIC_PENALTY
+from benchmark.utils.envs import HALF_CHEETAH_ENVS, HALF_CHEETAH_MEDIUM_V2, HOPPER_ENVS, HOPPER_MEDIUM_EXPERT_V2, HOPPER_MEDIUM_REPLAY_V2, HOPPER_MEDIUM_V2, WALKER_ENVS, WALKER_MEDIUM_EXPERT_V2, WALKER_MEDIUM_REPLAY_V2, WALKER_MEDIUM_v2
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -7,6 +8,10 @@ import json
 import os
 import os.path as osp
 import numpy as np
+from benchmark.utils.mode_from_exp_name import get_mode
+from benchmark.utils.env_name_from_exp_name import get_env_name
+from benchmark.utils.str2bool import str2bool
+from d4rl import get_normalized_score
 
 DIV_LINE_WIDTH = 50
 
@@ -159,19 +164,21 @@ def make_plots(all_logdirs, legend=None, xaxis=None, values=None, count=False,
     plt.show()
 
 
-def main():
+if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('logdir', default=[
-                        '/home/felipe/anaconda3/envs/thesis/lib/python3.8/site-packages/data/hopper_mbpo_probabilistic_ensemble'], nargs='*')
+                        '/home/felipe/Projects/thesis-code/data/experiments'], nargs='*')
     parser.add_argument('--legend', '-l', nargs='*')
     parser.add_argument('--xaxis', '-x', default='Epoch')
-    parser.add_argument('--value', '-y', default='AverageTestEpRet', nargs='*')
+    parser.add_argument(
+        '--value', '-y', default=['AverageTestEpRet'], nargs='*')
     parser.add_argument('--count', action='store_true')
     parser.add_argument('--smooth', '-s', type=int, default=1)
     parser.add_argument('--select', nargs='*')
     parser.add_argument('--exclude', nargs='*')
     parser.add_argument('--est', default='mean')
+    parser.add_argument('--final_eval', type=str2bool, default=True)
     args = parser.parse_args()
     """
 
@@ -222,10 +229,102 @@ def main():
 
     """
 
-    make_plots(args.logdir, args.legend, args.xaxis, args.value, args.count,
-               smooth=args.smooth, select=args.select, exclude=args.exclude,
-               estimator=args.est)
+    if not args.final_eval:
+        make_plots(args.logdir, args.legend, args.xaxis, args.value, args.count,
+                   smooth=args.smooth, select=args.select, exclude=args.exclude,
+                   estimator=args.est)
+
+    else:
+        all_exp_dir = args.logdir[0]
+
+        exp_names = [name for name in os.listdir(
+            all_exp_dir) if osp.isdir(osp.join(all_exp_dir, name))]
+        exp_names.sort()
+
+        categories = [
+            HALF_CHEETAH_ENVS,
+            HOPPER_ENVS,
+            WALKER_ENVS
+        ]
+
+        category_names = [
+            "Halfcheetah",
+            "Hopper",
+            "Walker2D"
+        ]
+
+        datasets = [
+            '-medium-replay-v2',
+            '-medium-v2',
+            '-medium-expert-v2'
+        ]
+
+        mode_names = [
+            ALEATORIC_PENALTY,
+            ALEATORIC_PARTITIONING,
+            EPISTEMIC_PENALTY,
+            EPISTEMIC_PARTITIONING
+        ]
+
+        experiments = dict()
+
+        for exp_name in exp_names:
+            exp_dir = osp.join(all_exp_dir, exp_name)
+            env_name = get_env_name(exp_name)
+            mode = get_mode(exp_name)
+
+            experiments.update({(env_name, mode): exp_dir})
+
+        f, axes = plt.subplots(len(categories), len(datasets))
+        sns.set(style="darkgrid", font_scale=1.5)
+
+        for i_category, category in enumerate(categories):
+            for i_dataset, dataset in enumerate(datasets):
+                env_name = str.lower(category_names[i_category]) + dataset
+
+                for i_mode, mode in enumerate(mode_names):
+                    if (env_name, mode) in experiments:
+                        data = get_all_datasets([experiments[(env_name, mode)]],
+                                                None,
+                                                None,
+                                                None)
+
+                        y = np.ones(10)
+                        for datum in data:
+                            x = np.asarray(datum['AverageTestEpRet'])
+                            z = np.ones(len(x))
+                            smoothed_x = np.convolve(
+                                x, y, 'same') / np.convolve(z, y, 'same')
+                            datum['AverageTestEpRet'] = [
+                                100*get_normalized_score(env_name, score) for score in smoothed_x]
+
+                        ax = axes[i_category, i_dataset]
+                        data = pd.concat(data, ignore_index=True)
+                        sns.lineplot(data=data, x='Epoch', y='AverageTestEpRet',
+                                     ci='sd', estimator=getattr(np, 'mean'),
+                                     ax=ax, label=mode, legend=False)
+                        ax.set_ylabel('Performance')
+                        # plt.legend(loc='best', ncol=1, handlelength=1,
+                        #            borderaxespad=0., prop={'size': 13})
 
 
-if __name__ == "__main__":
-    main()
+        handles, labels = ax.get_legend_handles_labels()
+        labels = [label.replace('-', ' ') for label in labels]
+        f.legend(handles, labels, loc='lower center', ncol=len(labels))
+
+        pad = 5
+
+        for ax, col in zip(axes[0], [name[1:-3].replace('-', ' ') for name in datasets]):
+            ax.annotate(col, xy=(0.5, 1), xytext=(0, pad),
+                        xycoords='axes fraction', textcoords='offset points',
+                        size='large', ha='center', va='baseline')
+
+        for ax, row in zip(axes[:, 0], category_names):
+            ax.annotate(row, xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
+                        xycoords=ax.yaxis.label, textcoords='offset points',
+                        size='large', ha='right', va='center', rotation=90)
+
+        plt.tight_layout(pad=0.1)
+        # f.subplots_adjust(left=0.15, top=0.95)
+
+        plt.show()
