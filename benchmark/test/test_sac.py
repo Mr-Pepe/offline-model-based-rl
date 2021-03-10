@@ -1,4 +1,4 @@
-from benchmark.utils.envs import HALF_CHEETAH_RANDOM
+from benchmark.utils.envs import HALF_CHEETAH_EXPERT_V2, HALF_CHEETAH_RANDOM
 from benchmark.utils.logx import EpochLogger
 import time
 import gym
@@ -35,7 +35,7 @@ def test_sac_converges():
     env = 'HalfCheetah-v2'
 
     trainer = Trainer(env,
-                      sac_kwargs=dict(hidden=[256, 256, 256, 256],
+                      agent_kwargs=dict(hidden=[256, 256, 256, 256],
                                       batch_size=256),
                       random_steps=10000,
                       init_steps=1000,
@@ -59,7 +59,7 @@ def test_sac_offline():
     n_samples = 900000
 
     trainer = Trainer(env,
-                      sac_kwargs=dict(hidden=[200, 200, 200, 200],
+                      agent_kwargs=dict(hidden=[200, 200, 200, 200],
                                       batch_size=256),
                       random_steps=0,
                       agent_updates_per_step=1,
@@ -110,3 +110,21 @@ def sac_trains_faster_on_gpu_on_filled_buffer():
 
         print('')
         print("Time: {}".format(time.time()-start_time))
+
+
+# @pytest.mark.current
+# def test_cql():
+#     env_name = HALF_CHEETAH_EXPERT_V2
+#     logger_kwargs = setup_logger_kwargs('test_cql')
+#     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+#     trainer = Trainer(
+#         env_name=env_name,
+#         env_steps_per_step=0,
+#         n_samples_from_dataset=-1,
+#         cql=True,
+#         logger_kwargs=logger_kwargs,
+#         device=device
+#     )
+
+#     final_return, _ = trainer.train()

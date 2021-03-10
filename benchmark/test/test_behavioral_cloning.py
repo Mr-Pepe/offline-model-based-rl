@@ -37,7 +37,7 @@ def test_BC_agent_overfits_on_single_batch():
     buffer, obs_dim, act_dim = load_dataset_from_env(env)
 
     agent = BC(env.observation_space, env.action_space, batch_size=256,
-               lr=1e-5,
+               lr=1e-4,
                pre_fn=get_preprocessing_function(env_name))
     batch = buffer.sample_batch(256)
 
@@ -48,7 +48,24 @@ def test_BC_agent_overfits_on_single_batch():
             print(loss, end='\r')
 
 
-@pytest.mark.medium
+def test_BC_agent_trains_on_dataset():
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    env_name = HALF_CHEETAH_EXPERT_V2
+    env = gym.make(env_name)
+
+    buffer, obs_dim, act_dim = load_dataset_from_env(env, n_samples=-1, buffer_device=device)
+
+    agent = BC(env.observation_space, env.action_space, batch_size=256,
+               lr=1e-4,
+               pre_fn=get_preprocessing_function(env_name, device=device), device=device)
+
+    for i in range(100):
+        loss = agent.multi_update(1, buffer, debug=True)
+
+        if i % 100 == 0:
+            print(loss, end='\r')
+
+
 def test_train_BC_agent():
     epochs = 100
     steps_per_epoch = 10000
@@ -70,6 +87,6 @@ def test_train_BC_agent():
                       use_model=False,
                       env_steps_per_step=0,
                       n_samples_from_dataset=-1,
-                      device='cpu')
+                      device=device)
 
     test_performances, action_log = trainer.train()

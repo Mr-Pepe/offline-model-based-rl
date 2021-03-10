@@ -1,3 +1,4 @@
+from benchmark.actors.behavioral_cloning import BC
 from ray import tune
 from benchmark.utils.sample_selectors import get_selector
 from benchmark.utils.envs import get_test_env
@@ -164,15 +165,28 @@ class Trainer():
 
         agent_kwargs.update({'device': device})
         agent_kwargs.update({'pre_fn': self.pre_fn})
-        self.sac_kwargs = agent_kwargs
+        self.agent_kwargs = agent_kwargs
 
         if pretrained_agent_path != '':
             self.agent = torch.load(pretrained_agent_path)
             self.agent.to(device)
         else:
-            self.agent = SAC(self.env.observation_space,
-                             self.env.action_space,
-                             **agent_kwargs)
+            if 'type' in agent_kwargs:
+                if agent_kwargs['type'] == 'bc':
+                    self.agent = BC(self.env.observation_space,
+                                    self.env.action_space,
+                                    **agent_kwargs)
+                elif agent_kwargs['type'] == 'sac':
+                    self.agent = SAC(self.env.observation_space,
+                                     self.env.action_space,
+                                     **agent_kwargs)
+                else:
+                    raise ValueError(
+                        "Unknown agent type: {}".format(agent_kwargs['type']))
+            else:
+                self.agent = SAC(self.env.observation_space,
+                                 self.env.action_space,
+                                 **agent_kwargs)
 
         if use_custom_reward:
             self.rew_fn = get_reward_function(env_name)
@@ -186,7 +200,8 @@ class Trainer():
         self.model_kwargs = model_kwargs
 
         if pretrained_model_path != '':
-            self.env_model = torch.load(pretrained_model_path, map_location=device)
+            self.env_model = torch.load(
+                pretrained_model_path, map_location=device)
             self.env_model.pre_fn = self.pre_fn
             self.env_model.post_fn = self.post_fn
             if self.rew_fn:
@@ -293,7 +308,8 @@ class Trainer():
                 self.real_replay_buffer.set_curriculum(self.selector)
 
             if not silent:
-                print("Epoch {}\tMax rollout length: {}".format(epoch, self.max_rollout_length))
+                print("Epoch {}\tMax rollout length: {}".format(
+                    epoch, self.max_rollout_length))
 
             for step_epoch in range(self.steps_per_epoch):
                 actions_this_step = [0 for i in range(len(Actions))]
