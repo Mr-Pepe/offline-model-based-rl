@@ -1,6 +1,6 @@
 import argparse
 from benchmark.utils.uncertainty_distribution import get_uncertainty_distribution
-from benchmark.utils.modes import ALEATORIC_PENALTY, PARTITIONING_MODES, PENALTY_MODES, MODES, UNDERESTIMATION
+from benchmark.utils.modes import ALEATORIC_PENALTY, BEHAVIORAL_CLONING, PARTITIONING_MODES, PENALTY_MODES, MODES, UNDERESTIMATION
 from benchmark.utils.run_utils import setup_logger_kwargs
 from ray import tune
 import ray
@@ -27,15 +27,17 @@ def training_function(config, tuning=True):
 @ray.remote(num_gpus=0.5, max_retries=3)
 def training_wrapper(config, seed):
     print("hi")
-    exp_name = args.env_name+'-' + \
-        config['mode'] + '-' + str(config['rollouts_per_step']) + \
-        'rollouts' + '-' + str(config['max_rollout_length']) + 'steps'
+    exp_name = args.env_name + '-' + config['mode']
 
-    if config['mode'] in PENALTY_MODES:
-        exp_name += '-' + str(config['model_pessimism']) + 'pessimism'
+    if config['mode'] != BEHAVIORAL_CLONING:
+        exp_name += '-' + str(config['rollouts_per_step']) + \
+            'rollouts' + '-' + str(config['max_rollout_length']) + 'steps'
 
-    if config['mode'] in PARTITIONING_MODES:
-        exp_name += '-' + str(config['ood_threshold']) + 'threshold'
+        if config['mode'] in PENALTY_MODES:
+            exp_name += '-' + str(config['model_pessimism']) + 'pessimism'
+
+        if config['mode'] in PARTITIONING_MODES:
+            exp_name += '-' + str(config['ood_threshold']) + 'threshold'
 
     config.update(
         epochs=args.epochs,
@@ -52,7 +54,7 @@ if __name__ == '__main__':
                         default=WALKER_MEDIUM_REPLAY_V2)
     parser.add_argument('--level', type=int, default=0)
     parser.add_argument('--tuned_params', type=str2bool, default=False)
-    parser.add_argument('--mode', type=str, default=UNDERESTIMATION)
+    parser.add_argument('--mode', type=str, default=BEHAVIORAL_CLONING)
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--seeds', type=int, default=1)
     parser.add_argument('--pessimism', type=float, default=1)
@@ -76,10 +78,18 @@ if __name__ == '__main__':
     if args.mode not in MODES:
         raise ValueError("Unknown mode: {}".format(args.mode))
 
+    if args.mode == BEHAVIORAL_CLONING:
+        use_model = False
+        agent_type = 'bc'
+    else:
+        use_model = True
+        agent_type = 'sac'
+
     # None values must be filled for tuning and final training
     config = dict(
         env_name=args.env_name,
-        agent_kwargs=dict(batch_size=None,
+        agent_kwargs=dict(type=agent_type,
+                          batch_size=None,
                           agent_hidden=None,
                           gamma=None,
                           pi_lr=None,
@@ -102,7 +112,7 @@ if __name__ == '__main__':
         num_test_episodes=20,
         curriculum=[1, 1, 20, 100],
         max_ep_len=1000,
-        use_model=True,
+        use_model=use_model,
         pretrained_agent_path='',
         pretrained_model_path=os.path.join(
             MODELS_DIR, pretrained_model_name),
@@ -145,7 +155,8 @@ if __name__ == '__main__':
         # Basic config
         config.update(
             steps_per_epoch=5000,
-            agent_kwargs=dict(batch_size=256,
+            agent_kwargs=dict(type=agent_type,
+                              batch_size=256,
                               agent_hidden=args.n_hidden,
                               gamma=0.99,
                               pi_lr=3e-4,
@@ -186,7 +197,8 @@ if __name__ == '__main__':
         if args.level == 1:
             config.update(
                 epochs=30,
-                agent_kwargs=dict(batch_size=256,
+                agent_kwargs=dict(type=agent_type,
+                                  batch_size=256,
                                   agent_hidden=128,
                                   gamma=0.99,
                                   pi_lr=3e-4,
