@@ -29,7 +29,7 @@ class Trainer():
 
     def __init__(self,
                  env_name,
-                 sac_kwargs=dict(),
+                 agent_kwargs=dict(),
                  model_kwargs=dict(),
                  dataset_path='',
                  seed=0,
@@ -162,9 +162,9 @@ class Trainer():
             self.post_fn = None
             self.pre_fn = None
 
-        sac_kwargs.update({'device': device})
-        sac_kwargs.update({'pre_fn': self.pre_fn})
-        self.sac_kwargs = sac_kwargs
+        agent_kwargs.update({'device': device})
+        agent_kwargs.update({'pre_fn': self.pre_fn})
+        self.sac_kwargs = agent_kwargs
 
         if pretrained_agent_path != '':
             self.agent = torch.load(pretrained_agent_path)
@@ -172,7 +172,7 @@ class Trainer():
         else:
             self.agent = SAC(self.env.observation_space,
                              self.env.action_space,
-                             **sac_kwargs)
+                             **agent_kwargs)
 
         if use_custom_reward:
             self.rew_fn = get_reward_function(env_name)

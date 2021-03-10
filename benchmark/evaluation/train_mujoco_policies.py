@@ -18,8 +18,8 @@ import os
 
 
 def training_function(config, tuning=True):
-    config["sac_kwargs"].update(
-        {"hidden": 4*[config["sac_kwargs"]["agent_hidden"]]})
+    config["agent_kwargs"].update(
+        {"hidden": 4*[config["agent_kwargs"]["agent_hidden"]]})
     trainer = Trainer(**config)
     return trainer.train(tuning=tuning, silent=True)
 
@@ -79,12 +79,12 @@ if __name__ == '__main__':
     # None values must be filled for tuning and final training
     config = dict(
         env_name=args.env_name,
-        sac_kwargs=dict(batch_size=None,
-                        agent_hidden=None,
-                        gamma=None,
-                        pi_lr=None,
-                        q_lr=None,
-                        ),
+        agent_kwargs=dict(batch_size=None,
+                          agent_hidden=None,
+                          gamma=None,
+                          pi_lr=None,
+                          q_lr=None,
+                          ),
         max_rollout_length=None,
         model_pessimism=None,
         ood_threshold=None,
@@ -145,12 +145,12 @@ if __name__ == '__main__':
         # Basic config
         config.update(
             steps_per_epoch=5000,
-            sac_kwargs=dict(batch_size=256,
-                            agent_hidden=args.n_hidden,
-                            gamma=0.99,
-                            pi_lr=3e-4,
-                            q_lr=3e-4,
-                            ),
+            agent_kwargs=dict(batch_size=256,
+                              agent_hidden=args.n_hidden,
+                              gamma=0.99,
+                              pi_lr=3e-4,
+                              q_lr=3e-4,
+                              ),
             rollouts_per_step=rollouts_per_step,
             max_rollout_length=max_rollout_length,
             model_pessimism=model_pessimism,
@@ -160,13 +160,13 @@ if __name__ == '__main__':
 
         # According to appendix in COMBO paper
         # if args.env_name in WALKER_ENVS:
-        #     config['sac_kwargs'].update(pi_lr=1e-5, q_lr=1e-4)
+        #     config['agent_kwargs'].update(pi_lr=1e-5, q_lr=1e-4)
 
-        assert config['sac_kwargs']['batch_size'] is not None
-        assert config['sac_kwargs']['agent_hidden'] is not None
-        assert config['sac_kwargs']['gamma'] is not None
-        assert config['sac_kwargs']['pi_lr'] is not None
-        assert config['sac_kwargs']['q_lr'] is not None
+        assert config['agent_kwargs']['batch_size'] is not None
+        assert config['agent_kwargs']['agent_hidden'] is not None
+        assert config['agent_kwargs']['gamma'] is not None
+        assert config['agent_kwargs']['pi_lr'] is not None
+        assert config['agent_kwargs']['q_lr'] is not None
         assert config['rollouts_per_step'] is not None
         assert config['max_rollout_length'] is not None
         assert config['model_pessimism'] is not None
@@ -186,12 +186,12 @@ if __name__ == '__main__':
         if args.level == 1:
             config.update(
                 epochs=30,
-                sac_kwargs=dict(batch_size=256,
-                                agent_hidden=128,
-                                gamma=0.99,
-                                pi_lr=3e-4,
-                                q_lr=3e-4,
-                                ),
+                agent_kwargs=dict(batch_size=256,
+                                  agent_hidden=128,
+                                  gamma=0.99,
+                                  pi_lr=3e-4,
+                                  q_lr=3e-4,
+                                  ),
             )
 
             parameters = [
@@ -203,14 +203,16 @@ if __name__ == '__main__':
                     "log_scale": False,
                 }]
 
-            r_max, max_uncertainty, mean_uncertainty, std_uncertainty = get_uncertainty_distribution(args.env_name, args.mode)
+            r_max, max_uncertainty, mean_uncertainty, std_uncertainty = get_uncertainty_distribution(
+                args.env_name, args.mode)
 
             r_max = float(r_max)
             max_uncertainty = float(max_uncertainty)
             mean_uncertainty = float(mean_uncertainty)
             std_uncertainty = float(std_uncertainty)
 
-            print("R_max: {}, Max uncertainty: {}, Mean uncertainty: {}".format(r_max, max_uncertainty, mean_uncertainty))
+            print("R_max: {}, Max uncertainty: {}, Mean uncertainty: {}".format(
+                r_max, max_uncertainty, mean_uncertainty))
 
             if args.mode in PARTITIONING_MODES:
                 parameters += [
@@ -240,11 +242,11 @@ if __name__ == '__main__':
                     ood_threshold=0
                 )
 
-        assert config['sac_kwargs']['batch_size'] is not None
-        assert config['sac_kwargs']['agent_hidden'] is not None
-        assert config['sac_kwargs']['gamma'] is not None
-        assert config['sac_kwargs']['pi_lr'] is not None
-        assert config['sac_kwargs']['q_lr'] is not None
+        assert config['agent_kwargs']['batch_size'] is not None
+        assert config['agent_kwargs']['agent_hidden'] is not None
+        assert config['agent_kwargs']['gamma'] is not None
+        assert config['agent_kwargs']['pi_lr'] is not None
+        assert config['agent_kwargs']['q_lr'] is not None
 
         ray.init()
         scheduler = ASHAScheduler(

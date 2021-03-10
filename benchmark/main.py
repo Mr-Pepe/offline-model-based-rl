@@ -80,7 +80,7 @@ if __name__ == '__main__':
     torch.set_num_threads(torch.get_num_threads())
 
     trainer = Trainer(args.env,
-                      sac_kwargs=dict(hidden=[args.hid]*args.l,
+                      agent_kwargs=dict(hidden=[args.hid]*args.l,
                                       gamma=args.gamma,
                                       pi_lr=args.agent_lr,
                                       q_lr=args.agent_lr,
