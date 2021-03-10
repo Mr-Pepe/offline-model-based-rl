@@ -1,4 +1,4 @@
-from benchmark.utils.envs import HOPPER_RANDOM
+from benchmark.utils.envs import HOPPER_RANDOM_V2
 from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.mazes import plot_antmaze_umaze
 from benchmark.utils.replay_buffer import ReplayBuffer
@@ -201,7 +201,7 @@ def test_use_random_actions_in_virtual_rollout():
 @pytest.mark.medium
 def test_continuously_grow_rollouts(plot=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    env = gym.make(HOPPER_RANDOM)
+    env = gym.make(HOPPER_RANDOM_V2)
     observation_space = env.observation_space
     action_space = env.action_space
     seed = 1

@@ -1,5 +1,5 @@
 from benchmark.utils.modes import ALEATORIC_PENALTY
-from benchmark.utils.envs import HALF_CHEETAH_RANDOM, HOPPER_RANDOM
+from benchmark.utils.envs import HALF_CHEETAH_RANDOM_V2, HOPPER_RANDOM_V2
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.replay_buffer import ReplayBuffer
 from benchmark.actors.random_agent import RandomAgent
@@ -123,14 +123,14 @@ def test_single_deterministic_network_overfits_on_batch():
         loss.backward()
         optim.step()
 
-    assert criterion(y_pred, y.unsqueeze(0)).item() < 1e-5
+    assert criterion(y_pred, y.unsqueeze(0)).item() < 1e-4
 
 
 @pytest.mark.medium
 def test_deterministic_model_trains_on_offline_data():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    env = gym.make(HALF_CHEETAH_RANDOM)
+    env = gym.make(HALF_CHEETAH_RANDOM_V2)
     dataset = env.get_dataset()
     observations = dataset['observations']
     actions = dataset['actions']
@@ -200,7 +200,7 @@ def test_raises_error_if_type_unknown():
 def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augment_loss=False,
                                                    steps_per_plot=100,
                                                    add_points_between=False):
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'cpu'
 
     torch.manual_seed(0)
 
@@ -216,7 +216,7 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
                                     torch.abs(torch.sin(1.5*x + PI/8)))\
         .to(device)
 
-    n_networks = 4
+    n_networks = 2
 
     buffer = ReplayBuffer(1, 1, size=100000, device=device)
     buffer.obs_buf = x.unsqueeze(-1)
@@ -225,17 +225,17 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
     buffer.size = x.numel()
 
     model = EnvironmentModel(
-        1, 1, hidden=[200, 200, 200, 200], type='probabilistic',
+        1, 1, hidden=[4, 8, 4], type='probabilistic',
         n_networks=n_networks,
         device=device)
 
     x_true = torch.arange(-3*PI, 3*PI, 0.01)
     y_true = torch.sin(x_true)
-    f, axes = plt.subplots(2, 1)
+    plt.figure()
 
     for i in range(steps):
         model.train_to_convergence(
-            buffer, lr=1e-4, debug=True, max_n_train_batches=steps_per_plot, batch_size=128,
+            buffer, lr=1e-4, debug=False, max_n_train_batches=steps_per_plot, batch_size=128,
             augment_loss=augment_loss)
 
         if plot:
@@ -251,12 +251,13 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
 
             x_plt = x.cpu()
             y_plt = y.cpu()
+            idx = range(0, len(x_plt), 10)
 
-            axes[0].clear()
-            axes[1].clear()
-            axes[0].scatter(x_plt, y_plt,
-                            color='green', marker='x', s=5)
-            axes[0].plot(x_true, y_true, color='black')
+            plt.gca().clear()
+            # axes[1].clear()
+            plt.scatter(x_plt[idx], y_plt[idx],
+                       color='green', marker='x', s=20)
+            plt.plot(x_true, y_true, color='black')
 
             color = cm.rainbow(np.linspace(0, 1, n_networks))
             for i_network, c in zip(range(n_networks), color):
@@ -264,18 +265,21 @@ def test_probabilistic_model_trains_on_toy_dataset(steps=3000, plot=False, augme
                 # ax.fill_between(x_true, (mean_plt[i_network]+max_std[i_network]).view(-1),
                 #                 (mean_plt[i_network]-max_std[i_network]).view(-1),
                 #                 color='grey', zorder=-2)
-                axes[0].fill_between(x_true, (mean_plt[i_network]+std[i_network]).view(-1),
-                                     (mean_plt[i_network] -
-                                      std[i_network]).view(-1),
-                                     color=c, alpha=0.2)
-                axes[0].plot(x_true, mean_plt[i_network].view(-1), color=c)
-                axes[0].set_ylim([-3, 3])
+                plt.fill_between(x_true, (mean_plt[i_network]+std[i_network]).view(-1),
+                                (mean_plt[i_network] -
+                                 std[i_network]).view(-1),
+                                color=c, alpha=0.2)
+                plt.plot(x_true, mean_plt[i_network].view(-1), color=c)
+                plt.ylim([-1.5, 1.5])
+                plt.xlim([-8, 8])
+                plt.xticks([])
+                plt.yticks([])
 
-                axes[1].plot(
-                    x_true, uncertainty[i_network].detach().cpu().numpy(), color=c)
+            #     axes[1].plot(
+            #         x_true, uncertainty[i_network].detach().cpu().numpy(), color=c)
 
-            axes[1].plot(x_true, uncertainty.mean(
-                dim=0).detach().cpu().numpy(), color='black')
+            # axes[1].plot(x_true, uncertainty.mean(
+            #     dim=0).detach().cpu().numpy(), color='black')
 
             plt.draw()
             plt.pause(0.001)
@@ -335,7 +339,7 @@ def test_deterministic_ensemble_overfits_on_batch():
 
         print(loss.item())
 
-    assert loss.item() < 1e-5
+    assert loss.item() < 1e-4
 
 
 @pytest.mark.fast
@@ -426,7 +430,7 @@ def test_deterministic_model_returns_binary_done_signal_when_post_fn_used():
 def test_deterministic_model_does_not_always_output_terminal():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
-    env = gym.make(HOPPER_RANDOM)
+    env = gym.make(HOPPER_RANDOM_V2)
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
         env, n_samples=10000, buffer_device=device)
     model = EnvironmentModel(obs_dim, act_dim, type='deterministic',
@@ -478,7 +482,7 @@ def test_deterministic_model_does_not_always_output_terminal():
 def test_probabilistic_model_does_not_always_output_terminal():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torch.manual_seed(0)
-    env = gym.make(HOPPER_RANDOM)
+    env = gym.make(HOPPER_RANDOM_V2)
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
         env, 10000, buffer_device=device)
     model = EnvironmentModel(obs_dim, act_dim, type='probabilistic',

@@ -1,4 +1,4 @@
-from benchmark.utils.envs import HALF_CHEETAH_MEDIUM_REPLAY_V2, HOPPER_MEDIUM_REPLAY_V2, HOPPER_ORIGINAL, HOPPER_RANDOM, WALKER_MEDIUM_REPLAY_V2, WALKER_ORIGINAL
+from benchmark.utils.envs import HALF_CHEETAH_MEDIUM_REPLAY_V2, HOPPER_MEDIUM_REPLAY_V2, HOPPER_ORIGINAL, HOPPER_RANDOM_V2, WALKER_MEDIUM_REPLAY_V2, WALKER_ORIGINAL
 from benchmark.utils.actions import Actions
 from benchmark.train import Trainer
 import pytest
@@ -9,14 +9,14 @@ from benchmark.utils.postprocessing import postprocessing_functions
 
 @pytest.mark.medium
 def test_replay_buffer_is_initially_empty_for_online_training():
-    trainer = Trainer('maze2d-open-v0',
+    trainer = Trainer(HOPPER_MEDIUM_REPLAY_V2,
                       pretrain_epochs=0)
     assert trainer.real_replay_buffer.size == 0
 
 
 @pytest.mark.medium
 def test_replay_buffer_is_filled_for_offline_training():
-    trainer = Trainer('maze2d-open-v0',
+    trainer = Trainer(HOPPER_MEDIUM_REPLAY_V2,
                       pretrain_epochs=1,
                       n_samples_from_dataset=100)
 
@@ -31,7 +31,7 @@ def test_actions_for_online_model_free_training():
     init_steps = 100
     random_steps = 50
 
-    trainer = Trainer('maze2d-open-dense-v0',
+    trainer = Trainer(HOPPER_MEDIUM_REPLAY_V2,
                       epochs=epochs,
                       agent_kwargs=dict(type='sac',
                                         hidden=[32, 32, 32],
@@ -79,7 +79,7 @@ def test_actions_for_online_model_based_training():
     random_steps = 50
     train_model_every = 50
 
-    trainer = Trainer(HOPPER_RANDOM,
+    trainer = Trainer(HOPPER_RANDOM_V2,
                       epochs=epochs,
                       agent_kwargs=dict(type='sac',
                                         hidden=[32, 32, 32],
@@ -140,7 +140,7 @@ def test_actions_for_offline_model_free_training_with_fine_tuning():
     random_steps = 50
     n_samples = 500000
 
-    trainer = Trainer('maze2d-open-dense-v0',
+    trainer = Trainer(HOPPER_MEDIUM_REPLAY_V2,
                       epochs=epochs,
                       pretrain_epochs=pretrain_epochs,
                       agent_kwargs=dict(type='sac',
@@ -188,7 +188,7 @@ def test_actions_for_offline_model_based_training_with_fine_tuning():
     random_steps = 50
     train_model_every = 50
 
-    trainer = Trainer(HOPPER_RANDOM,
+    trainer = Trainer(HOPPER_RANDOM_V2,
                       epochs=epochs,
                       pretrain_epochs=pretrain_epochs,
                       agent_kwargs=dict(type='sac',
@@ -265,7 +265,7 @@ def test_results_are_reproducible():
     random_steps = 50
     train_model_every = 50
 
-    trainer1 = Trainer(HOPPER_RANDOM,
+    trainer1 = Trainer(HOPPER_RANDOM_V2,
                        epochs=epochs,
                        agent_kwargs=dict(type='sac',
                                          hidden=[32, 32, 32],
@@ -284,7 +284,7 @@ def test_results_are_reproducible():
 
     test_performances1, action_log1 = trainer1.train()
 
-    trainer2 = Trainer(HOPPER_RANDOM,
+    trainer2 = Trainer(HOPPER_RANDOM_V2,
                        epochs=epochs,
                        agent_kwargs=dict(type='sac',
                                          hidden=[32, 32, 32],

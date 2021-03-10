@@ -6,6 +6,7 @@ from benchmark.utils.load_dataset import load_dataset_from_env
 import matplotlib.pyplot as plt  # noqa
 
 
+@pytest.mark.xfail
 @pytest.mark.medium
 def test_antmaze_umaze_reward_function():
     env_name = 'antmaze-umaze-v0'
@@ -23,6 +24,7 @@ def test_antmaze_umaze_reward_function():
     assert rewards.shape[2] == 1
 
 
+@pytest.mark.xfail
 @pytest.mark.medium
 def test_antmaze_umaze_diverse_reward_function():
     env_name = 'antmaze-umaze-diverse-v0'
@@ -41,6 +43,7 @@ def test_antmaze_umaze_diverse_reward_function():
     assert rewards.shape[2] == 1
 
 
+@pytest.mark.xfail
 @pytest.mark.medium
 def test_antmaze_medium_diverse_reward_function():
     env_name = 'antmaze-medium-diverse-v0'
