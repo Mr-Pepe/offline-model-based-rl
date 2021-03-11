@@ -151,6 +151,12 @@ class Trainer():
 
         self.pre_fn = get_preprocessing_function(env_name, device)
 
+        if use_custom_reward:
+            self.rew_fn = get_reward_function(env_name)
+            model_kwargs.update({'rew_fn': self.rew_fn})
+        else:
+            self.rew_fn = None
+
         if use_model:
             self.post_fn = get_postprocessing_function(env_name)
             if not self.post_fn:
@@ -162,6 +168,26 @@ class Trainer():
         else:
             self.post_fn = None
             self.pre_fn = None
+
+        model_kwargs.update({'device': device})
+        model_kwargs.update({'pre_fn': self.pre_fn})
+        model_kwargs.update({'post_fn': self.post_fn})
+        self.model_kwargs = model_kwargs
+
+        if use_model:
+            if pretrained_model_path != '':
+                self.env_model = torch.load(
+                    pretrained_model_path, map_location=device)
+                self.env_model.pre_fn = self.pre_fn
+                self.env_model.post_fn = self.post_fn
+                if self.rew_fn:
+                    self.env_model.rew_fn = self.rew_fn
+            else:
+                self.env_model = EnvironmentModel(self.obs_dim[0],
+                                                  self.act_dim,
+                                                  **model_kwargs)
+        else:
+            self.model = None
 
         agent_kwargs.update({'device': device})
         agent_kwargs.update({'pre_fn': self.pre_fn})
@@ -187,29 +213,6 @@ class Trainer():
                 self.agent = SAC(self.env.observation_space,
                                  self.env.action_space,
                                  **agent_kwargs)
-
-        if use_custom_reward:
-            self.rew_fn = get_reward_function(env_name)
-            model_kwargs.update({'rew_fn': self.rew_fn})
-        else:
-            self.rew_fn = None
-
-        model_kwargs.update({'device': device})
-        model_kwargs.update({'pre_fn': self.pre_fn})
-        model_kwargs.update({'post_fn': self.post_fn})
-        self.model_kwargs = model_kwargs
-
-        if pretrained_model_path != '':
-            self.env_model = torch.load(
-                pretrained_model_path, map_location=device)
-            self.env_model.pre_fn = self.pre_fn
-            self.env_model.post_fn = self.post_fn
-            if self.rew_fn:
-                self.env_model.rew_fn = self.rew_fn
-        else:
-            self.env_model = EnvironmentModel(self.obs_dim[0],
-                                              self.act_dim,
-                                              **model_kwargs)
 
         self.logger.setup_pytorch_saver({
             'agent': self.agent,
