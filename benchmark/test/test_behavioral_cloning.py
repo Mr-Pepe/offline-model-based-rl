@@ -41,11 +41,13 @@ def test_BC_agent_overfits_on_single_batch():
                pre_fn=get_preprocessing_function(env_name))
     batch = buffer.sample_batch(256)
 
-    for i in range(1000000):
+    for i in range(5000):
         loss = agent.update(batch)
 
         if i % 100 == 0:
             print(loss, end='\r')
+
+    assert loss < 1e-5
 
 
 def test_BC_agent_trains_on_dataset():
