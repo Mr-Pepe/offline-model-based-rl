@@ -155,8 +155,8 @@ class CQL(nn.Module):
         loss_q = loss_q1 + loss_q2 + min_qf1_loss + min_qf2_loss
 
         # Useful info for logging
-        q_info = dict(Q1Vals=q1.cpu().detach().numpy(),
-                      Q2Vals=q2.cpu().detach().numpy())
+        q_info = dict(Q1Vals=0,
+                      Q2Vals=0)
 
         return loss_q, q_info
 
@@ -182,7 +182,7 @@ class CQL(nn.Module):
         loss_pi = (alpha * logp_pi - q_pi).mean()
 
         # Useful info for logging
-        pi_info = dict(LogPi=logp_pi.cpu().detach().numpy())
+        pi_info = dict(LogPi=0)
 
         return loss_pi, pi_info
 
@@ -230,8 +230,8 @@ class CQL(nn.Module):
             loss_q, q_info, loss_pi, pi_info = self.update(data=batch)
 
             if logger is not None:
-                logger.store(LossQ=loss_q.item(), **q_info)
-                logger.store(LossPi=loss_pi.item(), **pi_info)
+                logger.store(LossQ=0, **q_info)
+                logger.store(LossPi=0, **pi_info)
 
     def act(self, o, deterministic=False):
         self.device = next(self.parameters()).device
