@@ -1,6 +1,6 @@
 import argparse
 from benchmark.utils.uncertainty_distribution import get_uncertainty_distribution
-from benchmark.utils.modes import ALEATORIC_PENALTY, BEHAVIORAL_CLONING, PARTITIONING_MODES, PENALTY_MODES, MODES, UNDERESTIMATION
+from benchmark.utils.modes import ALEATORIC_PENALTY, BEHAVIORAL_CLONING, CQL, PARTITIONING_MODES, PENALTY_MODES, MODES, UNDERESTIMATION
 from benchmark.utils.run_utils import setup_logger_kwargs
 from ray import tune
 import ray
@@ -29,7 +29,7 @@ def training_wrapper(config, seed):
     print("hi")
     exp_name = args.env_name + '-' + config['mode']
 
-    if config['mode'] != BEHAVIORAL_CLONING:
+    if config['mode'] != BEHAVIORAL_CLONING and config['mode'] != CQL:
         exp_name += '-' + str(config['rollouts_per_step']) + \
             'rollouts' + '-' + str(config['max_rollout_length']) + 'steps'
 
@@ -81,6 +81,9 @@ if __name__ == '__main__':
     if args.mode == BEHAVIORAL_CLONING:
         use_model = False
         agent_type = 'bc'
+    elif args.mode == CQL:
+        use_model = False
+        agent_type = 'cql'
     else:
         use_model = True
         agent_type = 'sac'

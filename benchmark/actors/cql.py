@@ -7,19 +7,20 @@ from torch.optim.adamw import AdamW
 from benchmark.models.mlp_q_function import MLPQFunction
 from benchmark.models.squashed_gaussian_mlp_actor import \
     SquashedGaussianMLPActor
+import numpy as np
 
 
 class CQL(nn.Module):
+    # Based on https://spinningup.openai.com
 
     def __init__(self, observation_space, action_space, hidden=(256, 256),
                  activation=nn.ReLU, pi_lr=3e-4, q_lr=3e-4, gamma=0.99,
-                 alpha=0.2, polyak=0.995, batch_size=100,
+                 polyak=0.995, batch_size=100,
                  pre_fn=None, device='cpu', **_):
 
         super().__init__()
 
         self.gamma = gamma
-        self.alpha = alpha
         self.polyak = polyak
         self.batch_size = batch_size
         self.pre_fn = pre_fn
@@ -56,6 +57,19 @@ class CQL(nn.Module):
         for p in self.target.parameters():
             p.requires_grad = False
 
+        # CQL
+        self.target_entropy = -np.prod(action_space.shape).item()
+        self.log_alpha = torch.zeros(1, requires_grad=True, device=device)
+        self.alpha_optimizer = AdamW([self.log_alpha], lr=pi_lr)
+
+        self.target_action_gap = 10
+        self.log_alpha_prime = torch.zeros(
+            1, requires_grad=True, device=device)
+        self.alpha_prime_optimizer = AdamW([self.log_alpha_prime], lr=q_lr)
+
+        self.temp = 1
+        self.min_q_weight = 1
+
     def compute_loss_q(self, data):
         o, a, r, o2, d = data['obs'], data['act'], \
             data['rew'], data['obs2'], data['done']
@@ -77,12 +91,68 @@ class CQL(nn.Module):
             q2_pi_targ = self.target.q2(o2, a2)
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
             backup = r + self.gamma * \
-                ~d * (q_pi_targ - self.alpha * logp_a2)
+                ~d * (q_pi_targ - self.log_alpha.exp() * logp_a2)
 
         # MSE loss against Bellman backup
         loss_q1 = ((q1 - backup)**2).mean()
         loss_q2 = ((q2 - backup)**2).mean()
-        loss_q = loss_q1 + loss_q2
+
+        device = next(self.parameters()).device
+
+        # CQL
+        # From https://github.com/aviralkumar2907/CQL/blob/master/d4rl/rlkit/torch/sac/cql.py
+        n_actions = 10
+        stacked_o = o.unsqueeze(1).repeat(1, n_actions, 1).view(o.shape[0] * n_actions,
+                                                                o.shape[1])
+        stacked_o2 = o2.unsqueeze(1).repeat(1, n_actions, 1).view(o.shape[0] * n_actions,
+                                                                  o.shape[1])
+        random_actions = torch.FloatTensor(
+            q1.shape[0] * n_actions,
+            a.shape[-1]).uniform_(-1, 1).to(device)
+        curr_actions, curr_log_pi = self.pi(stacked_o, False, True)
+        next_actions, next_log_pi = self.pi(stacked_o2, False, True)
+        q1_random = self.q1(stacked_o, random_actions).view(
+            o.shape[0], n_actions)
+        q2_random = self.q2(stacked_o, random_actions).view(
+            o.shape[0], n_actions)
+        q1_curr = self.q1(stacked_o, curr_actions).view(o.shape[0], n_actions)
+        q2_curr = self.q2(stacked_o, curr_actions).view(o.shape[0], n_actions)
+        q1_next = self.q1(stacked_o, next_actions).view(o.shape[0], n_actions)
+        q2_next = self.q2(stacked_o, next_actions).view(o.shape[0], n_actions)
+
+        random_density = np.log(0.5 ** curr_actions.shape[-1])
+
+        cat_q1 = torch.cat(
+            [q1_random - random_density, q1_next -
+             next_log_pi.detach().view(-1, n_actions),
+             q1_curr - curr_log_pi.detach().view(-1, n_actions)], 1
+        )
+        cat_q2 = torch.cat(
+            [q2_random - random_density, q2_next -
+             next_log_pi.detach().view(-1, n_actions),
+             q2_curr - curr_log_pi.detach().view(-1, n_actions)], 1
+        )
+
+        min_qf1_loss = torch.logsumexp(
+            cat_q1 / self.temp, dim=1,).mean() * self.min_q_weight * self.temp
+        min_qf2_loss = torch.logsumexp(
+            cat_q2 / self.temp, dim=1,).mean() * self.min_q_weight * self.temp
+
+        """Subtract the log likelihood of data"""
+        min_qf1_loss = min_qf1_loss - q1.mean() * self.min_q_weight
+        min_qf2_loss = min_qf2_loss - q2.mean() * self.min_q_weight
+
+        alpha_prime = torch.clamp(
+            self.log_alpha_prime.exp(), min=0.0, max=1000000.0)
+        min_qf1_loss = alpha_prime * (min_qf1_loss - self.target_action_gap)
+        min_qf2_loss = alpha_prime * (min_qf2_loss - self.target_action_gap)
+
+        self.alpha_prime_optimizer.zero_grad()
+        alpha_prime_loss = (-min_qf1_loss - min_qf2_loss)*0.5
+        alpha_prime_loss.backward(retain_graph=True)
+        self.alpha_prime_optimizer.step()
+
+        loss_q = loss_q1 + loss_q2 + min_qf1_loss + min_qf2_loss
 
         # Useful info for logging
         q_info = dict(Q1Vals=q1.cpu().detach().numpy(),
@@ -101,8 +171,15 @@ class CQL(nn.Module):
         q2_pi = self.q2(o, pi)
         q_pi = torch.min(q1_pi, q2_pi)
 
+        alpha_loss = -(self.log_alpha * (logp_pi +
+                                         self.target_entropy).detach()).mean()
+        self.alpha_optimizer.zero_grad()
+        alpha_loss.backward()
+        self.alpha_optimizer.step()
+        alpha = self.log_alpha.exp()
+
         # Entropy-regularized policy loss
-        loss_pi = (self.alpha * logp_pi - q_pi).mean()
+        loss_pi = (alpha * logp_pi - q_pi).mean()
 
         # Useful info for logging
         pi_info = dict(LogPi=logp_pi.cpu().detach().numpy())
@@ -132,7 +209,7 @@ class CQL(nn.Module):
         loss_pi.backward()
         self.pi_optimizer.step()
 
-        # Unfreeze Q-networks so you can optimize it at next DDPG step.
+        # Unfreeze Q-networks.
         for p in self.q_params:
             p.requires_grad = True
 
