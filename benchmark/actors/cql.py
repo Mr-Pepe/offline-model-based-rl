@@ -57,6 +57,14 @@ class CQL(nn.Module):
         for p in self.target.parameters():
             p.requires_grad = False
 
+        self.use_amp = 'cuda' in next(self.parameters()).device.type
+        self.pi_scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp,
+                                                   growth_factor=1.5,
+                                                   backoff_factor=0.7)
+        self.q_scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp,
+                                                  growth_factor=1.5,
+                                                  backoff_factor=0.7)
+
         # CQL
         self.target_entropy = -np.prod(action_space.shape).item()
         self.log_alpha = torch.zeros(1, requires_grad=True, device=device)
@@ -103,9 +111,9 @@ class CQL(nn.Module):
         # CQL
         # From https://github.com/aviralkumar2907/CQL/blob/master/d4rl/rlkit/torch/sac/cql.py
         stacked_o = o.unsqueeze(1).repeat(1, self.n_actions, 1).view(o.shape[0] * self.n_actions,
-                                                                o.shape[1])
+                                                                     o.shape[1])
         stacked_o2 = o2.unsqueeze(1).repeat(1, self.n_actions, 1).view(o.shape[0] * self.n_actions,
-                                                                  o.shape[1])
+                                                                       o.shape[1])
         random_actions = torch.FloatTensor(
             q1.shape[0] * self.n_actions,
             a.shape[-1]).uniform_(-1, 1).to(device)
@@ -115,10 +123,14 @@ class CQL(nn.Module):
             o.shape[0], self.n_actions)
         q2_random = self.q2(stacked_o, random_actions).view(
             o.shape[0], self.n_actions)
-        q1_curr = self.q1(stacked_o, curr_actions).view(o.shape[0], self.n_actions)
-        q2_curr = self.q2(stacked_o, curr_actions).view(o.shape[0], self.n_actions)
-        q1_next = self.q1(stacked_o, next_actions).view(o.shape[0], self.n_actions)
-        q2_next = self.q2(stacked_o, next_actions).view(o.shape[0], self.n_actions)
+        q1_curr = self.q1(stacked_o, curr_actions).view(
+            o.shape[0], self.n_actions)
+        q2_curr = self.q2(stacked_o, curr_actions).view(
+            o.shape[0], self.n_actions)
+        q1_next = self.q1(stacked_o, next_actions).view(
+            o.shape[0], self.n_actions)
+        q2_next = self.q2(stacked_o, next_actions).view(
+            o.shape[0], self.n_actions)
 
         random_density = np.log(0.5 ** curr_actions.shape[-1])
 
@@ -194,9 +206,11 @@ class CQL(nn.Module):
 
         # First run one gradient descent step for Q1 and Q2
         self.q_optimizer.zero_grad()
-        loss_q, q_info = self.compute_loss_q(data)
-        loss_q.backward()
-        self.q_optimizer.step()
+        with torch.cuda.amp.autocast(enabled=self.use_amp):
+            loss_q, q_info = self.compute_loss_q(data)
+        self.q_scaler.scale(loss_q).backward()
+        self.q_scaler.step(self.q_optimizer)
+        self.q_scaler.update()
 
         # Freeze Q-networks so you don't waste computational effort
         # computing gradients for them during the policy learning step.
@@ -205,9 +219,11 @@ class CQL(nn.Module):
 
         # Next run one gradient descent step for pi.
         self.pi_optimizer.zero_grad()
-        loss_pi, pi_info = self.compute_loss_pi(data)
-        loss_pi.backward()
-        self.pi_optimizer.step()
+        with torch.cuda.amp.autocast(enabled=self.use_amp):
+            loss_pi, pi_info = self.compute_loss_pi(data)
+        self.pi_scaler.scale(loss_pi).backward()
+        self.pi_scaler.step(self.pi_optimizer)
+        self.pi_scaler.update()
 
         # Unfreeze Q-networks.
         for p in self.q_params:
