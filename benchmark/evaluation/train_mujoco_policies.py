@@ -64,6 +64,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_rollouts', type=int, default=50)
     parser.add_argument('--n_hidden', type=int, default=128)
     parser.add_argument('--n_trials', type=int, default=20)
+    parser.add_argument('--n_cql_actions', type=int, default=20)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
@@ -164,6 +165,7 @@ if __name__ == '__main__':
                               gamma=0.99,
                               pi_lr=3e-4,
                               q_lr=3e-4,
+                              n_actions=args.n_cql_actions
                               ),
             rollouts_per_step=rollouts_per_step,
             max_rollout_length=max_rollout_length,

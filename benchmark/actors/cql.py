@@ -15,7 +15,7 @@ class CQL(nn.Module):
 
     def __init__(self, observation_space, action_space, hidden=(256, 256),
                  activation=nn.ReLU, pi_lr=3e-4, q_lr=3e-4, gamma=0.99,
-                 polyak=0.995, batch_size=100,
+                 polyak=0.995, batch_size=100, n_actions=10,
                  pre_fn=None, device='cpu', **_):
 
         super().__init__()
@@ -62,6 +62,7 @@ class CQL(nn.Module):
         self.log_alpha = torch.zeros(1, requires_grad=True, device=device)
         self.alpha_optimizer = AdamW([self.log_alpha], lr=pi_lr)
 
+        self.n_actions = n_actions
         self.target_action_gap = 10
         self.log_alpha_prime = torch.zeros(
             1, requires_grad=True, device=device)
@@ -101,36 +102,35 @@ class CQL(nn.Module):
 
         # CQL
         # From https://github.com/aviralkumar2907/CQL/blob/master/d4rl/rlkit/torch/sac/cql.py
-        n_actions = 10
-        stacked_o = o.unsqueeze(1).repeat(1, n_actions, 1).view(o.shape[0] * n_actions,
+        stacked_o = o.unsqueeze(1).repeat(1, self.n_actions, 1).view(o.shape[0] * self.n_actions,
                                                                 o.shape[1])
-        stacked_o2 = o2.unsqueeze(1).repeat(1, n_actions, 1).view(o.shape[0] * n_actions,
+        stacked_o2 = o2.unsqueeze(1).repeat(1, self.n_actions, 1).view(o.shape[0] * self.n_actions,
                                                                   o.shape[1])
         random_actions = torch.FloatTensor(
-            q1.shape[0] * n_actions,
+            q1.shape[0] * self.n_actions,
             a.shape[-1]).uniform_(-1, 1).to(device)
         curr_actions, curr_log_pi = self.pi(stacked_o, False, True)
         next_actions, next_log_pi = self.pi(stacked_o2, False, True)
         q1_random = self.q1(stacked_o, random_actions).view(
-            o.shape[0], n_actions)
+            o.shape[0], self.n_actions)
         q2_random = self.q2(stacked_o, random_actions).view(
-            o.shape[0], n_actions)
-        q1_curr = self.q1(stacked_o, curr_actions).view(o.shape[0], n_actions)
-        q2_curr = self.q2(stacked_o, curr_actions).view(o.shape[0], n_actions)
-        q1_next = self.q1(stacked_o, next_actions).view(o.shape[0], n_actions)
-        q2_next = self.q2(stacked_o, next_actions).view(o.shape[0], n_actions)
+            o.shape[0], self.n_actions)
+        q1_curr = self.q1(stacked_o, curr_actions).view(o.shape[0], self.n_actions)
+        q2_curr = self.q2(stacked_o, curr_actions).view(o.shape[0], self.n_actions)
+        q1_next = self.q1(stacked_o, next_actions).view(o.shape[0], self.n_actions)
+        q2_next = self.q2(stacked_o, next_actions).view(o.shape[0], self.n_actions)
 
         random_density = np.log(0.5 ** curr_actions.shape[-1])
 
         cat_q1 = torch.cat(
             [q1_random - random_density, q1_next -
-             next_log_pi.detach().view(-1, n_actions),
-             q1_curr - curr_log_pi.detach().view(-1, n_actions)], 1
+             next_log_pi.detach().view(-1, self.n_actions),
+             q1_curr - curr_log_pi.detach().view(-1, self.n_actions)], 1
         )
         cat_q2 = torch.cat(
             [q2_random - random_density, q2_next -
-             next_log_pi.detach().view(-1, n_actions),
-             q2_curr - curr_log_pi.detach().view(-1, n_actions)], 1
+             next_log_pi.detach().view(-1, self.n_actions),
+             q2_curr - curr_log_pi.detach().view(-1, self.n_actions)], 1
         )
 
         min_qf1_loss = torch.logsumexp(
