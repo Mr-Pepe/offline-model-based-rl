@@ -6,6 +6,7 @@ ALEATORIC_PENALTY = 'aleatoric-penalty'
 EPISTEMIC_PENALTY = 'epistemic-penalty'
 UNDERESTIMATION = 'underestimation'
 BEHAVIORAL_CLONING = 'behavioral-cloning'
+CQL = 'CQL'
 
 MODES = [
     EXPLICIT_PARTITIONING,
