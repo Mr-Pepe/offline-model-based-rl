@@ -227,9 +227,7 @@ class EnvironmentModel(nn.Module):
                 prediction[ood_idx, -1] = 1
 
             elif mode == UNDERESTIMATION:
-                prediction = predictions.mean(dim=0)
                 prediction[:, -2] = underestimated_reward
-                prediction[underestimated_reward < -self.max_reward, -1] = 1
 
         if debug:
             return prediction, means, logvars, explicit_uncertainties, epistemic_uncertainty, aleatoric_uncertainty, underestimated_reward
