@@ -271,7 +271,7 @@ if __name__ == '__main__':
         assert config['agent_kwargs']['q_lr'] is not None
 
         if args.resume_tuning:
-            print_warning("Resuming tuning.")
+            print_warning("Resuming tuning.", ())
 
         ray.init()
         scheduler = ASHAScheduler(
