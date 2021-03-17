@@ -78,6 +78,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_samples_from_dataset', type=int, default=50000)
     parser.add_argument('--cc_knn_batch_size', type=int, default=20)
     parser.add_argument('--cc_knn_batch_size_init', type=int, default=20)
+    parser.add_argument('--cc_knn', type=int, default=3)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument('--use_ray', type=str2bool, default=True)
     parser.add_argument('--device', type=str, default='')
@@ -189,7 +190,8 @@ if __name__ == '__main__':
                               q_lr=3e-4,
                               n_actions=args.n_cql_actions,
                               cc_knn_batch_size=args.cc_knn_batch_size,
-                              cc_knn_batch_size_init=args.cc_knn_batch_size_init
+                              cc_knn_batch_size_init=args.cc_knn_batch_size_init,
+                              cc_knn=args.cc_knn
                               ),
             rollouts_per_step=rollouts_per_step,
             max_rollout_length=max_rollout_length,

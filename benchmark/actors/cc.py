@@ -15,7 +15,7 @@ class CopyCat(nn.Module):
     def __init__(self, observation_space, action_space, hidden=(128, 128, 128, 128),
                  activation=nn.ReLU, lr=3e-4, batch_size=100, gamma=0.99,
                  pre_fn=None, device='cpu', decay=0.99999, polyak=0.995,
-                 cc_knn_batch_size=20, cc_knn_batch_size_init=20, **_):
+                 cc_knn_batch_size=20, cc_knn_batch_size_init=20, cc_knn=3, **_):
 
         super().__init__()
 
@@ -49,7 +49,7 @@ class CopyCat(nn.Module):
                                                 growth_factor=1.5,
                                                 backoff_factor=0.7)
 
-        self.k = 3
+        self.k = cc_knn
         self.knn = None
         self.epsilon = 0.5
         self.decay = decay
@@ -157,7 +157,7 @@ class CopyCat(nn.Module):
             batch['done'] = pred[:, -1]
 
             obs2_knn = buffer.get_knn(
-                k=3, pre_fn=self.pre_fn, query=batch['obs2'], batch_size=self.knn_batch_size)
+                k=self.k, pre_fn=self.pre_fn, query=batch['obs2'], batch_size=self.knn_batch_size)
             batch['act2'] = self.eps_greedy_actions(batch['obs2'],
                                                     buffer,
                                                     torch.arange(0,
@@ -209,7 +209,7 @@ class CopyCat(nn.Module):
 
         actions[random_act_idxs] = buffer.act_buf[knn[idxs[random_act_idxs], act_idx].long()]
         q_values = self.q(obs[~random_act_idxs].repeat(self.k, 1),
-                          buffer.act_buf[knn[idxs[~random_act_idxs]].view(-1).long()]).view(3, -1)
+                          buffer.act_buf[knn[idxs[~random_act_idxs]].view(-1).long()]).view(self.k, -1)
         actions[~random_act_idxs] = buffer.act_buf[knn[idxs[~random_act_idxs],
                                                        torch.argmax(q_values, dim=0)].long()]
 
