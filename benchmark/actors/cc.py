@@ -52,6 +52,7 @@ class CopyCat(nn.Module):
         self.knn = None
         self.epsilon = 0.5
         self.decay = decay
+        self.act_idx = torch.randint(0, self.k, (self.batch_size,))
 
         self.target = deepcopy(self)
 
@@ -135,7 +136,8 @@ class CopyCat(nn.Module):
         self.epsilon *= self.decay
 
         if self.knn is None:
-            self.knn = buffer.get_knn(k=self.k, pre_fn=self.pre_fn, verbose=True)
+            self.knn = buffer.get_knn(
+                k=self.k, pre_fn=self.pre_fn, verbose=True)
 
         losses = torch.zeros(n_updates)
         for i_update in range(n_updates):
@@ -189,17 +191,19 @@ class CopyCat(nn.Module):
     def eps_greedy_actions(self, obs, buffer, idxs, knn=None):
         if knn is None:
             knn = self.knn
-        act_idx = torch.randint(0, self.k, (self.batch_size,))
-        actions = torch.zeros((len(obs), buffer.act_buf.shape[1])).to(obs.device)
+
+        actions = torch.empty((len(obs), buffer.act_buf.shape[1]),
+                              device=obs.device,
+                              dtype=torch.float32)
 
         for i_idx, idx in enumerate(idxs):
             if torch.rand((1,)) < self.epsilon:
                 actions[i_idx] = buffer.act_buf[int(
-                    knn[idx][act_idx[i_idx]])]
+                    knn[idx][self.act_idx[i_idx]])]
             else:
                 q_values = self.q(obs[i_idx].unsqueeze(0).repeat(
                     self.k, 1), buffer.act_buf[knn[idx].long()])
                 actions[i_idx] = buffer.act_buf[int(
-                    knn[idx][q_values.max(dim=0).indices])]
+                    knn[idx][torch.argmax(q_values)])]
 
         return actions
