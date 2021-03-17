@@ -91,8 +91,8 @@ if __name__ == '__main__':
         use_model = False
         agent_type = 'bc'
     elif args.mode == COPYCAT:
-        use_model = False
-        agent_type = 'cc'
+        use_model = True
+        agent_type = 'copycat'
         n_samples_from_dataset = args.n_samples_from_dataset
     elif args.mode == CQL:
         use_model = False

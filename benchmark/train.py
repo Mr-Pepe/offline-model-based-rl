@@ -17,7 +17,7 @@ from benchmark.utils.value_from_schedule import \
 from benchmark.utils.virtual_rollouts import generate_virtual_rollouts
 from benchmark.models.environment_model import EnvironmentModel
 from benchmark.evaluation.evaluate_policy import test_agent
-from benchmark.utils.modes import ALEATORIC_PENALTY
+from benchmark.utils.modes import ALEATORIC_PENALTY, COPYCAT
 import time
 
 import torch
@@ -201,7 +201,7 @@ class Trainer():
                     self.agent = CQL(self.env.observation_space,
                                      self.env.action_space,
                                      **agent_kwargs)
-                elif agent_kwargs['type'] == 'cc':
+                elif agent_kwargs['type'] == 'copycat':
                     self.agent = CopyCat(self.env.observation_space,
                                          self.env.action_space,
                                          **agent_kwargs)
@@ -412,7 +412,12 @@ class Trainer():
 
                 # Update agent
                 if step_total >= self.init_steps or self.pretrain_epochs > 0:
-                    if self.use_model and self.rollouts_per_step > 0:
+                    if self.agent_kwargs['type'] == COPYCAT:
+                        self.agent.multi_update(self.agent_updates_per_step,
+                                                self.real_replay_buffer,
+                                                self.env_model,
+                                                self.logger)
+                    elif self.use_model and self.rollouts_per_step > 0:
                         rollouts, prev_obs = generate_virtual_rollouts(
                             self.env_model,
                             self.agent,

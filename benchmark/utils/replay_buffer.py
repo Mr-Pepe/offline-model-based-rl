@@ -219,31 +219,36 @@ class ReplayBuffer:
 
         return knn
 
-    def get_knn(self, k=3, pre_fn=None):
-        obs = self.obs_buf[:self.size]
+    def get_knn(self, k=3, pre_fn=None, query=None, verbose=False):
+        if query is None:
+            obs = self.obs_buf[:self.size]
+        else:
+            obs = query
 
         if pre_fn is not None:
-            obs = pre_fn(self.obs_buf[:self.size])
+            obs = pre_fn(obs)
 
-        knn = torch.zeros((self.size, k), device=self.obs_buf.device,
+        knn = torch.zeros((len(obs), k), device=self.obs_buf.device,
                           requires_grad=False)
 
         batch_size = 20
         i = 0
 
-        print("Calculating nearest neighbors")
+        if verbose:
+            print("Calculating nearest neighbors")
 
-        while i < self.size:
-            if i % 100 == 0:
-                print("Sample {}/{}".format(i, self.size), end='\r')
+        while i < len(obs):
+            if i % 100 == 0 and verbose:
+                print("Sample {}/{}".format(i, len(obs)), end='\r')
 
-            i_to = min(i+batch_size, self.size)
+            i_to = min(i+batch_size, len(obs))
             this_knn = torch.topk(torch.linalg.norm(
                 obs[None, :, :] - obs[i:i_to, None, :], dim=2), k, largest=False)
             knn[i:i_to] = this_knn.indices
 
             i += batch_size
 
-        print('')
+        if verbose:
+            print('')
 
         return knn
