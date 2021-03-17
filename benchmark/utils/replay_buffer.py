@@ -200,3 +200,46 @@ class ReplayBuffer:
 
     def set_curriculum(self, selector):
         self.possible_idxs = selector.select(self)
+
+    def get_knn_naive(self, k=3, pre_fn=None):
+        obs = self.obs_buf
+
+        if pre_fn is not None:
+            obs = pre_fn(self.obs_buf)
+
+        knn = torch.zeros((len(self.obs_buf), k))
+
+        for i in range(len(knn)):
+            this_knn = torch.topk(torch.linalg.norm(
+                (obs - obs[i, :]), dim=(1,)), k, largest=False)
+            knn[i] = this_knn.indices
+
+        return knn
+
+    def get_knn(self, k=3, pre_fn=None):
+        obs = self.obs_buf
+
+        if pre_fn is not None:
+            obs = pre_fn(self.obs_buf)
+
+        knn = torch.zeros((len(self.obs_buf), k), device=self.obs_buf.device)
+
+        batch_size = 20
+        i = 0
+
+        print("Calculating nearest neighbors")
+
+        while i < self.size:
+            if i % 100 == 0:
+                print("Sample {}/{}".format(i, self.size), end='\r')
+
+            i_to = min(i+batch_size, self.size)
+            this_knn = torch.topk(torch.linalg.norm(
+                obs[None, :, :] - obs[i:i_to, None, :], dim=2), k, largest=False)
+            knn[i:i_to] = this_knn.indices
+
+            i += batch_size
+
+        print('')
+
+        return knn

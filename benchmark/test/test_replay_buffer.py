@@ -1,7 +1,9 @@
+import time
 from benchmark.utils.envs import HOPPER_RANDOM_V2
 from benchmark.utils.sample_selectors import antmaze_selector
 from benchmark.utils.load_dataset import load_dataset_from_env
 from benchmark.utils.replay_buffer import ReplayBuffer
+from benchmark.utils.preprocessing import get_preprocessing_function
 import d4rl  # noqa
 import gym
 import numpy as np
@@ -293,3 +295,32 @@ def test_selector_can_not_be_initialized_if_no_goal_state():
 
     with pytest.raises(ValueError):
         antmaze_selector(buffer)
+
+
+@pytest.mark.medium
+def test_nearest_neighbor():
+    env_name = HOPPER_RANDOM_V2
+    env = gym.make(env_name)
+    n_samples = 12345
+    buffer, _, _ = load_dataset_from_env(env, n_samples=n_samples)
+    gpu_buffer, _, _ = load_dataset_from_env(env, n_samples=n_samples, buffer_device='cuda')
+
+    pre_fn = get_preprocessing_function(env_name)
+    gpu_pre_fn = get_preprocessing_function(env_name, device='cuda')
+
+    k = 3
+
+    print('')
+
+    start_time = time.time()
+    knn_naive = buffer.get_knn_naive(k, pre_fn=pre_fn)
+    naive_time = time.time() - start_time
+    print("Naive time: {}s".format(naive_time))
+
+    start_time = time.time()
+    knn = gpu_buffer.get_knn(k, pre_fn=gpu_pre_fn)
+    vectorized_time = time.time() - start_time
+    print("Vectorized time: {}s".format(vectorized_time))
+
+    np.testing.assert_array_almost_equal(knn.cpu(), knn_naive)
+    assert naive_time > vectorized_time
