@@ -106,7 +106,7 @@ class ReplayBuffer:
             self.has_changed = False
 
         idxs = possible_idxs[torch.randint(
-            0, possible_idxs.numel(), (batch_size,))].flatten()
+            0, possible_idxs.numel(), (batch_size,))].flatten().to(self.obs_buf.device)
 
         obs = self.obs_buf[idxs]
         obs2 = self.obs2_buf[idxs]
@@ -228,9 +228,8 @@ class ReplayBuffer:
         if pre_fn is not None:
             obs = pre_fn(obs)
 
-        knn = torch.empty((len(obs), k), 
-                        device=self.obs_buf.device,
-                          requires_grad=False)
+        knn = torch.empty((len(obs), k),
+                          device=self.obs_buf.device)
 
         i = 0
 
