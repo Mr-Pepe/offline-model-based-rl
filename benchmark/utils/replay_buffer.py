@@ -219,7 +219,7 @@ class ReplayBuffer:
 
         return knn
 
-    def get_knn(self, k=3, pre_fn=None, query=None, verbose=False):
+    def get_knn(self, k=3, pre_fn=None, query=None, verbose=False, batch_size=20):
         if query is None:
             obs = self.obs_buf[:self.size]
         else:
@@ -231,7 +231,6 @@ class ReplayBuffer:
         knn = torch.zeros((len(obs), k), device=self.obs_buf.device,
                           requires_grad=False)
 
-        batch_size = 20
         i = 0
 
         if verbose:

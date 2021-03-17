@@ -71,6 +71,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_trials', type=int, default=20)
     parser.add_argument('--n_cql_actions', type=int, default=20)
     parser.add_argument('--n_samples_from_dataset', type=int, default=50000)
+    parser.add_argument('--cc_knn_batch_size', type=int, default=20)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
@@ -110,6 +111,7 @@ if __name__ == '__main__':
                           gamma=None,
                           pi_lr=None,
                           q_lr=None,
+                          cc_knn_batch_size=args.cc_knn_batch_size
                           ),
         max_rollout_length=None,
         model_pessimism=None,

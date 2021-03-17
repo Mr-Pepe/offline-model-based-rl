@@ -14,12 +14,14 @@ from benchmark.models.squashed_gaussian_mlp_actor import \
 class CopyCat(nn.Module):
     def __init__(self, observation_space, action_space, hidden=(128, 128, 128, 128),
                  activation=nn.ReLU, lr=3e-4, batch_size=100, gamma=0.99,
-                 pre_fn=None, device='cpu', decay=0.99999, polyak=0.995, **_):
+                 pre_fn=None, device='cpu', decay=0.99999, polyak=0.995,
+                 cc_knn_batch_size=20, **_):
 
         super().__init__()
 
         self.gamma = gamma
         self.polyak = polyak
+        self.knn_batch_size = cc_knn_batch_size
 
         self.batch_size = batch_size
         self.pre_fn = pre_fn
@@ -151,7 +153,7 @@ class CopyCat(nn.Module):
             batch['done'] = pred[:, -1]
 
             obs2_knn = buffer.get_knn(
-                k=3, pre_fn=self.pre_fn, query=batch['obs2'])
+                k=3, pre_fn=self.pre_fn, query=batch['obs2'], batch_size=self.knn_batch_size)
             batch['act2'] = self.eps_greedy_actions(
                 batch['obs2'], buffer, range(len(obs2_knn)), obs2_knn)
 
