@@ -25,9 +25,7 @@ def training_function(config, tuning=True):
     return trainer.train(tuning=tuning, silent=True)
 
 
-@ray.remote(num_gpus=0.5, max_retries=3)
-def training_wrapper(config, seed):
-    print("hi")
+def get_exp_name(config):
     exp_name = args.env_name + '-' + config['mode']
 
     if config['mode'] == CQL:
@@ -43,8 +41,15 @@ def training_wrapper(config, seed):
         if config['mode'] in PARTITIONING_MODES:
             exp_name += '-' + str(config['ood_threshold']) + 'threshold'
 
+    return exp_name
+
+
+@ray.remote(num_gpus=0.5, max_retries=3)
+def training_wrapper(config, seed):
+    print("hi")
+    exp_name = get_exp_name(config)
+
     config.update(
-        epochs=args.epochs,
         seed=seed,
         logger_kwargs=setup_logger_kwargs(exp_name,
                                           seed=seed),
@@ -59,7 +64,7 @@ if __name__ == '__main__':
     parser.add_argument('--level', type=int, default=0)
     parser.add_argument('--tuned_params', type=str2bool, default=False)
     parser.add_argument('--resume_tuning', type=str2bool, default=True)
-    parser.add_argument('--mode', type=str, default=BEHAVIORAL_CLONING)
+    parser.add_argument('--mode', type=str, default=COPYCAT)
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--seeds', type=int, default=1)
     parser.add_argument('--pessimism', type=float, default=1)
@@ -73,6 +78,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_samples_from_dataset', type=int, default=50000)
     parser.add_argument('--cc_knn_batch_size', type=int, default=20)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
+    parser.add_argument('--use_ray', type=str2bool, default=True)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
 
@@ -202,15 +208,24 @@ if __name__ == '__main__':
         assert config['model_pessimism'] is not None
         assert config['ood_threshold'] is not None
 
-        ray.init()
-        unfinished_jobs = []
+        if args.use_ray:
+            ray.init()
+            unfinished_jobs = []
 
-        for seed in range(args.start_seed, args.start_seed+args.seeds):
-            job_id = training_wrapper.remote(config, seed)
-            unfinished_jobs.append(job_id)
+            for seed in range(args.start_seed, args.start_seed+args.seeds):
+                job_id = training_wrapper.remote(config, seed)
+                unfinished_jobs.append(job_id)
 
-        while unfinished_jobs:
-            _, unfinished_jobs = ray.wait(unfinished_jobs)
+            while unfinished_jobs:
+                _, unfinished_jobs = ray.wait(unfinished_jobs)
+        else:
+            for seed in range(args.start_seed, args.start_seed+args.seeds):
+                config.update(
+                    seed=seed,
+                    logger_kwargs=setup_logger_kwargs(get_exp_name(config),
+                                                      seed=seed),
+                )
+                training_function(config, tuning=False)
 
     else:
         if args.level == 1:
