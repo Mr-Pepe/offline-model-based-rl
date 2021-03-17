@@ -1,3 +1,4 @@
+from benchmark.actors.cc import CopyCat
 from benchmark.actors.behavioral_cloning import BC
 from benchmark.actors.cql import CQL
 from ray import tune
@@ -151,24 +152,13 @@ class Trainer():
                                                   device=device)
 
         self.pre_fn = get_preprocessing_function(env_name, device)
+        self.post_fn = get_postprocessing_function(env_name)
 
         if use_custom_reward:
             self.rew_fn = get_reward_function(env_name)
             model_kwargs.update({'rew_fn': self.rew_fn})
         else:
             self.rew_fn = None
-
-        if use_model:
-            self.post_fn = get_postprocessing_function(env_name)
-            if not self.post_fn:
-                raise ValueError("Could not find postprocessing function for \
-            environment {}".format(env_name))
-            if not self.pre_fn:
-                raise ValueError("Could not find preprocessing function for \
-            environment {}".format(env_name))
-        else:
-            self.post_fn = None
-            self.pre_fn = None
 
         model_kwargs.update({'device': device})
         model_kwargs.update({'pre_fn': self.pre_fn})
@@ -211,6 +201,10 @@ class Trainer():
                     self.agent = CQL(self.env.observation_space,
                                      self.env.action_space,
                                      **agent_kwargs)
+                elif agent_kwargs['type'] == 'cc':
+                    self.agent = CopyCat(self.env.observation_space,
+                                         self.env.action_space,
+                                         **agent_kwargs)
                 else:
                     raise ValueError(
                         "Unknown agent type: {}".format(agent_kwargs['type']))

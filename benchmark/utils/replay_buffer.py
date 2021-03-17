@@ -92,7 +92,7 @@ class ReplayBuffer:
 
         self.has_changed = True
 
-    def sample_batch(self, batch_size=32, non_terminals_only=False):
+    def sample_batch(self, batch_size=32, non_terminals_only=False, return_idxs=False):
         if self.possible_idxs is not None and not self.has_changed:
             possible_idxs = self.possible_idxs
         else:
@@ -120,7 +120,10 @@ class ReplayBuffer:
                      rew=rew,
                      done=done)
 
-        return batch
+        if return_idxs:
+            return batch, idxs
+        else:
+            return batch
 
     def sample_train_batch(self, batch_size=32, val_split=0.2):
         if self.split_at_size != self.size or \
@@ -217,12 +220,13 @@ class ReplayBuffer:
         return knn
 
     def get_knn(self, k=3, pre_fn=None):
-        obs = self.obs_buf
+        obs = self.obs_buf[:self.size]
 
         if pre_fn is not None:
-            obs = pre_fn(self.obs_buf)
+            obs = pre_fn(self.obs_buf[:self.size])
 
-        knn = torch.zeros((len(self.obs_buf), k), device=self.obs_buf.device)
+        knn = torch.zeros((self.size, k), device=self.obs_buf.device,
+                          requires_grad=False)
 
         batch_size = 20
         i = 0
