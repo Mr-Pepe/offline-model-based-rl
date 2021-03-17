@@ -14,11 +14,12 @@ from benchmark.models.squashed_gaussian_mlp_actor import \
 class CopyCat(nn.Module):
     def __init__(self, observation_space, action_space, hidden=(128, 128, 128, 128),
                  activation=nn.ReLU, lr=3e-4, batch_size=100, gamma=0.99,
-                 pre_fn=None, device='cpu', decay=0.9999, **_):
+                 pre_fn=None, device='cpu', decay=0.99999, polyak=0.995, **_):
 
         super().__init__()
 
         self.gamma = gamma
+        self.polyak = polyak
 
         self.batch_size = batch_size
         self.pre_fn = pre_fn
@@ -117,6 +118,14 @@ class CopyCat(nn.Module):
         self.scaler.scale(loss_pi).backward()
         self.scaler.step(self.pi_optimizer)
         self.scaler.update()
+
+        with torch.no_grad():
+            for p, p_targ in zip(self.parameters(), self.target.parameters()):
+                # NB: We use an in-place operations "mul_", "add_" to
+                # update target params, as opposed to "mul" and "add", which
+                # would make new tensors.
+                p_targ.data.mul_(self.polyak)
+                p_targ.data.add_((1 - self.polyak) * p.data)
 
         return loss_q, q_info, loss_pi
 
