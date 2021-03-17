@@ -158,8 +158,12 @@ class CopyCat(nn.Module):
 
             obs2_knn = buffer.get_knn(
                 k=3, pre_fn=self.pre_fn, query=batch['obs2'], batch_size=self.knn_batch_size)
-            batch['act2'] = self.eps_greedy_actions(
-                batch['obs2'], buffer, range(len(obs2_knn)), obs2_knn)
+            batch['act2'] = self.eps_greedy_actions(batch['obs2'],
+                                                    buffer,
+                                                    torch.arange(0,
+                                                                 len(obs2_knn),
+                                                                 device=obs2_knn.device),
+                                                    obs2_knn)
 
             self.train()
 
@@ -206,6 +210,7 @@ class CopyCat(nn.Module):
         actions[random_act_idxs] = buffer.act_buf[knn[idxs[random_act_idxs], act_idx].long()]
         q_values = self.q(obs[~random_act_idxs].repeat(self.k, 1),
                           buffer.act_buf[knn[idxs[~random_act_idxs]].view(-1).long()]).view(3, -1)
-        actions[~random_act_idxs] = buffer.act_buf[knn[idxs[~random_act_idxs], torch.argmax(q_values, dim=0)].long()]
+        actions[~random_act_idxs] = buffer.act_buf[knn[idxs[~random_act_idxs],
+                                                       torch.argmax(q_values, dim=0)].long()]
 
         return actions
