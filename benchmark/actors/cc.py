@@ -15,13 +15,14 @@ class CopyCat(nn.Module):
     def __init__(self, observation_space, action_space, hidden=(128, 128, 128, 128),
                  activation=nn.ReLU, lr=3e-4, batch_size=100, gamma=0.99,
                  pre_fn=None, device='cpu', decay=0.99999, polyak=0.995,
-                 cc_knn_batch_size=20, **_):
+                 cc_knn_batch_size=20, cc_knn_batch_size_init=20, **_):
 
         super().__init__()
 
         self.gamma = gamma
         self.polyak = polyak
         self.knn_batch_size = cc_knn_batch_size
+        self.cc_knn_batch_size_init = cc_knn_batch_size_init
 
         self.batch_size = batch_size
         self.pre_fn = pre_fn
@@ -137,7 +138,9 @@ class CopyCat(nn.Module):
 
         if self.knn is None:
             self.knn = buffer.get_knn(
-                k=self.k, pre_fn=self.pre_fn, verbose=True)
+                k=self.k, pre_fn=self.pre_fn, 
+                verbose=True,
+                batch_size=self.cc_knn_batch_size_init)
 
         losses = torch.zeros(n_updates)
         for i_update in range(n_updates):
