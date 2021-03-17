@@ -7,7 +7,7 @@ EPISTEMIC_PENALTY = 'epistemic-penalty'
 UNDERESTIMATION = 'underestimation'
 BEHAVIORAL_CLONING = 'behavioral-cloning'
 CQL = 'cql'
-COPYCAT = 'cc'
+COPYCAT = 'copycat'
 
 MODES = [
     EXPLICIT_PARTITIONING,

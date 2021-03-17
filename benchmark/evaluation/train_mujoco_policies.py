@@ -33,7 +33,7 @@ def training_wrapper(config, seed):
     if config['mode'] == CQL:
         exp_name += '-' + str(config['agent_kwargs']['n_actions']) + 'actions'
 
-    if config['mode'] != BEHAVIORAL_CLONING and config['mode'] != CQL:
+    if config['mode'] != BEHAVIORAL_CLONING and config['mode'] != CQL and config['mode'] != COPYCAT:
         exp_name += '-' + str(config['rollouts_per_step']) + \
             'rollouts' + '-' + str(config['max_rollout_length']) + 'steps'
 
