@@ -7,6 +7,7 @@ EPISTEMIC_PENALTY = 'epistemic-penalty'
 UNDERESTIMATION = 'underestimation'
 BEHAVIORAL_CLONING = 'behavioral-cloning'
 CQL = 'cql'
+COPYCAT = 'cc'
 
 MODES = [
     EXPLICIT_PARTITIONING,
@@ -17,7 +18,8 @@ MODES = [
     EPISTEMIC_PENALTY,
     UNDERESTIMATION,
     BEHAVIORAL_CLONING,
-    CQL
+    CQL,
+    COPYCAT
 ]
 
 PENALTY_MODES = [
