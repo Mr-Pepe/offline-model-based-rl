@@ -228,13 +228,14 @@ class ReplayBuffer:
         if pre_fn is not None:
             obs = pre_fn(obs)
 
-        knn = torch.zeros((len(obs), k), device=self.obs_buf.device,
+        knn = torch.empty((len(obs), k), 
+                        device=self.obs_buf.device,
                           requires_grad=False)
 
         i = 0
 
         if verbose:
-            print("Calculating nearest neighbors")
+            print("Calculating nearest neighbors with batch size {}".format(batch_size))
 
         while i < len(obs):
             if i % 100 == 0 and verbose:
