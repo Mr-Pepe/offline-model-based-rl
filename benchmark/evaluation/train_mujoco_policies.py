@@ -187,7 +187,9 @@ if __name__ == '__main__':
                               gamma=0.99,
                               pi_lr=3e-4,
                               q_lr=3e-4,
-                              n_actions=args.n_cql_actions
+                              n_actions=args.n_cql_actions,
+                              cc_knn_batch_size=args.cc_knn_batch_size,
+                              cc_knn_batch_size_init=args.cc_knn_batch_size_init
                               ),
             rollouts_per_step=rollouts_per_step,
             max_rollout_length=max_rollout_length,
