@@ -19,6 +19,8 @@ class CopyCat(nn.Module):
 
         super().__init__()
 
+        pre_fn = None
+
         self.gamma = gamma
         self.polyak = polyak
         self.knn_batch_size = cc_knn_batch_size
