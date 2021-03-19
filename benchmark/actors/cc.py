@@ -1,3 +1,4 @@
+from benchmark.models.q_ensemble import QEnsemble
 from benchmark.utils.modes import UNDERESTIMATION
 from benchmark.models.mlp import mlp
 import itertools
@@ -37,12 +38,10 @@ class CopyCat(nn.Module):
         # build policy and value functions
         self.pi = SquashedGaussianMLPActor(
             obs_dim, act_dim, hidden, activation, act_limit)
-        self.q1 = MLPQFunction(obs_dim, act_dim, hidden, activation)
-        self.q2 = MLPQFunction(obs_dim, act_dim, hidden, activation)
+        self.q = QEnsemble(obs_dim, act_dim)
 
         # List of parameters for both Q-networks (save this for convenience)
-        self.q_params = itertools.chain(
-            self.q1.parameters(), self.q2.parameters())
+        self.q_params = itertools.chain(self.q.parameters())
 
         # Set up optimizers for policy and q-function
         self.pi_optimizer = AdamW(self.pi.parameters(), lr=pi_lr)
@@ -65,8 +64,7 @@ class CopyCat(nn.Module):
             o = self.pre_fn(o)
             o2 = self.pre_fn(o2)
 
-        q1 = self.q1(o, a)
-        q2 = self.q2(o, a)
+        q = self.q(o, a)
 
         # Bellman backup for Q functions
         with torch.no_grad():
@@ -74,20 +72,17 @@ class CopyCat(nn.Module):
             a2, logp_a2 = self.pi(o2)
 
             # Target Q-values
-            q1_pi_targ = self.target.q1(o2, a2)
-            q2_pi_targ = self.target.q2(o2, a2)
-            q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
+            q_pi_targ = self.target.q(o2, a2)
+            q_pi_targ = q_pi_targ.min(dim=0).values
             backup = r + self.gamma * \
                 ~d * (q_pi_targ - self.alpha * logp_a2)
 
         # MSE loss against Bellman backup
-        loss_q1 = ((q1 - backup)**2).mean()
-        loss_q2 = ((q2 - backup)**2).mean()
-        loss_q = loss_q1 + loss_q2
+        loss_q = ((q - backup)**2).mean()
 
         # Useful info for logging
-        q_info = dict(Q1Vals=q1.cpu().detach().numpy(),
-                      Q2Vals=q2.cpu().detach().numpy())
+        q_info = dict(Q1Vals=q.cpu().detach().numpy(),
+                      Q2Vals=0)
 
         return loss_q, q_info
 
@@ -98,9 +93,7 @@ class CopyCat(nn.Module):
             o = self.pre_fn(o)
 
         pi, logp_pi = self.pi(o)
-        q1_pi = self.q1(o, pi)
-        q2_pi = self.q2(o, pi)
-        q_pi = torch.min(q1_pi, q2_pi)
+        q_pi = self.q(o, pi).min(dim=0).values
 
         # Entropy-regularized policy loss
         loss_pi = (self.alpha * logp_pi - q_pi).mean()
