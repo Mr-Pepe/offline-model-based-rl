@@ -75,7 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_hidden', type=int, default=128)
     parser.add_argument('--n_trials', type=int, default=20)
     parser.add_argument('--n_cql_actions', type=int, default=20)
-    parser.add_argument('--n_samples_from_dataset', type=int, default=50000)
+    parser.add_argument('--n_samples_from_dataset', type=int, default=-1)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument('--use_ray', type=str2bool, default=True)
     parser.add_argument('--device', type=str, default='')
@@ -91,15 +91,12 @@ if __name__ == '__main__':
     if args.mode not in MODES:
         raise ValueError("Unknown mode: {}".format(args.mode))
 
-    n_samples_from_dataset = -1
-
     if args.mode == BEHAVIORAL_CLONING:
         use_model = False
         agent_type = 'bc'
     elif args.mode == COPYCAT:
         use_model = True
         agent_type = 'copycat'
-        n_samples_from_dataset = args.n_samples_from_dataset
     elif args.mode == CQL:
         use_model = False
         agent_type = 'cql'
@@ -129,7 +126,7 @@ if __name__ == '__main__':
         random_steps=8000,
         init_steps=4000,
         env_steps_per_step=0,
-        n_samples_from_dataset=n_samples_from_dataset,
+        n_samples_from_dataset=args.n_samples_from_dataset,
         agent_updates_per_step=1,
         num_test_episodes=20,
         curriculum=[1, 1, 20, 100],
