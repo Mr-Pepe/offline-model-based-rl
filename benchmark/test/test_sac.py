@@ -1,4 +1,4 @@
-from benchmark.utils.envs import HALF_CHEETAH_EXPERT_V2, HALF_CHEETAH_RANDOM
+from benchmark.utils.envs import HALF_CHEETAH_RANDOM
 from benchmark.utils.logx import EpochLogger
 import time
 import gym
@@ -110,21 +110,3 @@ def sac_trains_faster_on_gpu_on_filled_buffer():
 
         print('')
         print("Time: {}".format(time.time()-start_time))
-
-
-# @pytest.mark.current
-# def test_cql():
-#     env_name = HALF_CHEETAH_EXPERT_V2
-#     logger_kwargs = setup_logger_kwargs('test_cql')
-#     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-#     trainer = Trainer(
-#         env_name=env_name,
-#         env_steps_per_step=0,
-#         n_samples_from_dataset=-1,
-#         cql=True,
-#         logger_kwargs=logger_kwargs,
-#         device=device
-#     )
-
-#     final_return, _ = trainer.train()
