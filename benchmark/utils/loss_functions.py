@@ -34,17 +34,10 @@ def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, n
 
     inv_var = torch.exp(-logvar)
 
-    epistemic_loss = torch.zeros((1,))
-    if augment or only_uncertainty:
-        contiguous_mean = torch.transpose(mean, 0, 1).clone().contiguous()
-        epistemic_loss = 0.01 * torch.cdist(
-            contiguous_mean,
-            contiguous_mean).mean(-1).mean(-1).mean()
-
     if only_mse:
         return torch.square(mean - y).mean()
     elif only_uncertainty:
-        return uncertainty.mean() + epistemic_loss
+        return uncertainty.mean()
     else:
         mse_loss = torch.square(mean - y)
         mse_inv_var_loss = (mse_loss * inv_var).mean()
@@ -52,6 +45,12 @@ def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, n
         var_bound_loss = 0.01 * max_logvar.mean() - 0.01 * min_logvar.mean()
         uncertainty_loss = uncertainty.mean()
 
+        epistemic_loss = torch.zeros((1,))
+        if augment:
+            contiguous_mean = torch.transpose(mean, 0, 1).clone().contiguous()
+            epistemic_loss = torch.cdist(
+                contiguous_mean,
+                contiguous_mean).max(-1).values.max(-1).values.mean()
         if debug:
             print("LR: {:.5f}, State MSE: {:.5f}, Rew MSE: {:.5f}, MSE + INV VAR: {:.5f} VAR: {:.5f}, BOUNDS: {:.5f}, MAX LOGVAR: {:.5f}, MIN LOGVAR: {:.5f}, UNCERTAINTY: {:.5f}, EPISTEMIC: {:.5f}".format(
                 model.optim.param_groups[0]['lr'],
