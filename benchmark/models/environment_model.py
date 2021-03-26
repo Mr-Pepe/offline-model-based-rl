@@ -338,8 +338,7 @@ class EnvironmentModel(nn.Module):
                     else:
                         if in_normalized_space:
                             loss = probabilistic_loss(
-                                x, y, self, debug=debug, no_reward=no_reward, pre_fn=self.pre_fn,
-                                augment=augment)
+                                x, y, self, debug=debug, no_reward=no_reward, pre_fn=self.pre_fn)
                         else:
                             loss = probabilistic_loss(
                                 x, y, self, debug=debug, no_reward=no_reward)
