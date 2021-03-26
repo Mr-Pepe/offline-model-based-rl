@@ -247,7 +247,7 @@ class EnvironmentModel(nn.Module):
     def train_to_convergence(self, data, lr=1e-3, batch_size=1024,
                              val_split=0.2, patience=20, patience_value=0,
                              debug=False, max_n_train_batches=-1, lr_schedule=None, no_reward=False,
-                             augment=False, max_n_train_epochs=-1, checkpoint_dir=None,
+                             augmentation_fn=None, max_n_train_epochs=-1, checkpoint_dir=None,
                              tuning=False, in_normalized_space=False, **_):
 
         if type(patience) is list:
@@ -331,6 +331,9 @@ class EnvironmentModel(nn.Module):
                     self.max_reward = torch.max(
                         self.max_reward, y[:, -1].max())
 
+                if augmentation_fn is not None:
+                    augmentation_fn(x, y)
+
                 self.optim.zero_grad()
                 with torch.cuda.amp.autocast(enabled=use_amp):
                     if self.type == 'deterministic':
@@ -354,6 +357,19 @@ class EnvironmentModel(nn.Module):
                         else:
                             self.min_obs_act += (x.min(dim=0).values -
                                                  self.min_obs_act)*0.001
+
+                        for _ in range(1):
+                            aug_x = torch.rand_like(x)
+
+                            aug_x *= (self.max_obs_act -
+                                      self.min_obs_act)*2
+                            aug_x += self.min_obs_act - \
+                                (self.max_obs_act - self.min_obs_act)*0.5
+
+                            loss -= probabilistic_loss(aug_x,
+                                                       aug_x,
+                                                       self,
+                                                       only_uncertainty=True)
 
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)

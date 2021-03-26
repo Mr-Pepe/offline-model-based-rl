@@ -39,7 +39,6 @@ if __name__ == '__main__':
     parser.add_argument('--patience', type=int, default=30)
     parser.add_argument('--n_hidden', type=int, default=200)
     parser.add_argument('--lr', type=float, default=1e-4)
-    parser.add_argument('--augment', type=str2bool, default=False)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
 
@@ -71,7 +70,6 @@ if __name__ == '__main__':
         "n_networks": 7,
         "pre_fn": pre_fn,
         "post_fn": post_fn,
-        "augment": args.augment,
         "debug": False,
         "no_reward": False,
         "use_batch_norm": False,
@@ -82,10 +80,9 @@ if __name__ == '__main__':
     }
 
     if args.level == 0:
-        if args.augment:
-            save_path = os.path.join(MODELS_DIR, args.env_name + '-aug-model.pt')
-        else:
-            save_path = os.path.join(MODELS_DIR, args.env_name + '-model.pt')
+        # Perform training with tuned hyperparameters and save model
+
+        save_path = os.path.join(MODELS_DIR, args.env_name + '-model.pt')
 
         config.update(
             max_n_train_epochs=-1,
