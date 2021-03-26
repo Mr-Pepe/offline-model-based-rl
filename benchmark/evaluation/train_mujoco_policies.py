@@ -63,7 +63,6 @@ if __name__ == '__main__':
                         default=WALKER_MEDIUM_REPLAY_V2)
     parser.add_argument('--level', type=int, default=0)
     parser.add_argument('--tuned_params', type=str2bool, default=False)
-    parser.add_argument('--resume_tuning', type=str2bool, default=True)
     parser.add_argument('--mode', type=str, default=COPYCAT)
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--seeds', type=int, default=1)
@@ -289,9 +288,6 @@ if __name__ == '__main__':
         assert config['agent_kwargs']['pi_lr'] is not None
         assert config['agent_kwargs']['q_lr'] is not None
 
-        if args.resume_tuning:
-            print_warning("Resuming tuning.", ())
-
         ray.init()
         scheduler = ASHAScheduler(
             time_attr='training_iteration',
@@ -318,7 +314,6 @@ if __name__ == '__main__':
             config=config,
             max_failures=3,
             resources_per_trial={"gpu": 0.5},
-            resume=args.resume_tuning
         )
 
         print("Best config: ", analysis.get_best_config(
