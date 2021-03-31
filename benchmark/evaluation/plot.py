@@ -1,5 +1,5 @@
 # Based on https://spinningup.openai.com
-from benchmark.utils.modes import ALEATORIC_PARTITIONING, ALEATORIC_PENALTY, EPISTEMIC_PARTITIONING, EPISTEMIC_PENALTY
+from benchmark.utils.modes import ALEATORIC_PARTITIONING, ALEATORIC_PENALTY, BEHAVIORAL_CLONING, EPISTEMIC_PARTITIONING, EPISTEMIC_PENALTY
 from benchmark.utils.envs import HALF_CHEETAH_ENVS, HALF_CHEETAH_MEDIUM_V2, HOPPER_ENVS, HOPPER_MEDIUM_EXPERT_V2, HOPPER_MEDIUM_REPLAY_V2, HOPPER_MEDIUM_V2, WALKER_ENVS, WALKER_MEDIUM_EXPERT_V2, WALKER_MEDIUM_REPLAY_V2, WALKER_MEDIUM_v2
 import seaborn as sns
 import pandas as pd
@@ -12,6 +12,7 @@ from benchmark.utils.mode_from_exp_name import get_mode
 from benchmark.utils.env_name_from_exp_name import get_env_name
 from benchmark.utils.str2bool import str2bool
 from d4rl import get_normalized_score
+import torch
 
 DIV_LINE_WIDTH = 50
 
@@ -129,10 +130,10 @@ def get_all_datasets(all_logdirs, legend=None, select=None, exclude=None):
             not(x in log) for x in exclude)]
 
     # Verify logdirs
-    print('Plotting from...\n' + '='*DIV_LINE_WIDTH + '\n')
-    for logdir in logdirs:
-        print(logdir)
-    print('\n' + '='*DIV_LINE_WIDTH)
+    # print('Plotting from...\n' + '='*DIV_LINE_WIDTH + '\n')
+    # for logdir in logdirs:
+    #     print(logdir)
+    # print('\n' + '='*DIV_LINE_WIDTH)
 
     # Make sure the legend is compatible with the logdirs
     assert not(legend) or (len(legend) == len(logdirs)), \
@@ -254,16 +255,18 @@ if __name__ == "__main__":
         ]
 
         datasets = [
+            '-random-v2',
             '-medium-replay-v2',
             '-medium-v2',
             '-medium-expert-v2'
         ]
 
         mode_names = [
+            BEHAVIORAL_CLONING,
             ALEATORIC_PENALTY,
             ALEATORIC_PARTITIONING,
             EPISTEMIC_PENALTY,
-            EPISTEMIC_PARTITIONING
+            EPISTEMIC_PARTITIONING,
         ]
 
         experiments = dict()
@@ -275,8 +278,9 @@ if __name__ == "__main__":
 
             experiments.update({(env_name, mode): exp_dir})
 
-        f, axes = plt.subplots(len(categories), len(datasets))
-        sns.set(style="darkgrid", font_scale=1.5)
+        sns.set_palette('colorblind')
+        f, axes = plt.subplots(len(categories), len(datasets), figsize=(6, 6))
+        # sns.set(style="darkgrid", font_scale=1.5)
 
         for i_category, category in enumerate(categories):
             for i_dataset, dataset in enumerate(datasets):
@@ -289,7 +293,7 @@ if __name__ == "__main__":
                                                 None,
                                                 None)
 
-                        y = np.ones(10)
+                        y = np.ones(15)
                         for datum in data:
                             x = np.asarray(datum['AverageTestEpRet'])
                             z = np.ones(len(x))
@@ -299,32 +303,61 @@ if __name__ == "__main__":
                                 100*get_normalized_score(env_name, score) for score in smoothed_x]
 
                         ax = axes[i_category, i_dataset]
-                        data = pd.concat(data, ignore_index=True)
-                        sns.lineplot(data=data, x='Epoch', y='AverageTestEpRet',
-                                     ci='sd', estimator=getattr(np, 'mean'),
-                                     ax=ax, label=mode, legend=False)
-                        ax.set_ylabel('Performance')
-                        # plt.legend(loc='best', ncol=1, handlelength=1,
-                        #            borderaxespad=0., prop={'size': 13})
 
+                        if mode == BEHAVIORAL_CLONING:
+                            bc_threshold = torch.as_tensor(
+                                [d['AverageTestEpRet'].values[-1] for d in data]).mean()
+                            sns.lineplot(x=torch.arange(100), y=torch.ones(100)*bc_threshold,
+                                         ax=ax, label=mode, legend=False, style=True,
+                                         dashes=[(2, 2)], color='black')
+                        else:
+                            data = pd.concat(data, ignore_index=True)
+                            sns.lineplot(data=data, x='Epoch', y='AverageTestEpRet',
+                                         ci='sd', estimator=getattr(np, 'mean'),
+                                         ax=ax, label=mode, legend=False)
+
+                        if i_dataset == 0:
+                            ax.set_ylabel('Performance', fontsize=10)
+                            ax.set_yticks([0, 25, 50, 75, 100])
+                        else:
+                            ax.set_ylabel(None)
+                            ax.set_yticks([])
+
+                        if i_category == len(categories) - 1:
+                            ax.set_xlabel('Epoch', fontsize=10)
+                            ax.set_xticks([0, 100])
+                        else:
+                            ax.set_xlabel(None)
+                            ax.set_xticks([])
+
+                        ax.set_ylim([-5, 110])
 
         handles, labels = ax.get_legend_handles_labels()
-        labels = [label.replace('-', ' ') for label in labels]
-        f.legend(handles, labels, loc='lower center', ncol=len(labels))
+        handles = list(reversed(handles))
+        labels = list(reversed([label.replace('-', ' ') for label in labels]))
+        handles[0], handles[1], handles[2], handles[4] = handles[1], handles[0], handles[4], handles[2]
+        labels[0], labels[1], labels[2], labels[4] = labels[1], labels[0], labels[4], labels[2]
 
-        pad = 5
+        f.legend(handles, labels, loc='lower center',
+                 ncol=2, prop={'size': 12})
 
-        for ax, col in zip(axes[0], [name[1:-3].replace('-', ' ') for name in datasets]):
+        pad = 10
+
+        for ax, col in zip(axes[0], [name[1:-3].replace('-', '\n') for name in datasets]):
             ax.annotate(col, xy=(0.5, 1), xytext=(0, pad),
                         xycoords='axes fraction', textcoords='offset points',
-                        size='large', ha='center', va='baseline')
+                        size=12, ha='center', va='baseline')
 
         for ax, row in zip(axes[:, 0], category_names):
             ax.annotate(row, xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
                         xycoords=ax.yaxis.label, textcoords='offset points',
-                        size='large', ha='right', va='center', rotation=90)
+                        size=12, ha='right', va='center', rotation=90)
 
-        plt.tight_layout(pad=0.1)
-        # f.subplots_adjust(left=0.15, top=0.95)
+        f.subplots_adjust(top=0.925,
+                          bottom=0.22,
+                          left=0.155,
+                          right=0.985,
+                          hspace=0.085,
+                          wspace=0.185)
 
         plt.show()
