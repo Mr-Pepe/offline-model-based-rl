@@ -2,6 +2,7 @@ from benchmark.utils.modes import ALEATORIC_PENALTY
 from matplotlib import cm
 import numpy as np
 from benchmark.utils.replay_buffer import ReplayBuffer
+from benchmark.actors.random_agent import RandomAgent
 from benchmark.user_config import MODELS_DIR
 from benchmark.utils.envs import HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM, HALF_CHEETAH_MEDIUM_EXPERT, HALF_CHEETAH_MEDIUM_EXPERT_V1, HALF_CHEETAH_MEDIUM_REPLAY, HALF_CHEETAH_MEDIUM_REPLAY_V1, HALF_CHEETAH_RANDOM, HOPPER_EXPERT, HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT, HOPPER_MEDIUM_EXPERT_V1, HOPPER_MEDIUM_REPLAY, HOPPER_MEDIUM_REPLAY_V1, HOPPER_MEDIUM_V1, HOPPER_RANDOM, WALKER_MEDIUM, WALKER_MEDIUM_EXPERT_V2, WALKER_MEDIUM_REPLAY, WALKER_MEDIUM_REPLAY_V2, WALKER_MEDIUM_v2
 import torch
@@ -13,116 +14,102 @@ from benchmark.actors.sac import SAC
 import matplotlib.pyplot as plt
 import os
 
+name = "Halfcheetah"
+prefix = name.lower() + '-'
+version = '-v2'
 
-env_name = WALKER_MEDIUM_EXPERT_V2
-env = gym.make(env_name)
+dataset_names = [
+    'random',
+    'medium-replay',
+    'medium',
+    'medium-expert',
+]
 
-model = torch.load(os.path.join(MODELS_DIR, env_name +
-                                '-model.pt'), map_location="cpu")
-agent = SAC(env.observation_space, env.action_space,
-            device=next(model.parameters()).device)
+fig, axes = plt.subplots(2, len(dataset_names))
 
-buffer, obs_dim, act_dim = load_dataset_from_env(
-    env, buffer_device=next(model.parameters()).device)
+fig.suptitle(name, fontsize=24)
 
-virtual_buffer = ReplayBuffer(obs_dim, act_dim, size=100000)
+for i_dataset, dataset_name in enumerate(dataset_names):
+    device = 'cuda'
+    env_name = prefix + dataset_name + version
+    print(env_name)
+    env = gym.make(env_name)
 
-steps = 200
-n_rollouts = 50
-pessimism = 1
-mode = ALEATORIC_PENALTY
+    buffer, obs_dim, act_dim = load_dataset_from_env(env)
 
-for i_rollout in range(n_rollouts):
-    (rollouts, info) = generate_virtual_rollouts(model,
-                                                 agent,
-                                                 buffer, steps=steps,
-                                                 n_rollouts=1,
-                                                 pessimism=10,
-                                                 ood_threshold=0.5,
-                                                 mode=mode,
-                                                 random_action=True)
+    model = torch.load(os.path.join(MODELS_DIR, env_name + '-model.pt'))
 
-    real_rew = None
-    means = None
-    logvars = None
-    explicit_uncertainties = None
-    epistemic_uncertainties = None
-    aleatoric_uncertainties = None
-    underestimated_rewards = None
+    n_samples = 3000
+    random_samples = 1000
+    i_sample = 0
+    batch_size = 256
 
-    for i in range(rollouts['rew'].shape[0]):
-        obs = rollouts['obs'][i].cpu()
-        act = rollouts['act'][i].cpu()
+    idxs = torch.randint(0, buffer.size, (n_samples,))
+    obs_buf = buffer.obs_buf[idxs].cuda()
+    act_buf = buffer.act_buf[idxs].cuda()
+    obs2_buf = buffer.obs2_buf[idxs].cuda()
 
-        obs_act = torch.cat((obs, act))
+    model_errors = []
+    aleatoric_uncertainties = []
+    epistemic_uncertainties = []
 
-        predictions, this_means, this_logvars, this_explicit_uncertainty, \
-            this_epistemic_uncertainty, this_aleatoric_uncertainty, this_underestimated_reward = model.get_prediction(
-                obs_act, mode=mode, pessimism=pessimism, debug=True)
+    while i_sample < len(obs_buf):
+        print(i_sample)
+        i_to = min(len(obs_buf), i_sample + batch_size)
+        obs_act = torch.cat((obs_buf[i_sample:i_to], act_buf[i_sample:i_to]), dim=1)
+        obs2 = obs2_buf[i_sample:i_to]
 
-        env = gym.make(env_name)
+        prediction, means, logvars, explicit_uncertainty, epistemic_uncertainty, aleatoric_uncertainty, underestimated_reward = model.get_prediction(obs_act, debug=True)
+
+        model_errors.extend((prediction[:, :-2] - obs2).abs().mean(dim=1).cpu().detach().float().tolist())
+        aleatoric_uncertainties.extend(aleatoric_uncertainty.tolist())
+        epistemic_uncertainties.extend(epistemic_uncertainty.tolist())
+
+        i_sample += batch_size
+
+    if random_samples > 0:
+        print("Generating random samples.")
         env.reset()
-        env.set_state(
-            torch.cat((torch.as_tensor([0]), obs[:env.model.nq-1])), obs[env.model.nq-1:])
-        # env.render()
-        _, r, _, _ = env.step(act.numpy())
+        agent = RandomAgent(env, device=device)
 
-        if explicit_uncertainties is None:
-            means = this_means
-            logvars = this_logvars
-            explicit_uncertainties = this_explicit_uncertainty
-            epistemic_uncertainties = this_epistemic_uncertainty
-            aleatoric_uncertainties = this_aleatoric_uncertainty
-            underestimated_rewards = this_underestimated_reward
-            real_rew = torch.as_tensor(r).unsqueeze(0)
-        else:
-            means = torch.cat((means, this_means), dim=1)
-            logvars = torch.cat((logvars, this_logvars), dim=1)
-            explicit_uncertainties = torch.cat(
-                (explicit_uncertainties, this_explicit_uncertainty), dim=1)
-            epistemic_uncertainties = torch.cat(
-                (epistemic_uncertainties, this_epistemic_uncertainty))
-            aleatoric_uncertainties = torch.cat(
-                (aleatoric_uncertainties, this_aleatoric_uncertainty))
-            underestimated_rewards = torch.cat(
-                (underestimated_rewards, this_underestimated_reward))
-            real_rew = torch.cat(
-                (real_rew, torch.as_tensor(r).unsqueeze(0)))
+        for i_obs in range(random_samples):
+            obs = obs_buf[i_obs]
+            env.set_state(torch.cat((torch.as_tensor([0]), torch.as_tensor(obs[:env.model.nq-1].cpu()))), obs[env.model.nq-1:].cpu())
+            act = agent.act()
 
-    print("Reward overestimation percentage for rollout length {}: {:.2f}%".format(
-        steps,
-        ((real_rew - underestimated_rewards.cpu()) < 0).sum().float() / real_rew.numel() * 100))
+            obs2, _, _, _ = env.step(act.cpu().detach().numpy())
 
-    r_means = means[:, :, -1].detach().cpu()
-    r_logvars = logvars[:, :, -1].detach().cpu()
+            obs_act = torch.cat((obs.unsqueeze(0), act), dim=1)
 
-    f, axes = plt.subplots(4, 1)
+            prediction, means, logvars, explicit_uncertainty, epistemic_uncertainty, aleatoric_uncertainty, underestimated_reward = model.get_prediction(obs_act, debug=True)
 
-    for i in range(r_means.shape[0]):
-        axes[0].fill_between(range(r_means.shape[-1]), r_means[i]+torch.exp(
-            r_logvars[i]), r_means[i]-torch.exp(r_logvars[i]), alpha=0.5)
-    axes[0].plot(real_rew, label='Ground truth')
-    axes[0].plot(underestimated_rewards.cpu(), label='Underestimated reward')
-    axes[0].legend(fontsize=12)
-    axes[0].set_ylim([buffer.rew_buf.min().cpu(), buffer.rew_buf.max().cpu()])
-    axes[0].set_ylabel("Reward", fontsize=12)
-    axes[0].set_xlabel("Steps", fontsize=12)
+            model_errors.extend((prediction[:, :-2].cpu() - obs2).abs().mean(dim=1).cpu().detach().float().tolist())
+            aleatoric_uncertainties.extend(aleatoric_uncertainty.tolist())
+            epistemic_uncertainties.extend(epistemic_uncertainty.tolist())
 
-    color = cm.rainbow(np.linspace(0, 1, model.n_networks))
-    for i_network, c in zip(range(model.n_networks), color):
-        axes[1].plot(
-            explicit_uncertainties[i_network].detach().cpu().numpy(), color=c)
-    axes[1].set_ylim([-0.1, 1.1])
-    axes[1].plot(explicit_uncertainties.mean(dim=0).detach().cpu(), color='black')
-    axes[1].set_ylabel("Explicit", fontsize=12)
+    aleatoric_uncertainties = torch.as_tensor(aleatoric_uncertainties)
+    aleatoric_uncertainties /= aleatoric_uncertainties.max()
+    epistemic_uncertainties = torch.as_tensor(epistemic_uncertainties)
+    epistemic_uncertainties /= epistemic_uncertainties.max()
+    model_errors = torch.as_tensor(model_errors)
+    model_errors /= model_errors.max()
 
-    axes[2].plot(epistemic_uncertainties.detach().cpu())
-    axes[2].set_ylabel("Epistemic", fontsize=12)
+    axes[0, i_dataset].plot([0, 1], [0, 1], color='black')
+    axes[0, i_dataset].scatter(model_errors[:n_samples], aleatoric_uncertainties[:n_samples], s=1, alpha=0.3, color='blue')
+    axes[0, i_dataset].scatter(model_errors[n_samples:], aleatoric_uncertainties[n_samples:], s=1, alpha=0.3, color='red')
+    if i_dataset == 0:
+        axes[0, i_dataset].set_ylabel('Aleatoric uncertainty')
+    axes[0, i_dataset].set_title(dataset_name)
 
-    axes[3].plot(aleatoric_uncertainties.detach().cpu())
-    axes[3].set_ylabel("Aleatoric", fontsize=12)
+    axes[1, i_dataset].plot([0, 1], [0, 1], color='black')
+    axes[1, i_dataset].scatter(model_errors[:n_samples], epistemic_uncertainties[:n_samples], s=1, alpha=0.3, color='blue')
+    axes[1, i_dataset].scatter(model_errors[n_samples:], epistemic_uncertainties[n_samples:], s=1, alpha=0.3, color='red')
+    axes[1, i_dataset].set_xlabel('Model error')
+    if i_dataset == 0:
+        axes[1, i_dataset].set_ylabel('Epistemic uncertainty')
 
-    axes[3].set_xlabel("Steps", fontsize=12)
+    del obs_buf
+    del act_buf
+    del obs2_buf
 
-    plt.tight_layout()
-    plt.show()
+plt.show()
