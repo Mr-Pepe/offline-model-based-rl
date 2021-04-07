@@ -14,7 +14,7 @@ from benchmark.actors.sac import SAC
 import matplotlib.pyplot as plt
 import os
 
-name = "Halfcheetah"
+name = "Walker2d"
 prefix = name.lower() + '-'
 version = '-v2'
 
@@ -23,6 +23,7 @@ dataset_names = [
     'medium-replay',
     'medium',
     'medium-expert',
+    'expert',
 ]
 
 fig, axes = plt.subplots(2, len(dataset_names))
@@ -35,11 +36,12 @@ for i_dataset, dataset_name in enumerate(dataset_names):
     print(env_name)
     env = gym.make(env_name)
 
-    buffer, obs_dim, act_dim = load_dataset_from_env(env)
+    n_samples = 3000
+
+    buffer, obs_dim, act_dim = load_dataset_from_env(env, n_samples)
 
     model = torch.load(os.path.join(MODELS_DIR, env_name + '-model.pt'))
 
-    n_samples = 3000
     random_samples = 1000
     i_sample = 0
     batch_size = 256
@@ -50,8 +52,8 @@ for i_dataset, dataset_name in enumerate(dataset_names):
     obs2_buf = buffer.obs2_buf[idxs].cuda()
 
     model_errors = []
-    aleatoric_uncertainties = []
-    epistemic_uncertainties = []
+    raw_aleatoric_uncertainties = []
+    raw_epistemic_uncertainties = []
 
     while i_sample < len(obs_buf):
         print(i_sample)
@@ -62,8 +64,8 @@ for i_dataset, dataset_name in enumerate(dataset_names):
         prediction, means, logvars, explicit_uncertainty, epistemic_uncertainty, aleatoric_uncertainty, underestimated_reward = model.get_prediction(obs_act, debug=True)
 
         model_errors.extend((prediction[:, :-2] - obs2).abs().mean(dim=1).cpu().detach().float().tolist())
-        aleatoric_uncertainties.extend(aleatoric_uncertainty.tolist())
-        epistemic_uncertainties.extend(epistemic_uncertainty.tolist())
+        raw_aleatoric_uncertainties.extend(aleatoric_uncertainty.tolist())
+        raw_epistemic_uncertainties.extend(epistemic_uncertainty.tolist())
 
         i_sample += batch_size
 
@@ -84,15 +86,18 @@ for i_dataset, dataset_name in enumerate(dataset_names):
             prediction, means, logvars, explicit_uncertainty, epistemic_uncertainty, aleatoric_uncertainty, underestimated_reward = model.get_prediction(obs_act, debug=True)
 
             model_errors.extend((prediction[:, :-2].cpu() - obs2).abs().mean(dim=1).cpu().detach().float().tolist())
-            aleatoric_uncertainties.extend(aleatoric_uncertainty.tolist())
-            epistemic_uncertainties.extend(epistemic_uncertainty.tolist())
+            raw_aleatoric_uncertainties.extend(aleatoric_uncertainty.tolist())
+            raw_epistemic_uncertainties.extend(epistemic_uncertainty.tolist())
 
-    aleatoric_uncertainties = torch.as_tensor(aleatoric_uncertainties)
-    aleatoric_uncertainties /= aleatoric_uncertainties.max()
-    epistemic_uncertainties = torch.as_tensor(epistemic_uncertainties)
-    epistemic_uncertainties /= epistemic_uncertainties.max()
+    raw_aleatoric_uncertainties = torch.as_tensor(raw_aleatoric_uncertainties)
+    aleatoric_uncertainties = raw_aleatoric_uncertainties / raw_aleatoric_uncertainties.max()
+    raw_epistemic_uncertainties = torch.as_tensor(raw_epistemic_uncertainties)
+    epistemic_uncertainties = raw_epistemic_uncertainties / raw_epistemic_uncertainties.max()
     model_errors = torch.as_tensor(model_errors)
     model_errors /= model_errors.max()
+
+    combined_uncertainties = torch.sqrt((raw_aleatoric_uncertainties + 1).square() - 1) + torch.sqrt((raw_epistemic_uncertainties + 1).square() - 1)
+    combined_uncertainties /= combined_uncertainties.max()
 
     axes[0, i_dataset].plot([0, 1], [0, 1], color='black')
     axes[0, i_dataset].scatter(model_errors[:n_samples], aleatoric_uncertainties[:n_samples], s=1, alpha=0.3, color='blue')
@@ -108,8 +113,11 @@ for i_dataset, dataset_name in enumerate(dataset_names):
     if i_dataset == 0:
         axes[1, i_dataset].set_ylabel('Epistemic uncertainty')
 
-    del obs_buf
-    del act_buf
-    del obs2_buf
+    # axes[2, i_dataset].plot([0, 1], [0, 1], color='black')
+    # axes[2, i_dataset].scatter(model_errors[:n_samples], combined_uncertainties[:n_samples], s=1, alpha=0.3, color='blue')
+    # axes[2, i_dataset].scatter(model_errors[n_samples:], combined_uncertainties[n_samples:], s=1, alpha=0.3, color='red')
+    # axes[2, i_dataset].set_xlabel('Model error')
+    # if i_dataset == 0:
+    #     axes[2, i_dataset].set_ylabel('Combined uncertainty')
 
 plt.show()
