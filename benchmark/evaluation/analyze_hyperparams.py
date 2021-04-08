@@ -21,7 +21,7 @@ def plot_hyperparameters(env_name, mode, trials):
     else:
         ylabel = 'OOD threshold'
 
-    fig, axes = plt.subplots(1, 2)
+    fig, axes = plt.subplots(1, 2, figsize=(8, 5))
 
     sc = axes[0].scatter(x, y, c=z)
     axes[0].set_title(env_name + ' ' + mode)
@@ -104,7 +104,7 @@ if __name__ == "__main__":
                                                           final_return=final,
                                                           returns=returns))
 
-    name = "Halfcheetah"
+    name = "Walker2d"
     prefix = name.lower() + '-'
     version = '-v2'
 
@@ -151,22 +151,29 @@ if __name__ == "__main__":
                 ax.set_xlim([-1, 21])
                 ax.set_ylim([-0.05, 1.05])
 
+                ax.set_yticks([0, 0.5, 1])
+
                 if i_dataset == 0:
                     if mode in PENALTY_MODES:
                         ax.set_ylabel('Penalty', fontsize=10)
                     else:
                         ax.set_ylabel('Threshold', fontsize=10)
-                    ax.set_yticks([0, 1])
                 else:
                     ax.set_ylabel(None)
-                    ax.set_yticks([])
+                    ax.set_yticklabels([])
+                    for tic in ax.yaxis.get_major_ticks():
+                        tic.tick1line.set_visible(False)
+                        tic.tick2line.set_visible(False)
 
+                ax.set_xticks([0, 10, 20])
                 if i_mode == len(modes) - 1:
                     ax.set_xlabel('Rollout\nlength', fontsize=10)
-                    ax.set_xticks([0, 20])
                 else:
                     ax.set_xlabel(None)
-                    ax.set_xticks([])
+                    ax.set_xticklabels([])
+                    for tic in ax.xaxis.get_major_ticks():
+                        tic.tick1line.set_visible(False)
+                        tic.tick2line.set_visible(False)
 
     pad = 5
 
@@ -180,10 +187,13 @@ if __name__ == "__main__":
                     xycoords=ax.yaxis.label, textcoords='offset points',
                     size=12, ha='right', va='center', rotation=0)
 
+    for ax in axes.flat:
+        ax.grid(b=True, alpha=0.5, linestyle="--")
+
     f.subplots_adjust(top=0.81,
                       bottom=0.135,
-                      left=0.245,
-                      right=0.9,
+                      left=0.25,
+                      right=0.99,
                       hspace=0.105,
                       wspace=0.1)
     plt.show()
