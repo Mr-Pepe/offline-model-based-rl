@@ -258,7 +258,8 @@ if __name__ == "__main__":
             '-random-v2',
             '-medium-replay-v2',
             '-medium-v2',
-            '-medium-expert-v2'
+            '-medium-expert-v2',
+            '-expert-v2'
         ]
 
         mode_names = [
@@ -279,7 +280,7 @@ if __name__ == "__main__":
             experiments.update({(env_name, mode): exp_dir})
 
         sns.set_palette('colorblind')
-        f, axes = plt.subplots(len(categories), len(datasets), figsize=(6, 6))
+        f, axes = plt.subplots(len(categories), len(datasets), figsize=(8, 8))
         # sns.set(style="darkgrid", font_scale=1.5)
 
         for i_category, category in enumerate(categories):
@@ -293,7 +294,7 @@ if __name__ == "__main__":
                                                 None,
                                                 None)
 
-                        y = np.ones(15)
+                        y = np.ones(20)
                         for datum in data:
                             x = np.asarray(datum['AverageTestEpRet'])
                             z = np.ones(len(x))
@@ -316,23 +317,30 @@ if __name__ == "__main__":
                                          ci='sd', estimator=getattr(np, 'mean'),
                                          ax=ax, label=mode, legend=False)
 
+                        ax.set_yticks([0, 25, 50, 75, 100])
                         if i_dataset == 0:
                             ax.set_ylabel('Performance', fontsize=10)
-                            ax.set_yticks([0, 25, 50, 75, 100])
                         else:
                             ax.set_ylabel(None)
-                            ax.set_yticks([])
+                            ax.set_yticklabels([])
+                            for tic in ax.yaxis.get_major_ticks():
+                                tic.tick1line.set_visible(False)
+                                tic.tick2line.set_visible(False)
 
+                        ax.set_xticks([0, 50, 100])
                         if i_category == len(categories) - 1:
                             ax.set_xlabel('Epoch', fontsize=10)
-                            ax.set_xticks([0, 100])
                         else:
                             ax.set_xlabel(None)
-                            ax.set_xticks([])
+                            ax.set_xticklabels([])
+                            for tic in ax.xaxis.get_major_ticks():
+                                tic.tick1line.set_visible(False)
+                                tic.tick2line.set_visible(False)
 
-                        ax.set_ylim([-5, 110])
+                        ax.set_ylim([-5, 115])
+                        ax.grid(b=True, alpha=0.5, linestyle="--")
 
-        handles, labels = ax.get_legend_handles_labels()
+        handles, labels = axes[0, 0].get_legend_handles_labels()
         handles = list(reversed(handles))
         labels = list(reversed([label.replace('-', ' ') for label in labels]))
         handles[0], handles[1], handles[2], handles[4] = handles[1], handles[0], handles[4], handles[2]
@@ -353,9 +361,9 @@ if __name__ == "__main__":
                         xycoords=ax.yaxis.label, textcoords='offset points',
                         size=12, ha='right', va='center', rotation=90)
 
-        f.subplots_adjust(top=0.925,
-                          bottom=0.22,
-                          left=0.155,
+        f.subplots_adjust(top=0.94,
+                          bottom=0.175,
+                          left=0.115,
                           right=0.985,
                           hspace=0.085,
                           wspace=0.185)
