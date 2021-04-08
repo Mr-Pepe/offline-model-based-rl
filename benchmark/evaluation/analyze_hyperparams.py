@@ -1,15 +1,12 @@
 from benchmark.utils.modes import ALEATORIC_PARTITIONING, ALEATORIC_PENALTY, EPISTEMIC_PARTITIONING, EPISTEMIC_PENALTY, PENALTY_MODES
 from benchmark.utils.env_name_from_exp_name import get_env_name
 from benchmark.utils.mode_from_exp_name import get_mode
-from benchmark.utils.print_warning import print_warning
 import os
 import os.path as osp
 import csv
-import torch
 import d4rl
 import json
 import matplotlib.pyplot as plt
-from matplotlib.offsetbox import DrawingArea
 
 
 def plot_hyperparameters(env_name, mode, trials):
@@ -87,11 +84,12 @@ if __name__ == "__main__":
                 params = json.load(f)
 
             # Only consider trials that ran for 10 iterations
-            if len(trial_log) == 10:
+            epoch = 5
+            if len(trial_log) >= epoch:
                 final = 100 * d4rl.get_normalized_score(
-                    env_name, float(trial_log[-1]['avg_test_return']))
+                    env_name, float(trial_log[epoch-1]['avg_test_return']))
                 returns = [100 * d4rl.get_normalized_score(
-                    env_name, float(trial_log[i]['test_return'])) for i in range(len(trial_log))]
+                    env_name, float(trial_log[i]['test_return'])) for i in range(epoch)]
 
                 if mode in PENALTY_MODES:
                     pessimism = params['model_pessimism']
@@ -106,15 +104,16 @@ if __name__ == "__main__":
                                                           final_return=final,
                                                           returns=returns))
 
-    prefix = 'walker2d-'
+    name = "Halfcheetah"
+    prefix = name.lower() + '-'
     version = '-v2'
 
     dataset_names = [
-        # 'random',
-        # 'medium-replay',
+        'random',
+        'medium-replay',
         'medium',
-        # 'medium-expert',
-        # 'expert',
+        'medium-expert',
+        'expert'
     ]
 
     modes = [
@@ -124,10 +123,67 @@ if __name__ == "__main__":
         EPISTEMIC_PENALTY,
     ]
 
-    for dataset_name in dataset_names:
-        for mode in modes:
+    f, axes = plt.subplots(len(modes), len(dataset_names))
+    f.suptitle(name, fontsize=18)
+
+    for i_dataset, dataset_name in enumerate(dataset_names):
+        for i_mode, mode in enumerate(modes):
             env_name = prefix + dataset_name + version
 
             if (env_name, mode) in experiments:
-                plot_hyperparameters(
-                    env_name, mode, experiments[(env_name, mode)])
+                ax = axes[i_mode, i_dataset]
+                trials = experiments[(env_name, mode)]
+
+                trials = zip([trials[i]['rollout_length'] for i in range(len(trials))],
+                             [trials[i]['pessimism']
+                                 for i in range(len(trials))],
+                             [trials[i]['final_return'] for i in range(len(trials))])
+
+                trials = sorted(trials, key=lambda x: x[2], reverse=True)
+                x = [trial[0] for trial in trials]
+                y = [trial[1] for trial in trials]
+                y = [e/max(y) for e in y]
+                z = [trial[2] for trial in trials]
+
+                ax.scatter(x, y, s=8)
+                ax.scatter(
+                    x[:8], y[:8], marker='o',  s=40, facecolors='none', edgecolors='red')
+                ax.set_xlim([-1, 21])
+                ax.set_ylim([-0.05, 1.05])
+
+                if i_dataset == 0:
+                    if mode in PENALTY_MODES:
+                        ax.set_ylabel('Penalty', fontsize=10)
+                    else:
+                        ax.set_ylabel('Threshold', fontsize=10)
+                    ax.set_yticks([0, 1])
+                else:
+                    ax.set_ylabel(None)
+                    ax.set_yticks([])
+
+                if i_mode == len(modes) - 1:
+                    ax.set_xlabel('Rollout\nlength', fontsize=10)
+                    ax.set_xticks([0, 20])
+                else:
+                    ax.set_xlabel(None)
+                    ax.set_xticks([])
+
+    pad = 5
+
+    for ax, col in zip(axes[0], [name.replace('-', '\n') for name in dataset_names]):
+        ax.annotate(col, xy=(0.5, 1), xytext=(0, pad),
+                    xycoords='axes fraction', textcoords='offset points',
+                    size=12, ha='center', va='baseline')
+
+    for ax, row in zip(axes[:, 0], [name.replace('-', '\n') for name in modes]):
+        ax.annotate(row, xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
+                    xycoords=ax.yaxis.label, textcoords='offset points',
+                    size=12, ha='right', va='center', rotation=0)
+
+    f.subplots_adjust(top=0.81,
+                      bottom=0.135,
+                      left=0.245,
+                      right=0.9,
+                      hspace=0.105,
+                      wspace=0.1)
+    plt.show()
