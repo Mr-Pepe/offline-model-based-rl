@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
     if args.mode in PARTITIONING_MODES:
         ood_threshold = tune.grid_search(np.linspace(
-            args.bounds[0], args.bounds[1], num=args.n_trials))
+            args.bounds[0], args.bounds[1], num=args.n_trials).tolist())
 
         config.update(
             model_pessimism=0,
@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     elif args.mode in PENALTY_MODES:
         model_pessimism = tune.grid_search(np.linspace(
-            args.bounds[0], args.bounds[1], num=args.n_trials))
+            args.bounds[0], args.bounds[1], num=args.n_trials).tolist())
 
         config.update(
             model_pessimism=model_pessimism,
