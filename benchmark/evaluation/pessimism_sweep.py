@@ -54,7 +54,7 @@ if __name__ == '__main__':
         dataset_path='',
         seed=0,
         epochs=args.epochs,
-        steps_per_epoch=100,
+        steps_per_epoch=15000,
         random_steps=8000,
         init_steps=4000,
         env_steps_per_step=0,
