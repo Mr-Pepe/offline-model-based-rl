@@ -8,7 +8,7 @@ from benchmark.utils.load_dataset import load_dataset_from_env
 import os
 
 
-def get_uncertainty_distribution(env_name, mode):
+def get_uncertainty_distribution(env_name, mode, all_stats=False):
     env = gym.make(env_name)
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -48,15 +48,24 @@ def get_uncertainty_distribution(env_name, mode):
 
     explicit_uncertainties = explicit_uncertainties.mean(dim=0)
 
-    rew_span = max(buffer.rew_buf.max().abs().item(), buffer.rew_buf.min().abs().item())
+    rew_span = max(buffer.rew_buf.max().abs().item(),
+                   buffer.rew_buf.min().abs().item())
 
     print("\nEnvironment: {}\n".format(env_name))
     print("Reward span: {}".format(rew_span))
-    print("Aleatoric max, mean, std: ({:.6f}, {:.6f}, {:.6f})".format(aleatoric_uncertainties.max(), aleatoric_uncertainties.mean(), aleatoric_uncertainties.std()))
-    print("Epistemic max, mean, std: ({:.6f}, {:.6f}, {:.6f})".format(epistemic_uncertainties.max(), epistemic_uncertainties.mean(), epistemic_uncertainties.std()))
-    print("Explicit  max, mean, std: ({:.6f}, {:.6f}, {:.6f})".format(explicit_uncertainties.max(), explicit_uncertainties.mean(), explicit_uncertainties.std()))
+    print("Aleatoric max, mean, std: ({:.6f}, {:.6f}, {:.6f})".format(
+        aleatoric_uncertainties.max(), aleatoric_uncertainties.mean(), aleatoric_uncertainties.std()))
+    print("Epistemic max, mean, std: ({:.6f}, {:.6f}, {:.6f})".format(
+        epistemic_uncertainties.max(), epistemic_uncertainties.mean(), epistemic_uncertainties.std()))
+    print("Explicit  max, mean, std: ({:.6f}, {:.6f}, {:.6f})".format(
+        explicit_uncertainties.max(), explicit_uncertainties.mean(), explicit_uncertainties.std()))
 
-    if mode in ALEATORIC_MODES:
+    if all_stats:
+        return dict(aleatoric=(rew_span, aleatoric_uncertainties.max().item(), aleatoric_uncertainties.mean().item(), aleatoric_uncertainties.std().item()),
+                    epistemic=(rew_span, epistemic_uncertainties.max().item(
+                    ), epistemic_uncertainties.mean().item(), epistemic_uncertainties.std().item()),
+                    explicit=(rew_span, explicit_uncertainties.max().item(), explicit_uncertainties.mean().item(), explicit_uncertainties.std().item()))
+    elif mode in ALEATORIC_MODES:
         return rew_span, aleatoric_uncertainties.max().item(), aleatoric_uncertainties.mean().item(), aleatoric_uncertainties.std().item()
     elif mode in EPISTEMIC_MODES:
         return rew_span, epistemic_uncertainties.max().item(), epistemic_uncertainties.mean().item(), epistemic_uncertainties.std().item()
@@ -64,7 +73,47 @@ def get_uncertainty_distribution(env_name, mode):
         return rew_span, explicit_uncertainties.max().item(), explicit_uncertainties.mean().item(), explicit_uncertainties.std().item()
 
 
-if __name__ == '__main__':
-    env_name = WALKER_MEDIUM_REPLAY
+def format_numbers(numbers):
+    out = []
+    for number in numbers:
+        if number < 0.01:
+            out.append("{:.2e}".format(number))
+        else:
+            out.append("{:.2f}".format(number))
 
-    get_uncertainty_distribution(env_name, ALEATORIC_PARTITIONING)
+    return out
+
+
+if __name__ == '__main__':
+    prefix = 'halfcheetah-'
+    version = '-v2'
+
+    dataset_names = [
+        'random',
+        # 'medium-replay',
+        # 'medium',
+        # 'medium-expert',
+    ]
+
+    avg_rew = []
+    per_trajectory_rews = []
+
+    latex = ''
+
+    for dataset_name in dataset_names:
+        env_name = prefix + dataset_name + version
+        print(env_name)
+        stats = get_uncertainty_distribution(env_name, '', all_stats=True)
+
+        latex += "& {} & {} & {} & {} & {} & {} & {} \\\\ ".format(
+            dataset_name,
+            *format_numbers(
+                (stats['aleatoric'][2],
+                 stats['aleatoric'][3],
+                 stats['aleatoric'][1],
+                 stats['epistemic'][2],
+                 stats['epistemic'][3],
+                 stats['epistemic'][1]))
+        ).replace('e+00', '')
+
+        print(latex)
