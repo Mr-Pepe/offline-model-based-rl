@@ -32,6 +32,8 @@ y = [point[1] for point in points]
 # Partitioning
 sns.kdeplot(x, y, shade=True, bw_adjust=0.6,
             levels=2, thresh=0.4, color='blue')
+# sns.kdeplot(x, y, shade=True, bw_adjust=0.6,
+#             levels=2, thresh=0.02, color='blue')
 
 
 for i_rollout in range(n_virtual_rollouts):
