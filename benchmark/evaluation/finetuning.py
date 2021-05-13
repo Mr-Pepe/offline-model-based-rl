@@ -83,7 +83,7 @@ if __name__ == '__main__':
         logger_kwargs=dict(),
         save_freq=1,
         device=device,
-        render=True)
+        render=False)
 
     parameters = []
 
