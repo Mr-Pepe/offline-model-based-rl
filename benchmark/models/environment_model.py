@@ -212,8 +212,13 @@ class EnvironmentModel(nn.Module):
                 elif mode == EXPLICIT_PENALTY:
                     uncertainty = explicit_uncertainty
 
+                penalty = pessimism * uncertainty
+
+                if self.max_reward is not None:
+                    penalty = torch.clamp_max(penalty, self.max_reward)
+
                 prediction[:, -2] = means[:, :, -
-                                          1].mean(dim=0) - pessimism * uncertainty
+                                          1].mean(dim=0) - penalty
 
             elif mode in PARTITIONING_MODES:
                 if mode == ALEATORIC_PARTITIONING:
