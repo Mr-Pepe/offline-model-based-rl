@@ -26,6 +26,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--n_trials', type=int, default=50)
     parser.add_argument('--bounds', default=[0, 1], nargs=2, type=float)
+    parser.add_argument('--rollout_length', type=int, default=15)
     parser.add_argument('--n_samples_from_dataset', type=int, default=-1)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
@@ -46,7 +47,7 @@ if __name__ == '__main__':
                           pi_lr=3e-4,
                           q_lr=3e-4,
                           ),
-        max_rollout_length=15,
+        max_rollout_length=args.rollout_length,
         model_pessimism=None,
         ood_threshold=None,
         rollouts_per_step=50,
