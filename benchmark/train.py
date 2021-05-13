@@ -468,10 +468,6 @@ class Trainer():
             test_return = 0
 
             if step_total > self.init_steps or self.pretrain_epochs > 0:
-                eval_buffer = ReplayBuffer(
-                    self.obs_dim,
-                    self.act_dim,
-                    self.num_test_episodes*self.max_ep_len)
 
                 # Test the performance of the deterministic version of the agent.
                 test_return = test_agent(self.test_env,
@@ -481,11 +477,10 @@ class Trainer():
                                          self.logger,
                                          self.render and
                                          step_total > self.init_steps,
-                                         buffer=eval_buffer,
+                                         buffer=None,
                                          use_setup=self.setup_test_env)
 
                 tested_agent = True
-                # self.logger.add_to_pytorch_saver({'eval_buffer': eval_buffer})
 
             if tuning:
                 running_avg += (test_return - running_avg)*0.2
