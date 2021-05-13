@@ -55,7 +55,7 @@ if __name__ == '__main__':
         epochs=args.epochs,
         steps_per_epoch=5000,
         random_steps=0,
-        init_steps=5000,
+        init_steps=4999,
         env_steps_per_step=1,
         n_samples_from_dataset=args.n_samples_from_dataset,
         agent_updates_per_step=1,
