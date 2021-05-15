@@ -10,8 +10,8 @@ dataset_names = [
     'random',
     'medium-replay',
     'medium',
-    'medium-expert',
     'expert',
+    'medium-expert',
 ]
 
 avg_rew = []
