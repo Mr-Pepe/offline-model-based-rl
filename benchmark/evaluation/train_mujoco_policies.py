@@ -178,7 +178,7 @@ if __name__ == '__main__':
                               agent_hidden=args.n_hidden,
                               gamma=0.99,
                               pi_lr=3e-4,
-                              q_lr=1e-5,
+                              q_lr=3e-4,
                               n_actions=args.n_cql_actions
                               ),
             rollouts_per_step=rollouts_per_step,
