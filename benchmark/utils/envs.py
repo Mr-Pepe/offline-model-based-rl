@@ -196,11 +196,11 @@ HYPERPARAMS = {
         HOPPER_MEDIUM_REPLAY_V2: (50, 15, 35),
         HOPPER_MEDIUM_EXPERT_V2: (50, 15, 45),
         HOPPER_EXPERT_V2: (50, 15, 30),
-        WALKER_RANDOM_v2: (50, 15, 4.3),
+        WALKER_RANDOM_v2: (50, 15, 2.5),
         WALKER_MEDIUM_v2: (50, 15, 4.3),
         WALKER_MEDIUM_REPLAY_V2: (50, 15, 4.3),
         WALKER_MEDIUM_EXPERT_V2: (50, 15, 4.3),
-        WALKER_EXPERT_v2: (50, 15, 4.3),
+        WALKER_EXPERT_v2: (50, 15, 2.5),
     },
     EXPLICIT_PENALTY: {
     }
