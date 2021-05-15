@@ -170,13 +170,6 @@ if __name__ == '__main__':
             model_pessimism = args.pessimism
             ood_threshold = args.ood_threshold
 
-        if 'halfcheetah' in config['env_name']:
-            pi_lr = 3e-5
-            q_lr = 3e-5
-        else:
-            pi_lr = 3e-4
-            q_lr = 3e-4
-
         # Basic config
         config.update(
             steps_per_epoch=5000,
@@ -184,8 +177,8 @@ if __name__ == '__main__':
                               batch_size=256,
                               agent_hidden=args.n_hidden,
                               gamma=0.99,
-                              pi_lr=pi_lr,
-                              q_lr=q_lr,
+                              pi_lr=3e-4,
+                              q_lr=3e-4,
                               n_actions=args.n_cql_actions
                               ),
             rollouts_per_step=rollouts_per_step,
