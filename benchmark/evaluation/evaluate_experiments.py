@@ -54,7 +54,9 @@ if __name__ == "__main__":
                 trial_log = list(csv.DictReader(f, delimiter='\t'))
 
                 # Check that trial was run for 50 or 100 epochs
-                if trial_log[-1]['Epoch'] != '50' and trial_log[-1]['Epoch'] != '100':
+                if trial_log[-1]['Epoch'] != '50' and \
+                    trial_log[-1]['Epoch'] != '100' and \
+                        trial_log[-1]['Epoch'] != '200':
                     print_warning("{} {} seed {} ran for {} epochs only",
                                   (env_name, mode, seed, trial_log[-1]['Epoch']))
 
