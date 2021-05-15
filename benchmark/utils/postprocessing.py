@@ -22,11 +22,9 @@ def postprocess_hopper(next_obs=None, **_):
     return {'dones': done}
 
 
-def postprocess_half_cheetah(next_obs=None, means=None, **_):
+def postprocess_half_cheetah(next_obs=None, **_):
     next_obs = next_obs.detach().clone()
     done = torch.zeros((next_obs.shape[0], next_obs.shape[1], 1))
-    if means is not None:
-        done[means[:, :, -1] < -20] = 1
     return {'dones': done}
 
 
