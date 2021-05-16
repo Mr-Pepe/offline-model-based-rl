@@ -67,6 +67,8 @@ if __name__ == '__main__':
     parser.add_argument('--mode', type=str, default=COPYCAT)
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--seeds', type=int, default=1)
+    parser.add_argument('--train_model_every', type=int, default=0)
+    parser.add_argument('--steps_per_epoch', type=int, default=15000)
     parser.add_argument('--pessimism', type=float, default=1)
     parser.add_argument('--ood_threshold', type=float, default=0.5)
     parser.add_argument('--start_seed', type=int, default=0)
@@ -127,7 +129,7 @@ if __name__ == '__main__':
         dataset_path='',
         seed=0,
         epochs=args.epochs,
-        steps_per_epoch=15000,
+        steps_per_epoch=args.steps_per_epoch,
         random_steps=8000,
         init_steps=4000,
         env_steps_per_step=0,
@@ -144,7 +146,7 @@ if __name__ == '__main__':
         model_max_n_train_batches=-1,
         rollout_schedule=[1, 1, 20, 100],
         continuous_rollouts=True,
-        train_model_every=0,
+        train_model_every=args.train_model_every,
         use_custom_reward=False,
         real_buffer_size=int(2e6),
         virtual_buffer_size=int(1e6),
