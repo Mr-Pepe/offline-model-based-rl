@@ -63,6 +63,7 @@ if __name__ == '__main__':
                         default=WALKER_MEDIUM_REPLAY_V2)
     parser.add_argument('--level', type=int, default=0)
     parser.add_argument('--tuned_params', type=str2bool, default=False)
+    parser.add_argument('--new_model', type=str2bool, default=False)
     parser.add_argument('--mode', type=str, default=COPYCAT)
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--seeds', type=int, default=1)
@@ -138,7 +139,7 @@ if __name__ == '__main__':
         use_model=use_model,
         pretrained_agent_path='',
         pretrained_model_path=os.path.join(
-            MODELS_DIR, pretrained_model_name),
+            MODELS_DIR, pretrained_model_name) if not args.new_model else '',
         mode=args.mode,
         model_max_n_train_batches=-1,
         rollout_schedule=[1, 1, 20, 100],
