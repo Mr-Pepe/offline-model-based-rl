@@ -131,7 +131,7 @@ if __name__ == '__main__':
         model_pessimism=None,
         ood_threshold=None,
         rollouts_per_step=args.n_rollouts,
-        model_kwargs=dict(),
+        model_kwargs=dict(in_normalized_space=True),
         dataset_path='',
         seed=0,
         epochs=args.epochs,
