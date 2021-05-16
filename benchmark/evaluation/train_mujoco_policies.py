@@ -50,7 +50,7 @@ def training_wrapper(config, seed):
     exp_name = get_exp_name(config)
 
     if config['pretrained_interaction_agent_path'] != '':
-        exp_name += '-double_agent'
+        exp_name += '-double_agent-' + str(config['exploration_chance'])
 
     config.update(
         seed=seed,
