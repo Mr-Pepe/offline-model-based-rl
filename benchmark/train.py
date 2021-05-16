@@ -49,6 +49,7 @@ class Trainer():
                  use_model=False,
                  pretrained_agent_path='',
                  pretrained_interaction_agent_path='',
+                 exploration_chance=1,
                  pretrained_model_path='',
                  model_pessimism=0,
                  ood_threshold=-1,
@@ -263,6 +264,7 @@ class Trainer():
         self.ood_threshold = ood_threshold
         self.interaction_agent_pessimism = interaction_agent_pessimism
         self.interaction_agent_threshold = interaction_agent_threshold
+        self.exploration_chance = exploration_chance
         self.mode = mode
         self.model_max_n_train_batches = model_max_n_train_batches
         self.reset_buffer = reset_buffer
@@ -396,7 +398,7 @@ class Trainer():
                             a = self.env.action_space.sample()
                             actions_this_step[Actions.RANDOM_ACTION] = 1
                         else:
-                            if self.interaction_agent is not None:
+                            if self.interaction_agent is not None and torch.randn((1,)) < self.exploration_chance:
                                 a = self.interaction_agent.act(o).cpu().numpy()
                             else:
                                 a = self.agent.act(o).cpu().numpy()
