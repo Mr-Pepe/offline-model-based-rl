@@ -48,9 +48,12 @@ class Trainer():
                  max_ep_len=1000,
                  use_model=False,
                  pretrained_agent_path='',
+                 pretrained_interaction_agent_path='',
                  pretrained_model_path='',
                  model_pessimism=0,
                  ood_threshold=-1,
+                 interaction_agent_pessimism=0,
+                 interaction_agent_threshold=-1,
                  mode=ALEATORIC_PENALTY,
                  model_max_n_train_batches=-1,
                  rollouts_per_step=10,
@@ -213,6 +216,17 @@ class Trainer():
                                  self.env.action_space,
                                  **agent_kwargs)
 
+        self.interaction_agent = None
+        self.interaction_agent_virtual_buffer = None
+        if pretrained_interaction_agent_path != '':
+            self.interaction_agent = torch.load(
+                pretrained_interaction_agent_path)
+            self.interaction_agent.to(device)
+            self.interaction_agent_virtual_buffer = ReplayBuffer(obs_dim=self.obs_dim,
+                                                                 act_dim=self.act_dim,
+                                                                 size=virtual_buffer_size,
+                                                                 device=device)
+
         self.logger.setup_pytorch_saver({
             'agent': self.agent,
             # 'model': self.env_model,
@@ -247,6 +261,8 @@ class Trainer():
         self.continuous_rollouts = continuous_rollouts
         self.model_pessimism = model_pessimism
         self.ood_threshold = ood_threshold
+        self.interaction_agent_pessimism = interaction_agent_pessimism
+        self.interaction_agent_threshold = interaction_agent_threshold
         self.mode = mode
         self.model_max_n_train_batches = model_max_n_train_batches
         self.reset_buffer = reset_buffer
@@ -287,6 +303,7 @@ class Trainer():
         model_trained_at_all = False
 
         prev_obs = None
+        interaction_agent_prev_obs = None
 
         running_avg = 0
 
@@ -379,7 +396,10 @@ class Trainer():
                             a = self.env.action_space.sample()
                             actions_this_step[Actions.RANDOM_ACTION] = 1
                         else:
-                            a = self.agent.act(o).cpu().numpy()
+                            if self.interaction_agent is not None:
+                                a = self.interaction_agent.act(o).cpu().numpy()
+                            else:
+                                a = self.agent.act(o).cpu().numpy()
 
                         o2, r, d, _ = self.env.step(a)
                         ep_ret += r
@@ -418,34 +438,61 @@ class Trainer():
                                                 self.env_model,
                                                 self.logger)
                     elif self.use_model and self.rollouts_per_step > 0:
-                        rollouts, prev_obs = generate_virtual_rollouts(
-                            self.env_model,
-                            self.agent,
-                            self.real_replay_buffer,
-                            rollout_length,
-                            n_rollouts=self.rollouts_per_step,
-                            pessimism=self.model_pessimism,
-                            ood_threshold=self.ood_threshold,
-                            mode=self.mode,
-                            random_action=take_random_action,
-                            prev_obs=prev_obs if self.continuous_rollouts else None,
-                            max_rollout_length=self.max_rollout_length,
-                        )
-                        self.virtual_replay_buffer.store_batch(
-                            rollouts['obs'],
-                            rollouts['act'],
-                            rollouts['rew'],
-                            rollouts['next_obs'],
-                            rollouts['done'])
+                        for _ in self.agent_updates_per_step:
+                            rollouts, prev_obs = generate_virtual_rollouts(
+                                self.env_model,
+                                self.agent,
+                                self.real_replay_buffer,
+                                rollout_length,
+                                n_rollouts=self.rollouts_per_step,
+                                pessimism=self.model_pessimism,
+                                ood_threshold=self.ood_threshold,
+                                mode=self.mode,
+                                random_action=take_random_action,
+                                prev_obs=prev_obs if self.continuous_rollouts else None,
+                                max_rollout_length=self.max_rollout_length,
+                            )
+                            self.virtual_replay_buffer.store_batch(
+                                rollouts['obs'],
+                                rollouts['act'],
+                                rollouts['rew'],
+                                rollouts['next_obs'],
+                                rollouts['done'])
 
-                        self.agent.multi_update(self.agent_updates_per_step,
-                                                self.virtual_replay_buffer,
-                                                self.logger)
+                            self.agent.multi_update(1,
+                                                    self.virtual_replay_buffer,
+                                                    self.logger)
 
                         actions_this_step[Actions.GENERATE_ROLLOUTS] = 1
 
                         if take_random_action:
                             actions_this_step[Actions.RANDOM_ACTION] = 1
+
+                        if self.interaction_agent is not None:
+                            for _ in self.agent_updates_per_step:
+                                rollouts, interaction_agent_prev_obs = generate_virtual_rollouts(
+                                    self.env_model,
+                                    self.interaction_agent,
+                                    self.real_replay_buffer,
+                                    rollout_length,
+                                    n_rollouts=self.rollouts_per_step,
+                                    pessimism=self.interaction_agent_pessimism,
+                                    ood_threshold=self.interaction_agent_threshold,
+                                    mode='offline-exploration',
+                                    random_action=take_random_action,
+                                    prev_obs=interaction_agent_prev_obs if self.continuous_rollouts else None,
+                                    max_rollout_length=self.max_rollout_length,
+                                )
+                                self.interaction_agent_virtual_buffer.store_batch(
+                                    rollouts['obs'],
+                                    rollouts['act'],
+                                    rollouts['rew'],
+                                    rollouts['next_obs'],
+                                    rollouts['done'])
+
+                                self.interaction_agent.multi_update(1,
+                                                                    self.interaction_agent_virtual_buffer,
+                                                                    self.logger)
 
                     else:
                         self.agent.multi_update(self.agent_updates_per_step,

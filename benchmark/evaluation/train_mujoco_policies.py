@@ -76,6 +76,10 @@ if __name__ == '__main__':
     parser.add_argument('--n_cql_actions', type=int, default=20)
     parser.add_argument('--n_samples_from_dataset', type=int, default=-1)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
+    parser.add_argument(
+        '--pretrained_interaction_agent_path', type=str, default='')
+    parser.add_argument('--interaction_pessimism', type=float, default=1)
+    parser.add_argument('--interaction_threshold', type=float, default=0.5)
     parser.add_argument('--use_ray', type=str2bool, default=True)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
@@ -185,7 +189,10 @@ if __name__ == '__main__':
             max_rollout_length=max_rollout_length,
             model_pessimism=model_pessimism,
             ood_threshold=ood_threshold,
-            pretrained_agent_path=args.pretrained_agent_path
+            pretrained_agent_path=args.pretrained_agent_path,
+            pretrained_interaction_agent_path=args.pretrained_interaction_agent_path,
+            interaction_agent_pessimism=args.interaction_pessimism,
+            interaction_agent_threshold=args.interaction_threshold
         )
 
         # According to appendix in COMBO paper
