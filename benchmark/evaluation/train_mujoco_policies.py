@@ -90,6 +90,7 @@ if __name__ == '__main__':
         '--pretrained_interaction_agent_path', type=str, default='')
     parser.add_argument('--interaction_pessimism', type=float, default=1)
     parser.add_argument('--interaction_threshold', type=float, default=0.5)
+    parser.add_argument('--virtual_buffer_size', type=int, default=1e6)
     parser.add_argument('--use_ray', type=str2bool, default=True)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
@@ -155,7 +156,7 @@ if __name__ == '__main__':
         train_model_every=args.train_model_every,
         use_custom_reward=False,
         real_buffer_size=int(2e6),
-        virtual_buffer_size=int(1e6),
+        virtual_buffer_size=args.virtual_buffer_size,
         reset_buffer=False,
         virtual_pretrain_epochs=0,
         train_model_from_scratch=False,
