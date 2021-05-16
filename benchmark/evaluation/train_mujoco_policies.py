@@ -49,6 +49,9 @@ def training_wrapper(config, seed):
     print("hi")
     exp_name = get_exp_name(config)
 
+    if config['pretrained_interaction_agent_path'] != '':
+        exp_name += '-double_agent'
+
     config.update(
         seed=seed,
         logger_kwargs=setup_logger_kwargs(exp_name,
