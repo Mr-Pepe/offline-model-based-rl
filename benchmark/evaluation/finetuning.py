@@ -30,6 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_trials', type=int, default=50)
     parser.add_argument('--bounds', default=[0, 1], nargs=2, type=float)
     parser.add_argument('--rollout_length', type=int, default=3)
+    parser.add_argument('--agent_updates_per_step', type=int, default=1)
     parser.add_argument('--n_samples_from_dataset', type=int, default=50000)
     parser.add_argument('--use_ray', type=str2bool, default=True)
     parser.add_argument('--device', type=str, default='')
@@ -58,7 +59,7 @@ if __name__ == '__main__':
         init_steps=999,
         env_steps_per_step=1,
         n_samples_from_dataset=args.n_samples_from_dataset,
-        agent_updates_per_step=1,
+        agent_updates_per_step=args.agent_updates_per_step,
         num_test_episodes=20,
         curriculum=[1, 1, 20, 100],
         max_ep_len=1000,
