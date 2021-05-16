@@ -75,6 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_trials', type=int, default=20)
     parser.add_argument('--n_cql_actions', type=int, default=20)
     parser.add_argument('--n_samples_from_dataset', type=int, default=-1)
+    parser.add_argument('--agent_updates_per_step', type=int, default=1)
     parser.add_argument('--pretrained_agent_path', type=str, default='')
     parser.add_argument(
         '--pretrained_interaction_agent_path', type=str, default='')
@@ -130,7 +131,7 @@ if __name__ == '__main__':
         init_steps=4000,
         env_steps_per_step=0,
         n_samples_from_dataset=args.n_samples_from_dataset,
-        agent_updates_per_step=1,
+        agent_updates_per_step=args.agent_updates_per_step,
         num_test_episodes=20,
         curriculum=[1, 1, 20, 100],
         max_ep_len=1000,
