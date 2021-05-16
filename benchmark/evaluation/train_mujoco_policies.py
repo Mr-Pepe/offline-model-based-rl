@@ -69,6 +69,7 @@ if __name__ == '__main__':
     parser.add_argument('--seeds', type=int, default=1)
     parser.add_argument('--train_model_every', type=int, default=0)
     parser.add_argument('--steps_per_epoch', type=int, default=15000)
+    parser.add_argument('--env_steps_per_step', type=int, default=0)
     parser.add_argument('--pessimism', type=float, default=1)
     parser.add_argument('--ood_threshold', type=float, default=0.5)
     parser.add_argument('--start_seed', type=int, default=0)
@@ -132,7 +133,7 @@ if __name__ == '__main__':
         steps_per_epoch=args.steps_per_epoch,
         random_steps=8000,
         init_steps=4000,
-        env_steps_per_step=0,
+        env_steps_per_step=args.env_steps_per_step,
         n_samples_from_dataset=args.n_samples_from_dataset,
         agent_updates_per_step=args.agent_updates_per_step,
         num_test_episodes=20,
