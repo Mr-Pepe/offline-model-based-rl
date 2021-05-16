@@ -71,7 +71,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--seeds', type=int, default=1)
     parser.add_argument('--train_model_every', type=int, default=0)
-    parser.add_argument('--steps_per_epoch', type=int, default=15000)
+    parser.add_argument('--steps_per_epoch', type=int, default=5000)
     parser.add_argument('--env_steps_per_step', type=int, default=0)
     parser.add_argument('--random_steps', type=int, default=8000)
     parser.add_argument('--init_steps', type=int, default=4000)
@@ -187,7 +187,6 @@ if __name__ == '__main__':
 
         # Basic config
         config.update(
-            steps_per_epoch=5000,
             agent_kwargs=dict(type=agent_type,
                               batch_size=256,
                               agent_hidden=args.n_hidden,
@@ -243,6 +242,7 @@ if __name__ == '__main__':
         if args.level == 1:
             config.update(
                 epochs=30,
+                steps_per_epoch=15000,
                 agent_kwargs=dict(type=agent_type,
                                   batch_size=256,
                                   agent_hidden=128,
