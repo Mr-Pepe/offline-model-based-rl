@@ -438,7 +438,7 @@ class Trainer():
                                                 self.env_model,
                                                 self.logger)
                     elif self.use_model and self.rollouts_per_step > 0:
-                        for _ in self.agent_updates_per_step:
+                        for _ in range(self.agent_updates_per_step):
                             rollouts, prev_obs = generate_virtual_rollouts(
                                 self.env_model,
                                 self.agent,
@@ -469,7 +469,7 @@ class Trainer():
                             actions_this_step[Actions.RANDOM_ACTION] = 1
 
                         if self.interaction_agent is not None:
-                            for _ in self.agent_updates_per_step:
+                            for _ in range(self.agent_updates_per_step):
                                 rollouts, interaction_agent_prev_obs = generate_virtual_rollouts(
                                     self.env_model,
                                     self.interaction_agent,
