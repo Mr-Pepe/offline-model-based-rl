@@ -1,4 +1,6 @@
 import argparse
+from benchmark.utils.postprocessing import get_postprocessing_function
+from benchmark.utils.preprocessing import get_preprocessing_function
 from benchmark.utils.uncertainty_distribution import get_uncertainty_distribution
 from benchmark.utils.modes import ALEATORIC_PENALTY, BEHAVIORAL_CLONING, COPYCAT, CQL, MBPO, PARTITIONING_MODES, PENALTY_MODES, MODES, SAC, UNDERESTIMATION
 from benchmark.utils.run_utils import setup_logger_kwargs
@@ -145,7 +147,16 @@ if __name__ == '__main__':
         model_pessimism=None,
         ood_threshold=None,
         rollouts_per_step=args.n_rollouts,
-        model_kwargs=dict(in_normalized_space=True),
+        model_kwargs=dict(in_normalized_space=True,
+                          lr=1e-3,
+                          batch_size=256,
+                          hidden=[200, 200, 200, 200],
+                          type='probabilistic',
+                          n_networks=7,
+                          pre_fn=get_preprocessing_function(args.env_name),
+                          post_fn=get_postprocessing_function(args.env_name),
+                          no_reward=False,
+                          use_batch_norm=False),
         dataset_path='',
         seed=0,
         epochs=args.epochs,
