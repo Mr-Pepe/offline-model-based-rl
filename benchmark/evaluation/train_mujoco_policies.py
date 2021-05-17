@@ -79,6 +79,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_test_episodes', type=int, default=20)
     parser.add_argument('--seeds', type=int, default=1)
     parser.add_argument('--train_model_every', type=int, default=0)
+    parser.add_argument('--max_n_train_batches', type=int, default=-1)
     parser.add_argument('--steps_per_epoch', type=int, default=5000)
     parser.add_argument('--env_steps_per_step', type=int, default=0)
     parser.add_argument('--random_steps', type=int, default=8000)
@@ -174,7 +175,7 @@ if __name__ == '__main__':
         pretrained_model_path=os.path.join(
             MODELS_DIR, pretrained_model_name) if not args.new_model else '',
         mode=args.mode,
-        model_max_n_train_batches=-1,
+        model_max_n_train_batches=args.max_n_train_batches,
         rollout_schedule=[1, 1, 20, 100],
         continuous_rollouts=True,
         train_model_every=args.train_model_every,
