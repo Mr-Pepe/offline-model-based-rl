@@ -117,7 +117,7 @@ if __name__ == '__main__':
         agent_type = 'cql'
     elif args.mode == SAC:
         use_model = False
-        agent_type = 'SAC'
+        agent_type = 'sac'
     else:
         use_model = True
         agent_type = 'sac'
