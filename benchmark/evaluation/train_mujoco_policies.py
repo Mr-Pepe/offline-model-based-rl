@@ -47,6 +47,8 @@ def get_exp_name(config):
     if config['pretrained_agent_path'] != '':
         exp_name += '-pretrained'
 
+    exp_name += '-' + str(config['n_samples_from_dataset']) + 'samples'
+
     return exp_name
 
 
