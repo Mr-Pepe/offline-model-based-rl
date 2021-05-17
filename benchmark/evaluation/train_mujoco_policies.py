@@ -50,7 +50,7 @@ def get_exp_name(config):
     return exp_name
 
 
-@ray.remote(num_gpus=0.5, max_retries=3)
+@ray.remote(num_gpus=1, max_retries=3)
 def training_wrapper(config, seed):
     print("hi")
     exp_name = get_exp_name(config)
