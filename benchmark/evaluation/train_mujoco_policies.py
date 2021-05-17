@@ -1,6 +1,6 @@
 import argparse
 from benchmark.utils.uncertainty_distribution import get_uncertainty_distribution
-from benchmark.utils.modes import ALEATORIC_PENALTY, BEHAVIORAL_CLONING, COPYCAT, CQL, PARTITIONING_MODES, PENALTY_MODES, MODES, SAC, UNDERESTIMATION
+from benchmark.utils.modes import ALEATORIC_PENALTY, BEHAVIORAL_CLONING, COPYCAT, CQL, MBPO, PARTITIONING_MODES, PENALTY_MODES, MODES, SAC, UNDERESTIMATION
 from benchmark.utils.run_utils import setup_logger_kwargs
 from benchmark.utils.print_warning import print_warning
 from ray import tune
@@ -31,7 +31,7 @@ def get_exp_name(config):
     if config['mode'] == CQL:
         exp_name += '-' + str(config['agent_kwargs']['n_actions']) + 'actions'
 
-    if config['mode'] != BEHAVIORAL_CLONING and config['mode'] != CQL and config['mode'] != COPYCAT:
+    if config['mode'] not in [BEHAVIORAL_CLONING, CQL, COPYCAT, SAC]:
         exp_name += '-' + str(config['rollouts_per_step']) + \
             'rollouts' + '-' + str(config['max_rollout_length']) + 'steps'
 
@@ -41,6 +41,12 @@ def get_exp_name(config):
         if config['mode'] in PARTITIONING_MODES:
             exp_name += '-' + str(config['ood_threshold']) + 'threshold'
 
+    if config['pretrained_interaction_agent_path'] != '':
+        exp_name += '-double_agent-' + str(config['exploration_chance'])
+
+    if config['pretrained_agent_path'] != '':
+        exp_name += '-pretrained'
+
     return exp_name
 
 
@@ -48,9 +54,6 @@ def get_exp_name(config):
 def training_wrapper(config, seed):
     print("hi")
     exp_name = get_exp_name(config)
-
-    if config['pretrained_interaction_agent_path'] != '':
-        exp_name += '-double_agent-' + str(config['exploration_chance'])
 
     config.update(
         seed=seed,
@@ -117,6 +120,9 @@ if __name__ == '__main__':
         agent_type = 'cql'
     elif args.mode == SAC:
         use_model = False
+        agent_type = 'sac'
+    elif args.mode == MBPO:
+        use_model = True
         agent_type = 'sac'
     else:
         use_model = True

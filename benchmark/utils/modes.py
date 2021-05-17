@@ -10,6 +10,7 @@ BEHAVIORAL_CLONING = 'behavioral-cloning'
 CQL = 'cql'
 COPYCAT = 'copycat'
 SAC = 'sac'
+MBPO = 'mbpo'
 
 MODES = [
     EXPLICIT_PARTITIONING,
@@ -23,7 +24,8 @@ MODES = [
     CQL,
     COPYCAT,
     OFFLINE_EXPLORATION,
-    SAC
+    SAC,
+    MBPO
 ]
 
 PENALTY_MODES = [
