@@ -72,6 +72,7 @@ if __name__ == '__main__':
     parser.add_argument('--new_model', type=str2bool, default=False)
     parser.add_argument('--mode', type=str, default=COPYCAT)
     parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--num_test_episodes', type=int, default=20)
     parser.add_argument('--seeds', type=int, default=1)
     parser.add_argument('--train_model_every', type=int, default=0)
     parser.add_argument('--steps_per_epoch', type=int, default=5000)
@@ -152,7 +153,7 @@ if __name__ == '__main__':
         env_steps_per_step=args.env_steps_per_step,
         n_samples_from_dataset=args.n_samples_from_dataset,
         agent_updates_per_step=args.agent_updates_per_step,
-        num_test_episodes=20,
+        num_test_episodes=args.num_test_episodes,
         curriculum=[1, 1, 20, 100],
         max_ep_len=1000,
         use_model=use_model,
