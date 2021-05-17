@@ -9,6 +9,7 @@ UNDERESTIMATION = 'underestimation'
 BEHAVIORAL_CLONING = 'behavioral-cloning'
 CQL = 'cql'
 COPYCAT = 'copycat'
+SAC = 'sac'
 
 MODES = [
     EXPLICIT_PARTITIONING,
@@ -21,7 +22,8 @@ MODES = [
     BEHAVIORAL_CLONING,
     CQL,
     COPYCAT,
-    OFFLINE_EXPLORATION
+    OFFLINE_EXPLORATION,
+    SAC
 ]
 
 PENALTY_MODES = [

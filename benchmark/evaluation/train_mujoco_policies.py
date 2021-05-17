@@ -1,6 +1,6 @@
 import argparse
 from benchmark.utils.uncertainty_distribution import get_uncertainty_distribution
-from benchmark.utils.modes import ALEATORIC_PENALTY, BEHAVIORAL_CLONING, COPYCAT, CQL, PARTITIONING_MODES, PENALTY_MODES, MODES, UNDERESTIMATION
+from benchmark.utils.modes import ALEATORIC_PENALTY, BEHAVIORAL_CLONING, COPYCAT, CQL, PARTITIONING_MODES, PENALTY_MODES, MODES, SAC, UNDERESTIMATION
 from benchmark.utils.run_utils import setup_logger_kwargs
 from benchmark.utils.print_warning import print_warning
 from ray import tune
@@ -115,6 +115,9 @@ if __name__ == '__main__':
     elif args.mode == CQL:
         use_model = False
         agent_type = 'cql'
+    elif args.mode == SAC:
+        use_model = False
+        agent_type = 'SAC'
     else:
         use_model = True
         agent_type = 'sac'
