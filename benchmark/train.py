@@ -189,8 +189,7 @@ class Trainer():
         self.agent_kwargs = agent_kwargs
 
         if pretrained_agent_path != '':
-            self.agent = torch.load(pretrained_agent_path)
-            self.agent.to(device)
+            self.agent = torch.load(pretrained_agent_path, map_location=device)
         else:
             if 'type' in agent_kwargs:
                 if agent_kwargs['type'] == 'bc':
