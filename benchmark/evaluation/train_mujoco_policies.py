@@ -81,6 +81,8 @@ if __name__ == '__main__':
     parser.add_argument('--train_model_every', type=int, default=0)
     parser.add_argument('--train_model_from_scratch',
                         type=str2bool, default=False)
+    parser.add_argument('--reset_buffer',
+                        type=str2bool, default=False)
     parser.add_argument('--max_n_train_batches', type=int, default=-1)
     parser.add_argument('--steps_per_epoch', type=int, default=5000)
     parser.add_argument('--env_steps_per_step', type=int, default=0)
@@ -184,7 +186,7 @@ if __name__ == '__main__':
         use_custom_reward=False,
         real_buffer_size=int(2e6),
         virtual_buffer_size=args.virtual_buffer_size,
-        reset_buffer=False,
+        reset_buffer=args.reset_buffer,
         virtual_pretrain_epochs=0,
         train_model_from_scratch=args.train_model_from_scratch,
         reset_maze2d_umaze=False,
