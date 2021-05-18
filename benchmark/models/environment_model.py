@@ -206,7 +206,8 @@ class EnvironmentModel(nn.Module):
             self.check_prediction_arguments(mode, pessimism)
 
             if mode == OFFLINE_EXPLORATION:
-                prediction[:, -2] = pessimism * epistemic_uncertainty
+                prediction[:, -2] = means[:, :, -
+                                          1].mean(dim=0) + pessimism * epistemic_uncertainty
                 ood_idx = epistemic_uncertainty > ood_threshold
                 prediction[ood_idx, -1] = 1
 
