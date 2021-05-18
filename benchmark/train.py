@@ -235,7 +235,7 @@ class Trainer():
         })
 
         if self.interaction_agent is not None:
-            self.logger.setup_pytorch_saver.update(
+            self.logger.add_to_pytorch_saver(
                 interaction_agent=self.interaction_agent)
 
         if curriculum[0] < 1:
