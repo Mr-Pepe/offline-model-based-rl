@@ -234,6 +234,10 @@ class Trainer():
             # 'virtual_replay_buffer': self.virtual_replay_buffer,
         })
 
+        if self.interaction_agent is not None:
+            self.logger.setup_pytorch_saver.update(
+                interaction_agent=self.interaction_agent)
+
         if curriculum[0] < 1:
             self.selector = get_selector(env_name)(self.real_replay_buffer)
             self.selector.progress = curriculum[0]
