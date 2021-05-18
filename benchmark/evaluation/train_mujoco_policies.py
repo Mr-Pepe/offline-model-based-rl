@@ -79,6 +79,8 @@ if __name__ == '__main__':
     parser.add_argument('--num_test_episodes', type=int, default=20)
     parser.add_argument('--seeds', type=int, default=1)
     parser.add_argument('--train_model_every', type=int, default=0)
+    parser.add_argument('--train_model_from_scratch',
+                        type=str2bool, default=False)
     parser.add_argument('--max_n_train_batches', type=int, default=-1)
     parser.add_argument('--steps_per_epoch', type=int, default=5000)
     parser.add_argument('--env_steps_per_step', type=int, default=0)
@@ -184,7 +186,7 @@ if __name__ == '__main__':
         virtual_buffer_size=args.virtual_buffer_size,
         reset_buffer=False,
         virtual_pretrain_epochs=0,
-        train_model_from_scratch=False,
+        train_model_from_scratch=args.train_model_from_scratch,
         reset_maze2d_umaze=False,
         pretrain_epochs=0,
         setup_test_env=False,
