@@ -104,7 +104,7 @@ if __name__ == '__main__':
     parser.add_argument('--interaction_pessimism', type=float, default=1)
     parser.add_argument('--interaction_threshold', type=float, default=0.5)
     parser.add_argument('--exploration_chance', type=float, default=1)
-    parser.add_argument('--virtual_buffer_size', type=int, default=1e6)
+    parser.add_argument('--virtual_buffer_size', type=int, default=int(1e6))
     parser.add_argument('--use_ray', type=str2bool, default=True)
     parser.add_argument('--device', type=str, default='')
     args = parser.parse_args()
