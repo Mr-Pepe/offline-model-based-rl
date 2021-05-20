@@ -212,7 +212,7 @@ class EnvironmentModel(nn.Module):
 
             if mode == OFFLINE_EXPLORATION_PARTITIONING:
                 exp_idx = epistemic_uncertainty > pessimism
-                prediction[exp_idx:, -2] = 1
+                prediction[exp_idx, -2] = 1
 
                 ood_idx = epistemic_uncertainty > ood_threshold
                 prediction[ood_idx, -2] = 0
