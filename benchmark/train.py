@@ -236,7 +236,8 @@ class Trainer():
 
         if self.interaction_agent is not None:
             self.logger.add_to_pytorch_saver(
-                {'interaction_agent': self.interaction_agent})
+                {'interaction_agent': self.interaction_agent,
+                 'model': self.model})
 
         if curriculum[0] < 1:
             self.selector = get_selector(env_name)(self.real_replay_buffer)

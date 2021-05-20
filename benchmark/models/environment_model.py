@@ -1,4 +1,4 @@
-from benchmark.utils.modes import ALEATORIC_PARTITIONING, EPISTEMIC_PARTITIONING, EPISTEMIC_PENALTY, EXPLICIT_PARTITIONING, EXPLICIT_PENALTY, MODES, ALEATORIC_PENALTY, OFFLINE_EXPLORATION, PARTITIONING_MODES, PENALTY_MODES, UNDERESTIMATION
+from benchmark.utils.modes import ALEATORIC_PARTITIONING, EPISTEMIC_PARTITIONING, EPISTEMIC_PENALTY, EXPLICIT_PARTITIONING, EXPLICIT_PENALTY, MODES, ALEATORIC_PENALTY, OFFLINE_EXPLORATION_PARTITIONING, OFFLINE_EXPLORATION_PENALTY, PARTITIONING_MODES, PENALTY_MODES, UNDERESTIMATION
 import os
 from benchmark.utils.get_x_y_from_batch import get_x_y_from_batch
 from benchmark.utils.loss_functions import \
@@ -205,10 +205,17 @@ class EnvironmentModel(nn.Module):
 
             self.check_prediction_arguments(mode, pessimism)
 
-            if mode == OFFLINE_EXPLORATION:
-                prediction[:, -2] = means[:, :, -
-                                          1].mean(dim=0) + pessimism * epistemic_uncertainty
+            if mode == OFFLINE_EXPLORATION_PENALTY:
+                prediction[:, -2] = pessimism * epistemic_uncertainty
                 ood_idx = epistemic_uncertainty > ood_threshold
+                prediction[ood_idx, -1] = 1
+
+            if mode == OFFLINE_EXPLORATION_PARTITIONING:
+                exp_idx = epistemic_uncertainty > pessimism
+                prediction[exp_idx:, -2] = 1
+
+                ood_idx = epistemic_uncertainty > ood_threshold
+                prediction[ood_idx, -2] = 0
                 prediction[ood_idx, -1] = 1
 
             elif mode in PENALTY_MODES:
