@@ -33,6 +33,9 @@ def get_exp_name(config):
     if config['mode'] == CQL:
         exp_name += '-' + str(config['agent_kwargs']['n_actions']) + 'actions'
 
+    if (config['mode'] == MBPO or config['mode'] == SAC) and config['env_steps_per_step'] == 0:
+        exp_name += '-offline'
+
     if config['mode'] not in [BEHAVIORAL_CLONING, CQL, COPYCAT, SAC]:
         exp_name += '-' + str(config['rollouts_per_step']) + \
             'rollouts' + '-' + str(config['max_rollout_length']) + 'steps'
