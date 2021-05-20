@@ -91,7 +91,7 @@ if __name__ == '__main__':
     parser.add_argument('--pessimism', type=float, default=1)
     parser.add_argument('--ood_threshold', type=float, default=0.5)
     parser.add_argument('--start_seed', type=int, default=0)
-    parser.add_argument('--rollout_length', type=int, default=100)
+    parser.add_argument('--rollout_length', type=int, default=15)
     parser.add_argument('--n_rollouts', type=int, default=50)
     parser.add_argument('--n_hidden', type=int, default=128)
     parser.add_argument('--n_trials', type=int, default=20)
