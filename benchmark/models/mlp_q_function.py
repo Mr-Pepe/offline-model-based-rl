@@ -12,5 +12,5 @@ class MLPQFunction(nn.Module):
                      list(hidden_sizes) + [1], activation)
 
     def forward(self, obs, act):
-        q = self.q(torch.cat([obs, act], dim=-1))
+        q = torch.clamp(self.q(torch.cat([obs, act], dim=-1)), -13000, 13000)
         return torch.squeeze(q, -1)  # Critical to ensure q has right shape.
