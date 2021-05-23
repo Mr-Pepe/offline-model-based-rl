@@ -12,6 +12,7 @@ CQL = 'cql'
 COPYCAT = 'copycat'
 SAC = 'sac'
 MBPO = 'mbpo'
+SURVIVAL = 'survival'
 
 MODES = [
     EXPLICIT_PARTITIONING,
@@ -27,7 +28,8 @@ MODES = [
     OFFLINE_EXPLORATION_PENALTY,
     OFFLINE_EXPLORATION_PARTITIONING,
     SAC,
-    MBPO
+    MBPO,
+    SURVIVAL
 ]
 
 PENALTY_MODES = [
