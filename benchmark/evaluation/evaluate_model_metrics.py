@@ -13,7 +13,7 @@ from benchmark.utils.virtual_rollouts import generate_virtual_rollouts
 from benchmark.actors.sac import SAC
 import matplotlib.pyplot as plt
 import os
-from orl_metrics.metrics import correlation
+from orl_metrics.metrics import correlation, overestimation_ratio
 
 name = "Hopper"
 prefix = name.lower() + '-'
@@ -75,7 +75,10 @@ for i_dataset, dataset_name in enumerate(dataset_names):
 
     al_corr = correlation(model_errors, aleatoric_uncertainties)
     ep_corr = correlation(model_errors, epistemic_uncertainties)
-    print(f'ID (al/ep): {al_corr:.2f}/{ep_corr:.2f}')
+    al_over = overestimation_ratio(model_errors, aleatoric_uncertainties)
+    ep_over = overestimation_ratio(model_errors, epistemic_uncertainties)
+    print(
+        f'ID  (al/ep) (al/ep): {al_corr:.2f}/{ep_corr:.2f}  {al_over:.2f}/{ep_over:.2f}')
 
     model_errors = []
     aleatoric_uncertainties = []
@@ -110,9 +113,10 @@ for i_dataset, dataset_name in enumerate(dataset_names):
 
     al_corr = correlation(model_errors, aleatoric_uncertainties)
     ep_corr = correlation(model_errors, epistemic_uncertainties)
-
-    print(f'OOD (al/ep): {al_corr:.2f}/{ep_corr:.2f}')
-
+    al_over = overestimation_ratio(model_errors, aleatoric_uncertainties)
+    ep_over = overestimation_ratio(model_errors, epistemic_uncertainties)
+    print(
+        f'OOD (al/ep) (al/ep): {al_corr:.2f}/{ep_corr:.2f}  {al_over:.2f}/{ep_over:.2f}')
     del env
     del buffer
     del model
