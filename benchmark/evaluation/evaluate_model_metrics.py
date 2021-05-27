@@ -1,3 +1,4 @@
+import pickle
 from benchmark.utils.modes import ALEATORIC_PENALTY
 from matplotlib import cm
 import numpy as np
@@ -13,110 +14,121 @@ from benchmark.utils.virtual_rollouts import generate_virtual_rollouts
 from benchmark.actors.sac import SAC
 import matplotlib.pyplot as plt
 import os
-from orl_metrics.metrics import correlation, overestimation_ratio
+from orl_metrics.metrics import estimation_quality, pessimism
 
-name = "Hopper"
-prefix = name.lower() + '-'
-version = '-v2'
+env_names = ['halfcheetah', 'hopper', 'walker2d']
 
 dataset_names = [
-    'random',
-    'medium-replay',
-    'medium',
-    'medium-expert',
-    'expert',
+    'random-v2',
+    'medium-replay-v2',
+    'medium-v2',
+    'medium-expert-v2',
+    'expert-v2',
 ]
 
-for i_dataset, dataset_name in enumerate(dataset_names):
-    device = 'cuda'
-    env_name = prefix + dataset_name + version
-    print(env_name)
-    env = gym.make(env_name)
+results = dict()
 
-    n_samples = 10000
+for env_name in env_names:
 
-    buffer, obs_dim, act_dim = load_dataset_from_env(env, n_samples)
+    for i_dataset, dataset_name in enumerate(dataset_names):
+        device = 'cuda'
+        env_name += f'-{dataset_name}'
+        print(env_name)
+        env = gym.make(env_name)
 
-    model = torch.load(os.path.join(MODELS_DIR, env_name + '-model.pt'))
+        n_samples = 10000
 
-    random_samples = 10000
-    i_sample = 0
-    batch_size = 1024
+        buffer, obs_dim, act_dim = load_dataset_from_env(env, n_samples)
 
-    idxs = torch.randint(0, buffer.size, (n_samples,))
-    obs_buf = buffer.obs_buf[idxs].cuda()
-    act_buf = buffer.act_buf[idxs].cuda()
-    obs2_buf = buffer.obs2_buf[idxs].cuda()
+        model = torch.load(os.path.join(MODELS_DIR, env_name + '-model.pt'))
 
-    model_errors = []
-    aleatoric_uncertainties = []
-    epistemic_uncertainties = []
+        random_samples = 10000
+        i_sample = 0
+        batch_size = 1024
 
-    while i_sample < len(obs_buf):
-        print(f'ID: {i_sample}/{len(obs_buf)}', end='\r')
-        i_to = min(len(obs_buf), i_sample + batch_size)
-        obs_act = torch.cat(
-            (obs_buf[i_sample:i_to], act_buf[i_sample:i_to]), dim=1)
-        obs2 = obs2_buf[i_sample:i_to]
+        idxs = torch.randint(0, buffer.size, (n_samples,))
+        obs_buf = buffer.obs_buf[idxs].cuda()
+        act_buf = buffer.act_buf[idxs].cuda()
+        obs2_buf = buffer.obs2_buf[idxs].cuda()
 
-        prediction, means, logvars, explicit_uncertainty, epistemic_uncertainty, aleatoric_uncertainty, underestimated_reward = model.get_prediction(
-            obs_act, debug=True)
+        model_errors = []
+        aleatoric_uncertainties = []
+        epistemic_uncertainties = []
 
-        model_errors.extend(
-            (prediction[:, :-2] - obs2).abs().mean(dim=1).cpu().detach().float().tolist())
-        aleatoric_uncertainties.extend(aleatoric_uncertainty.tolist())
-        epistemic_uncertainties.extend(epistemic_uncertainty.tolist())
-
-        i_sample += batch_size
-
-    aleatoric_uncertainties = torch.as_tensor(aleatoric_uncertainties)
-    epistemic_uncertainties = torch.as_tensor(epistemic_uncertainties)
-    model_errors = torch.as_tensor(model_errors)
-
-    al_corr = correlation(model_errors, aleatoric_uncertainties)
-    ep_corr = correlation(model_errors, epistemic_uncertainties)
-    al_over = overestimation_ratio(model_errors, aleatoric_uncertainties)
-    ep_over = overestimation_ratio(model_errors, epistemic_uncertainties)
-    print(
-        f'ID  (al/ep) (al/ep): {al_corr:.2f}/{ep_corr:.2f}  {al_over:.2f}/{ep_over:.2f}')
-
-    model_errors = []
-    aleatoric_uncertainties = []
-    epistemic_uncertainties = []
-
-    if random_samples > 0:
-        env.reset()
-        agent = RandomAgent(env, device=device)
-
-        for i_obs in range(random_samples):
-            print(f'OOD: {i_obs}/{random_samples}', end='\r')
-            obs = obs_buf[i_obs]
-            env.set_state(torch.cat((torch.as_tensor([0]), torch.as_tensor(
-                obs[:env.model.nq-1].cpu()))), obs[env.model.nq-1:].cpu())
-            act = agent.act()
-
-            obs2, _, _, _ = env.step(act.cpu().detach().numpy())
-
-            obs_act = torch.cat((obs.unsqueeze(0), act), dim=1)
+        while i_sample < len(obs_buf):
+            print(f'ID: {i_sample}/{len(obs_buf)}', end='\r')
+            i_to = min(len(obs_buf), i_sample + batch_size)
+            obs_act = torch.cat(
+                (obs_buf[i_sample:i_to], act_buf[i_sample:i_to]), dim=1)
+            obs2 = obs2_buf[i_sample:i_to]
 
             prediction, means, logvars, explicit_uncertainty, epistemic_uncertainty, aleatoric_uncertainty, underestimated_reward = model.get_prediction(
                 obs_act, debug=True)
 
             model_errors.extend(
-                (prediction[:, :-2].cpu() - obs2).abs().mean(dim=1).cpu().detach().float().tolist())
+                (prediction[:, :-2] - obs2).abs().mean(dim=1).cpu().detach().float().tolist())
             aleatoric_uncertainties.extend(aleatoric_uncertainty.tolist())
             epistemic_uncertainties.extend(epistemic_uncertainty.tolist())
 
-    aleatoric_uncertainties = torch.as_tensor(aleatoric_uncertainties)
-    epistemic_uncertainties = torch.as_tensor(epistemic_uncertainties)
-    model_errors = torch.as_tensor(model_errors)
+            i_sample += batch_size
 
-    al_corr = correlation(model_errors, aleatoric_uncertainties)
-    ep_corr = correlation(model_errors, epistemic_uncertainties)
-    al_over = overestimation_ratio(model_errors, aleatoric_uncertainties)
-    ep_over = overestimation_ratio(model_errors, epistemic_uncertainties)
-    print(
-        f'OOD (al/ep) (al/ep): {al_corr:.2f}/{ep_corr:.2f}  {al_over:.2f}/{ep_over:.2f}')
-    del env
-    del buffer
-    del model
+        aleatoric_uncertainties = torch.as_tensor(aleatoric_uncertainties)
+        epistemic_uncertainties = torch.as_tensor(epistemic_uncertainties)
+        model_errors = torch.as_tensor(model_errors)
+
+        al_corr = estimation_quality(model_errors, aleatoric_uncertainties)
+        ep_corr = estimation_quality(model_errors, epistemic_uncertainties)
+        al_over = pessimism(model_errors, aleatoric_uncertainties)
+        ep_over = pessimism(model_errors, epistemic_uncertainties)
+        print(
+            f'ID  (al/ep) (al/ep): {al_corr:.2f}/{ep_corr:.2f}  {al_over:.2f}/{ep_over:.2f}')
+
+        results[(env_name, dataset_name, 'ID')] = (
+            al_corr, ep_corr, al_over, ep_over)
+
+        model_errors = []
+        aleatoric_uncertainties = []
+        epistemic_uncertainties = []
+
+        if random_samples > 0:
+            env.reset()
+            agent = RandomAgent(env, device=device)
+
+            for i_obs in range(random_samples):
+                print(f'OOD: {i_obs}/{random_samples}', end='\r')
+                obs = obs_buf[i_obs]
+                env.set_state(torch.cat((torch.as_tensor([0]), torch.as_tensor(
+                    obs[:env.model.nq-1].cpu()))), obs[env.model.nq-1:].cpu())
+                act = agent.act()
+
+                obs2, _, _, _ = env.step(act.cpu().detach().numpy())
+
+                obs_act = torch.cat((obs.unsqueeze(0), act), dim=1)
+
+                prediction, means, logvars, explicit_uncertainty, epistemic_uncertainty, aleatoric_uncertainty, underestimated_reward = model.get_prediction(
+                    obs_act, debug=True)
+
+                model_errors.extend(
+                    (prediction[:, :-2].cpu() - obs2).abs().mean(dim=1).cpu().detach().float().tolist())
+                aleatoric_uncertainties.extend(aleatoric_uncertainty.tolist())
+                epistemic_uncertainties.extend(epistemic_uncertainty.tolist())
+
+        aleatoric_uncertainties = torch.as_tensor(aleatoric_uncertainties)
+        epistemic_uncertainties = torch.as_tensor(epistemic_uncertainties)
+        model_errors = torch.as_tensor(model_errors)
+
+        al_corr = estimation_quality(model_errors, aleatoric_uncertainties)
+        ep_corr = estimation_quality(model_errors, epistemic_uncertainties)
+        al_over = pessimism(model_errors, aleatoric_uncertainties)
+        ep_over = pessimism(model_errors, epistemic_uncertainties)
+        print(
+            f'OOD  (al/ep) (al/ep): {al_corr:.2f}/{ep_corr:.2f}  {al_over:.2f}/{ep_over:.2f}')
+
+        results[(env_name, dataset_name, 'OOD')] = (
+            al_corr, ep_corr, al_over, ep_over)
+        del env
+        del buffer
+        del model
+
+    with open('model-quality.p', 'wb') as f:
+        pickle.dump(results, f)
