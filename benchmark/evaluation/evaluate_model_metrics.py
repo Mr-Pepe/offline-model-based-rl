@@ -28,11 +28,11 @@ dataset_names = [
 
 results = dict()
 
-for env_name in env_names:
+for env_title in env_names:
 
     for i_dataset, dataset_name in enumerate(dataset_names):
         device = 'cuda'
-        env_name += f'-{dataset_name}'
+        env_name = env_title + f'-{dataset_name}'
         print(env_name)
         env = gym.make(env_name)
 
@@ -130,5 +130,37 @@ for env_name in env_names:
         del buffer
         del model
 
-    with open('model-quality.p', 'wb') as f:
-        pickle.dump(results, f)
+with open('model-quality.p', 'wb') as f:
+    pickle.dump(results, f)
+
+with open('model-quality.p', 'rb') as f:
+    results = pickle.load(f)
+
+strings = [[], [], [], [], [], [], [], []]
+
+for env_title in env_names:
+    for i_dataset, dataset_name in enumerate(dataset_names):
+        device = 'cuda'
+        env_name = env_title + f'-{dataset_name}'
+
+        result_id = results[(env_name, dataset_name, 'ID')]
+        result_ood = results[(env_name, dataset_name, 'OOD')]
+
+        # MSE ID Ep
+        strings[0].append(result_id[1])
+        # MSE ID Al
+        strings[1].append(result_id[0])
+        # MSE OOD Ep
+        strings[2].append(result_ood[1])
+        # MSE OOD Al
+        strings[3].append(result_ood[0])
+        # PS ID Ep
+        strings[4].append(result_id[3])
+        # PS ID Al
+        strings[5].append(result_id[2])
+        # PS OOD Ep
+        strings[6].append(result_ood[3])
+        # PS OOD Al
+        strings[7].append(result_ood[2])
+
+latex = ' \\\\ '.join([' & '.join(x) for x in strings])
