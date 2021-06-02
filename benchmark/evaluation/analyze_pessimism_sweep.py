@@ -63,19 +63,19 @@ if __name__ == "__main__":
         if mode == ALEATORIC_PENALTY:
             pessimisms = np.array(pessimisms)*al_max
             max_pessimism = 50
-            kernel_size = 25
+            kernel_size = 50
         elif mode == EPISTEMIC_PENALTY:
             pessimisms = np.array(pessimisms)*ep_max
             max_pessimism = 100
-            kernel_size = 15
+            kernel_size = 60
         elif mode == ALEATORIC_PARTITIONING:
             pessimisms = np.array(pessimisms)/al_max
             max_pessimism = 1
-            kernel_size = 25
+            kernel_size = 30
         elif mode == EPISTEMIC_PARTITIONING:
             pessimisms = np.array(pessimisms)/ep_max
             max_pessimism = 1
-            kernel_size = 15
+            kernel_size = 30
 
         kernel = np.ones(kernel_size) / kernel_size
         trial_performances = np.convolve(
