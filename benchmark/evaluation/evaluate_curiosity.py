@@ -32,43 +32,53 @@ if __name__ == "__main__":
         env = gym.make(env_name)
 
         model = torch.load(os.path.join(
-            MODELS_DIR, env_name + '-model.pt'))
+            MODELS_DIR, env_name + '-model.pt'), map_location='cpu')
 
         trial_names = [name for name in os.listdir(
             exp_dir) if osp.isdir(osp.join(exp_dir, name))]
 
-        print(f"Found {len(trial_names)} seeds for {env_name} {mode}")
+        # print(f"Found {len(trial_names)} seeds for {env_name} {mode}")
 
         n_steps = 1000
 
         obs_act = torch.zeros(
             (len(trial_names) * n_steps, env.observation_space.shape[0] + env.action_space.shape[0]))
 
+        n_terminals = 0
+        performances = []
+
         for i_trial, trial_name in enumerate(trial_names):
             agent = torch.load(
-                osp.join(exp_dir, trial_name, 'pyt_save', 'agent.pt'))
-
-            n_terminals = 0
+                osp.join(exp_dir, trial_name, 'pyt_save', 'agent.pt'), 'cpu')
 
             o = env.reset()
+            interaction = 0
+            performance = 0
 
             for step in range(n_steps):
+                interaction += 1
                 a = agent.act(o, deterministic=True).cpu()
 
                 o2, r, d, _ = env.step(a.numpy())
                 # o2, r, d, _ = env.step(env.action_space.sample())
+
+                performance += r
 
                 obs_act[i_trial * n_steps +
                         step] = torch.cat((torch.as_tensor(o), a))
 
                 o = o2
 
-                if d and (step + 1) % 1000 != 0:
+                if d and interaction % 1000 != 0:
+                    interaction = 0
                     n_terminals += 1
                     o = env.reset()
+
+                    performances.append(performance)
+                    performance = 0
 
         prediction, means, logvars, explicit_uncertainties, epistemic_uncertainty, aleatoric_uncertainty, underestimated_reward = model.get_prediction(
             obs_act, debug=True)
 
         print(
-            f"Mean epistemic uncertainty: {epistemic_uncertainty.mean()}   Number of terminals: {n_terminals}")
+            f"Uncertainty: {epistemic_uncertainty.mean():.2f}   Terminals: {n_terminals}    Reward: {d4rl.get_normalized_score(env_name, np.mean(performance))*100:.0f}   {env_name} {mode}")
