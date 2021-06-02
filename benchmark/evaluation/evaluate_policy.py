@@ -65,8 +65,7 @@ def load_pytorch_policy(fpath, itr, deterministic=False):
     fname = osp.join(fpath, 'pyt_save', 'agent'+itr+'.pt')
     print('\n\nLoading from %s.\n\n' % fname)
 
-    model = torch.load(fname)
-    model.to('cpu')
+    model = torch.load(fname, map_location='cpu')
 
     # make function for producing an action given a single state
     def get_action(x):
