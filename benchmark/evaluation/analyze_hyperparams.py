@@ -55,7 +55,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--logdir', type=str, default='/home/felipe/ray_results')
+        '--logdir', type=str, default='')
     args = parser.parse_args()
 
     all_exp_dir = args.logdir

@@ -15,20 +15,7 @@ from benchmark.evaluation.plot import get_all_datasets, make_plots, plot_data
 
 
 if __name__ == "__main__":
-    logdir = [
-        ['/home/felipe/Projects/thesis-code/data/finetuning/halfcheetah/aleatoric-penalty/halfcheetah-medium-v2-sac-pretrained-50000samples',
-         '/home/felipe/Projects/thesis-code/data/finetuning/halfcheetah/aleatoric-partitioning/halfcheetah-medium-v2-sac-pretrained-50000samples',
-         '/home/felipe/Projects/thesis-code/data/finetuning/halfcheetah/epistemic-penalty/halfcheetah-medium-v2-sac-pretrained-50000samples',
-         '/home/felipe/Projects/thesis-code/data/finetuning/halfcheetah/epistemic-partitioning/halfcheetah-medium-v2-sac-pretrained-50000samples'],
-        ['/home/felipe/Projects/thesis-code/data/finetuning/hopper/aleatoric-penalty/hopper-medium-v2-sac-pretrained-50000samples',
-         '/home/felipe/Projects/thesis-code/data/finetuning/hopper/aleatoric-partitioning/hopper-medium-v2-sac-pretrained-50000samples',
-         '/home/felipe/Projects/thesis-code/data/finetuning/hopper/epistemic-penalty/hopper-medium-v2-sac-pretrained-50000samples',
-         '/home/felipe/Projects/thesis-code/data/finetuning/hopper/epistemic-partitioning/hopper-medium-v2-sac-pretrained-50000samples', ],
-        ['/home/felipe/Projects/thesis-code/data/finetuning/walker2d/aleatoric-penalty/walker2d-medium-v2-sac-pretrained-50000samples',
-         '/home/felipe/Projects/thesis-code/data/finetuning/walker2d/aleatoric-partitioning/walker2d-medium-v2-sac-pretrained-50000samples',
-         '/home/felipe/Projects/thesis-code/data/finetuning/walker2d/epistemic-penalty/walker2d-medium-v2-sac-pretrained-50000samples',
-         '/home/felipe/Projects/thesis-code/data/finetuning/walker2d/epistemic-partitioning/walker2d-medium-v2-sac-pretrained-50000samples', ],
-    ]
+    logdir = [[], []]
 
     env_names = ['halfcheetah-medium-v2',
                  'hopper-medium-v2',

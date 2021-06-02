@@ -25,7 +25,7 @@ if __name__ == '__main__':
                         default=HALF_CHEETAH_MEDIUM_V2)
     parser.add_argument('--mode', type=str, default=EPISTEMIC_PENALTY)
     parser.add_argument('--pretrained_agent_path', type=str,
-                        default='/home/felipe/Projects/thesis-code/data/experiments/halfcheetah-medium-v2-epistemic-penalty-50rollouts-4steps-1e-15pessimism/halfcheetah-medium-v2-epistemic-penalty-50rollouts-4steps-1e-15pessimism-s0/pyt_save/agent.pt')
+                        default='')
     parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--n_trials', type=int, default=50)
     parser.add_argument('--bounds', default=[0, 1], nargs=2, type=float)

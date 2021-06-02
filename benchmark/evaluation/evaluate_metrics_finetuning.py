@@ -13,7 +13,7 @@ from d4rl import get_normalized_score
 
 
 if __name__ == '__main__':
-    all_exp_dir = '/home/felipe/Projects/thesis-code/data/finetuning/'
+    all_exp_dir = ''
 
     categories = [
         HALF_CHEETAH_ENVS,

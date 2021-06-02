@@ -10,13 +10,7 @@ import d4rl  # noqa
 import numpy as np
 
 if __name__ == "__main__":
-    exp_dirs = [
-        '/home/felipe/Projects/thesis-code/data/sweeps/sweephopper-expert-v2-aleatoric-penalty',
-        '/home/felipe/Projects/thesis-code/data/sweeps/sweephopper-expert-v2-aleatoric-partitioning',
-        '/home/felipe/Projects/thesis-code/data/sweeps/sweephopper-expert-v2-epistemic-penalty',
-        '/home/felipe/Projects/thesis-code/data/sweeps/sweephopper-expert-v2-epistemic-partitioning',
-
-    ]
+    exp_dirs = []
 
     al_max, al_mean, al_std = 0.015116, 0.001189, 0.003457
     ep_max, ep_mean, ep_std = 1.014396, 0.020224, 0.037798

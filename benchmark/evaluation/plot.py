@@ -168,14 +168,7 @@ def make_plots(all_logdirs, legend=None, xaxis=None, values=None, count=False,
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('logdir', default=[
-                        '/home/felipe/Projects/thesis-code/data/experiments',
-                        # '/home/felipe/Projects/thesis-code/data/online_experiments/walker2d-medium-v2-sac'
-                        # '/home/felipe/Projects/thesis-code/data/online_experiments/walker2d-medium-v2-mbpo'
-                        # '/home/felipe/Projects/thesis-code/data/online_experiments/epistemic-penalty/walker2d-medium-v2-epistemic-penalty-50rollouts'
-                        # '/home/felipe/Projects/thesis-code/data/online_experiments/epistemic-penalty',
-                        # '/home/felipe/Projects/thesis-code/data/online_experiments/epistemic-partitioning'
-                        ], nargs='*')
+    parser.add_argument('logdir', default=[], nargs='*')
     parser.add_argument('--legend', '-l', nargs='*')
     parser.add_argument('--xaxis', '-x', default='Epoch')
     parser.add_argument(

@@ -13,8 +13,7 @@ from d4rl import get_normalized_score
 
 
 if __name__ == '__main__':
-    all_exp_dir = '/home/felipe/Projects/thesis-code/data/experiments'
-    # all_exp_dir = '/home/felipe/Projects/thesis-code/data/finetuning/halfcheetah/'
+    all_exp_dir = ''
 
     exp_names = [name for name in os.listdir(
         all_exp_dir) if osp.isdir(osp.join(all_exp_dir, name))]
