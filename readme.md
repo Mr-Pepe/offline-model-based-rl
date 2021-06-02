@@ -15,6 +15,7 @@ Install benchmark with pip from the benchmark folder.
 pip install .
 ```
 
+Set default directories in benchmark/benchmark/user_config.py.
 
 # Run experiments
 
