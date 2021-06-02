@@ -1,5 +1,5 @@
 # Based on https://spinningup.openai.com
-from benchmark.utils.modes import ALEATORIC_PARTITIONING, ALEATORIC_PENALTY, BEHAVIORAL_CLONING, EPISTEMIC_PARTITIONING, EPISTEMIC_PENALTY
+from benchmark.utils.modes import ALEATORIC_PARTITIONING, ALEATORIC_PENALTY, BEHAVIORAL_CLONING, EPISTEMIC_PARTITIONING, EPISTEMIC_PENALTY, MBPO, SAC
 from benchmark.utils.envs import HALF_CHEETAH_ENVS, HALF_CHEETAH_MEDIUM_V2, HOPPER_ENVS, HOPPER_MEDIUM_EXPERT_V2, HOPPER_MEDIUM_REPLAY_V2, HOPPER_MEDIUM_V2, WALKER_ENVS, WALKER_MEDIUM_EXPERT_V2, WALKER_MEDIUM_REPLAY_V2, WALKER_MEDIUM_v2
 import seaborn as sns
 import pandas as pd
@@ -169,13 +169,19 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('logdir', default=[
-                        '/home/felipe/Projects/thesis-code/data/experiments'], nargs='*')
+                        '/home/felipe/Projects/thesis-code/data/experiments',
+                        # '/home/felipe/Projects/thesis-code/data/online_experiments/walker2d-medium-v2-sac'
+                        # '/home/felipe/Projects/thesis-code/data/online_experiments/walker2d-medium-v2-mbpo'
+                        # '/home/felipe/Projects/thesis-code/data/online_experiments/epistemic-penalty/walker2d-medium-v2-epistemic-penalty-50rollouts'
+                        # '/home/felipe/Projects/thesis-code/data/online_experiments/epistemic-penalty',
+                        # '/home/felipe/Projects/thesis-code/data/online_experiments/epistemic-partitioning'
+                        ], nargs='*')
     parser.add_argument('--legend', '-l', nargs='*')
     parser.add_argument('--xaxis', '-x', default='Epoch')
     parser.add_argument(
         '--value', '-y', default=['AverageTestEpRet'], nargs='*')
     parser.add_argument('--count', action='store_true')
-    parser.add_argument('--smooth', '-s', type=int, default=1)
+    parser.add_argument('--smooth', '-s', type=int, default=10)
     parser.add_argument('--select', nargs='*')
     parser.add_argument('--exclude', nargs='*')
     parser.add_argument('--est', default='mean')
@@ -268,6 +274,8 @@ if __name__ == "__main__":
             ALEATORIC_PARTITIONING,
             EPISTEMIC_PENALTY,
             EPISTEMIC_PARTITIONING,
+            SAC,
+            MBPO
         ]
 
         experiments = dict()
@@ -280,7 +288,7 @@ if __name__ == "__main__":
             experiments.update({(env_name, mode): exp_dir})
 
         sns.set_palette('colorblind')
-        f, axes = plt.subplots(len(categories), len(datasets), figsize=(8, 8))
+        f, axes = plt.subplots(len(categories), len(datasets), figsize=(8, 7))
         # sns.set(style="darkgrid", font_scale=1.5)
 
         for i_category, category in enumerate(categories):
@@ -294,38 +302,44 @@ if __name__ == "__main__":
                                                 None,
                                                 None)
 
-                        y = np.ones(20)
+                        y = np.ones(10)
+                        what_to_plot = 'AverageTestEpRet'
+                        # what_to_plot = 'StdQ1Vals'
+
                         for datum in data:
-                            x = np.asarray(datum['AverageTestEpRet'])
+                            x = np.asarray(datum[what_to_plot])
                             z = np.ones(len(x))
                             smoothed_x = np.convolve(
                                 x, y, 'same') / np.convolve(z, y, 'same')
-                            datum['AverageTestEpRet'] = [
+                            datum[what_to_plot] = [
                                 100*get_normalized_score(env_name, score) for score in smoothed_x]
 
                         ax = axes[i_category, i_dataset]
 
                         if mode == BEHAVIORAL_CLONING:
                             bc_threshold = torch.as_tensor(
-                                [d['AverageTestEpRet'].values[-1] for d in data]).mean()
+                                [d[what_to_plot].values[-1] for d in data]).mean()
                             sns.lineplot(x=torch.arange(100), y=torch.ones(100)*bc_threshold,
                                          ax=ax, label=mode, legend=False, style=True,
                                          dashes=[(2, 2)], color='black')
                         else:
                             data = pd.concat(data, ignore_index=True)
-                            sns.lineplot(data=data, x='Epoch', y='AverageTestEpRet',
+                            sns.lineplot(data=data, x='Epoch', y=what_to_plot,
                                          ci='sd', estimator=getattr(np, 'mean'),
                                          ax=ax, label=mode, legend=False)
 
-                        ax.set_yticks([0, 25, 50, 75, 100])
+                        if what_to_plot == 'AverageTestEpRet':
+                            ax.set_yticks([0, 25, 50, 75, 100])
+
                         if i_dataset == 0:
                             ax.set_ylabel('Performance', fontsize=10)
                         else:
-                            ax.set_ylabel(None)
-                            ax.set_yticklabels([])
-                            for tic in ax.yaxis.get_major_ticks():
-                                tic.tick1line.set_visible(False)
-                                tic.tick2line.set_visible(False)
+                            if what_to_plot == 'AverageTestEpRet':
+                                ax.set_ylabel(None)
+                                ax.set_yticklabels([])
+                                for tic in ax.yaxis.get_major_ticks():
+                                    tic.tick1line.set_visible(False)
+                                    tic.tick2line.set_visible(False)
 
                         ax.set_xticks([0, 50, 100])
                         if i_category == len(categories) - 1:
@@ -337,7 +351,8 @@ if __name__ == "__main__":
                                 tic.tick1line.set_visible(False)
                                 tic.tick2line.set_visible(False)
 
-                        ax.set_ylim([-5, 115])
+                        if what_to_plot == 'AverageTestEpRet':
+                            ax.set_ylim([-5, 115])
                         ax.grid(b=True, alpha=0.5, linestyle="--")
 
         handles, labels = axes[0, 0].get_legend_handles_labels()
@@ -347,7 +362,7 @@ if __name__ == "__main__":
         labels[0], labels[1], labels[2], labels[4] = labels[1], labels[0], labels[4], labels[2]
 
         f.legend(handles, labels, loc='lower center',
-                 ncol=2, prop={'size': 12})
+                 ncol=3, prop={'size': 12})
 
         pad = 10
 
@@ -361,8 +376,8 @@ if __name__ == "__main__":
                         xycoords=ax.yaxis.label, textcoords='offset points',
                         size=12, ha='right', va='center', rotation=90)
 
-        f.subplots_adjust(top=0.94,
-                          bottom=0.175,
+        f.subplots_adjust(top=0.935,
+                          bottom=0.2,
                           left=0.115,
                           right=0.985,
                           hspace=0.085,
