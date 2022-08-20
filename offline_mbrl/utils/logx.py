@@ -19,6 +19,8 @@ import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from torch.utils.tensorboard import SummaryWriter
+
 from offline_mbrl.utils.envs import (
     ANTMAZE_MEDIUM_ENVS,
     ANTMAZE_UMAZE_ENVS,
@@ -31,7 +33,6 @@ from offline_mbrl.utils.mazes import (
 )
 from offline_mbrl.utils.mpi_tools import mpi_statistics_scalar, proc_id
 from offline_mbrl.utils.serialization_utils import convert_json
-from torch.utils.tensorboard import SummaryWriter
 
 color2num = dict(
     gray=30,

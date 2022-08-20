@@ -4,6 +4,8 @@ import os
 import numpy as np
 import ray
 import torch
+from ray import tune
+
 from offline_mbrl.evaluation.train_mujoco_policies import get_exp_name
 from offline_mbrl.train import Trainer
 from offline_mbrl.user_config import MODELS_DIR
@@ -16,7 +18,6 @@ from offline_mbrl.utils.modes import (
 )
 from offline_mbrl.utils.run_utils import setup_logger_kwargs
 from offline_mbrl.utils.str2bool import str2bool
-from ray import tune
 
 
 def training_function(config, tuning=True):

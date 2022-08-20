@@ -1,6 +1,7 @@
 import gym
 import pytest
 from numpy.testing import assert_array_equal, assert_raises
+
 from offline_mbrl.actors.random_agent import RandomAgent
 from offline_mbrl.utils.envs import HOPPER_ORIGINAL
 

@@ -2,8 +2,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from offline_mbrl.models.mlp import mlp
 from torch.distributions.normal import Normal
+
+from offline_mbrl.models.mlp import mlp
 
 LOG_STD_MAX = 2
 LOG_STD_MIN = -20

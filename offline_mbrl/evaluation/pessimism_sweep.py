@@ -4,6 +4,8 @@ import os
 import numpy as np
 import ray
 import torch
+from ray import tune
+
 from offline_mbrl.train import Trainer
 from offline_mbrl.user_config import MODELS_DIR
 from offline_mbrl.utils.envs import HOPPER_EXPERT_V2
@@ -12,7 +14,6 @@ from offline_mbrl.utils.modes import (
     PARTITIONING_MODES,
     PENALTY_MODES,
 )
-from ray import tune
 
 
 def training_function(config, tuning=True):

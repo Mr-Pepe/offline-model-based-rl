@@ -4,9 +4,10 @@ from copy import deepcopy
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.optim.adamw import AdamW
+
 from offline_mbrl.models.mlp_q_function import MLPQFunction
 from offline_mbrl.models.squashed_gaussian_mlp_actor import SquashedGaussianMLPActor
-from torch.optim.adamw import AdamW
 
 
 class CQL(nn.Module):

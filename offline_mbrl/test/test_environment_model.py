@@ -8,6 +8,8 @@ import pytest
 import torch
 import torch.nn as nn
 from matplotlib.pyplot import cm
+from torch.optim.adam import Adam
+
 from offline_mbrl.actors.random_agent import RandomAgent
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM_V2, HOPPER_RANDOM_V2
@@ -18,7 +20,6 @@ from offline_mbrl.utils.modes import ALEATORIC_PENALTY
 from offline_mbrl.utils.postprocessing import postprocessing_functions
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
 from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
-from torch.optim.adam import Adam
 
 gym.logger.set_level(40)
 

@@ -2,6 +2,11 @@ import os
 
 import torch
 import torch.nn as nn
+from ray import tune
+from torch.nn.functional import softplus
+from torch.nn.parameter import Parameter
+from torch.optim.adamw import AdamW
+
 from offline_mbrl.models.multi_head_mlp import MultiHeadMlp
 from offline_mbrl.utils.get_x_y_from_batch import get_x_y_from_batch
 from offline_mbrl.utils.loss_functions import deterministic_loss, probabilistic_loss
@@ -20,10 +25,6 @@ from offline_mbrl.utils.modes import (
     SURVIVAL,
     UNDERESTIMATION,
 )
-from ray import tune
-from torch.nn.functional import softplus
-from torch.nn.parameter import Parameter
-from torch.optim.adamw import AdamW
 
 
 class EnvironmentModel(nn.Module):

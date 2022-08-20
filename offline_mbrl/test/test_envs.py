@@ -1,4 +1,5 @@
 import pytest
+
 from offline_mbrl.utils.envs import get_test_env
 from offline_mbrl.utils.mazes import (
     ANTMAZE_MEDIUM_DIVERSE_GOAL,

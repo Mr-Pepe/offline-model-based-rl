@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 from offline_mbrl.utils.mazes import plot_antmaze_umaze, plot_maze2d_umaze
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
 from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts

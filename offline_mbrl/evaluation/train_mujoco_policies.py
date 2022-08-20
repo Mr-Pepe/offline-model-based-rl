@@ -4,6 +4,10 @@ import os
 import ray
 import torch
 from ax.service.ax_client import AxClient
+from ray import tune
+from ray.tune.schedulers.async_hyperband import ASHAScheduler
+from ray.tune.suggest.ax import AxSearch
+
 from offline_mbrl.train import Trainer
 from offline_mbrl.user_config import MODELS_DIR
 from offline_mbrl.utils.envs import (
@@ -35,9 +39,6 @@ from offline_mbrl.utils.print_warning import print_warning
 from offline_mbrl.utils.run_utils import setup_logger_kwargs
 from offline_mbrl.utils.str2bool import str2bool
 from offline_mbrl.utils.uncertainty_distribution import get_uncertainty_distribution
-from ray import tune
-from ray.tune.schedulers.async_hyperband import ASHAScheduler
-from ray.tune.suggest.ax import AxSearch
 
 
 def training_function(config, tuning=True):

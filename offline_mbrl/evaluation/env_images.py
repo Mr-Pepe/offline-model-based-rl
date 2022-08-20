@@ -3,6 +3,7 @@ from pathlib import Path
 
 import gym
 import matplotlib.pyplot as plt
+
 from offline_mbrl.utils.envs import (
     HALF_CHEETAH_ORIGINAL,
     HOPPER_ORIGINAL,

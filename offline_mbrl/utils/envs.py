@@ -1,5 +1,6 @@
 import d4rl  # noqa
 import gym
+
 from offline_mbrl.utils.mazes import (
     ANTMAZE_MEDIUM_DIVERSE_GOAL,
     ANTMAZE_UMAZE_DIVERSE_GOAL,

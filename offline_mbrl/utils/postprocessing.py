@@ -1,4 +1,5 @@
 import torch
+
 from offline_mbrl.utils.envs import ENV_CATEGORIES
 from offline_mbrl.utils.mazes import (
     ANTMAZE_ANT_RADIUS,

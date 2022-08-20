@@ -1,5 +1,5 @@
-from pathlib import Path
 import os.path as osp
+from pathlib import Path
 
 # Where experiment outputs are saved by default:
 DEFAULT_DATA_DIR = osp.join(Path.home(), "benchmark", "data", "experiments")

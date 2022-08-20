@@ -2,6 +2,7 @@ import d4rl  # noqa
 import gym
 import matplotlib.pyplot as plt
 import torch
+
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.mazes import plot_antmaze_medium, plot_antmaze_umaze
 from offline_mbrl.utils.postprocessing import postprocess_antmaze_medium

@@ -2,6 +2,7 @@ import d4rl  # noqa
 import gym
 import matplotlib.pyplot as plt  # noqa
 import pytest
+
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.reward_functions import (
     antmaze_medium_diverse_rew_fn,

@@ -16,6 +16,8 @@ from textwrap import dedent
 import cloudpickle
 import numpy as np
 import psutil
+from tqdm import trange
+
 from offline_mbrl.user_config import (
     DEFAULT_DATA_DIR,
     DEFAULT_SHORTHAND,
@@ -25,7 +27,6 @@ from offline_mbrl.user_config import (
 from offline_mbrl.utils.logx import colorize
 from offline_mbrl.utils.mpi_tools import mpi_fork, msg
 from offline_mbrl.utils.serialization_utils import convert_json
-from tqdm import trange
 
 DIV_LINE_WIDTH = 80
 

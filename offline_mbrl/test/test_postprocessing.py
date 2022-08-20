@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import torch
+
 from offline_mbrl.utils.envs import HOPPER_ORIGINAL, WALKER_ORIGINAL
 from offline_mbrl.utils.mazes import (
     plot_antmaze_medium,

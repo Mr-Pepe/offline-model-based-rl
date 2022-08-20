@@ -1,4 +1,5 @@
 import torch
+
 from offline_mbrl.utils.mazes import (
     ANTMAZE_ANT_RADIUS,
     ANTMAZE_MEDIUM_DIVERSE_GOAL,

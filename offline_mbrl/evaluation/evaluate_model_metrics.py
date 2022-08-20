@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from matplotlib import cm
+from orl_metrics.metrics import estimation_quality, pessimism
+
 from offline_mbrl.actors.random_agent import RandomAgent
 from offline_mbrl.actors.sac import SAC
 from offline_mbrl.user_config import MODELS_DIR
@@ -36,7 +38,6 @@ from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.modes import ALEATORIC_PENALTY
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
 from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
-from orl_metrics.metrics import estimation_quality, pessimism
 
 env_names = ["halfcheetah", "hopper", "walker2d"]
 

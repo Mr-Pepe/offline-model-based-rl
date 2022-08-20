@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import torch
+
 from offline_mbrl.utils.augmentation import antmaze_augmentation
 from offline_mbrl.utils.mazes import ANTMAZE_MEDIUM_MAX, ANTMAZE_MEDIUM_MIN
 from offline_mbrl.utils.replay_buffer import ReplayBuffer

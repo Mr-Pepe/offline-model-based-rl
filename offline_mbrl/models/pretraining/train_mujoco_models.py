@@ -5,6 +5,10 @@ import d4rl  # noqa
 import gym
 import ray
 import torch
+from ray import tune
+from ray.tune.schedulers.async_hyperband import ASHAScheduler
+from ray.tune.suggest.hyperopt import HyperOptSearch
+
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.user_config import MODELS_DIR
 from offline_mbrl.utils.envs import (
@@ -28,9 +32,6 @@ from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.postprocessing import get_postprocessing_function
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
 from offline_mbrl.utils.str2bool import str2bool
-from ray import tune
-from ray.tune.schedulers.async_hyperband import ASHAScheduler
-from ray.tune.suggest.hyperopt import HyperOptSearch
 
 
 def training_function(config, data, save_path=None, tuning=True):
