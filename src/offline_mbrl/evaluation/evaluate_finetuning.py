@@ -1,19 +1,8 @@
-import json
-import os
-import os.path as osp
-
 import d4rl
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import seaborn as sns
-import torch
-from d4rl import get_normalized_score
 
-from offline_mbrl.evaluation.plot import get_all_datasets, make_plots, plot_data
-from offline_mbrl.utils.env_name_from_exp_name import get_env_name
-from offline_mbrl.utils.mode_from_exp_name import get_mode
-from offline_mbrl.utils.str2bool import str2bool
+from offline_mbrl.evaluation.plot import get_all_datasets, plot_data
 
 if __name__ == "__main__":
     logdir = [[], []]

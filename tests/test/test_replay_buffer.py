@@ -256,7 +256,11 @@ def test_clear_buffer():
 
 
 @pytest.mark.fast
-def test_buffer_to_device():
+def test_buffer_to_device(request):
+    if not torch.cuda.is_available():
+        mark = pytest.mark.xfail(reason="xfail")
+        request.node.add_marker(mark)
+
     buffer = ReplayBuffer(1, 1, 100)
 
     for _ in range(100):

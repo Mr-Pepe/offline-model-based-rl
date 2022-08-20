@@ -2,6 +2,15 @@
 
 Install [Mujoco](https://mujoco.org/).
 
+Create an environment and install the package into it:
+
+```
+python3.9 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -e .[dev]
+```
+
 Install the environment from environment.yml using conda:
 
 ```

@@ -1,16 +1,10 @@
 import d4rl  # noqa
 import gym
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import torch
 
 from offline_mbrl.utils.envs import HOPPER_ORIGINAL, WALKER_ORIGINAL
-from offline_mbrl.utils.mazes import (
-    plot_antmaze_medium,
-    plot_antmaze_umaze,
-    plot_maze2d_umaze,
-)
 from offline_mbrl.utils.postprocessing import (
     postprocess_antmaze_medium,
     postprocess_antmaze_umaze,
@@ -113,18 +107,23 @@ def test_antmaze_umaze_postprocessing():
 
     dones = postprocess_antmaze_umaze(next_obs=next_obs, obs=obs)["dones"]
 
+    # import matplotlib.pyplot as plt
+    # from offline_mbrl.utils.mazes import plot_antmaze_umaze
+
     # plot_antmaze_umaze([-20, 20], [-20, 20])
     # for i_network in range(n_networks):
     #     plt.scatter(
     #         next_obs[i_network, (dones[i_network] == False).view(-1), 0],
     #         next_obs[i_network, (dones[i_network] == False).view(-1), 1],
     #         zorder=1,
-    #         color='blue')
+    #         color="blue",
+    #     )
     #     plt.scatter(
     #         next_obs[i_network, (dones[i_network] == True).view(-1), 0],
     #         next_obs[i_network, (dones[i_network] == True).view(-1), 1],
     #         zorder=1,
-    #         color='red')
+    #         color="red",
+    #     )
 
     # plt.show()
 
@@ -160,18 +159,23 @@ def test_antmaze_medium_postprocessing():
 
     dones = postprocess_antmaze_medium(next_obs=next_obs, obs=obs)["dones"]
 
+    # import matplotlib.pyplot as plt
+    # from offline_mbrl.utils.mazes import plot_antmaze_medium
+
     # plot_antmaze_medium([-10, 30], [-10, 30])
     # for i_network in range(n_networks):
     #     plt.scatter(
     #         next_obs[i_network, (dones[i_network] == False).view(-1), 0],
     #         next_obs[i_network, (dones[i_network] == False).view(-1), 1],
     #         zorder=1,
-    #         color='blue')
+    #         color="blue",
+    #     )
     #     plt.scatter(
     #         next_obs[i_network, (dones[i_network] == True).view(-1), 0],
     #         next_obs[i_network, (dones[i_network] == True).view(-1), 1],
     #         zorder=1,
-    #         color='red')
+    #         color="red",
+    #     )
 
     # plt.show()
 
@@ -205,8 +209,11 @@ def test_maze2d_umaze_postprocessing():
 
     dones = postprocess_maze2d_umaze(next_obs=next_obs, obs=obs)["dones"].view(-1)
 
+    # import matplotlib.pyplot as plt
+
+    # from offline_mbrl.utils.mazes import plot_maze2d_umaze
+
     # plot_maze2d_umaze([-2, 5], [-2, 5])
     # for i_network in range(n_networks):
-    #     plt.scatter(next_obs[i_network, :, 0],
-    #                 next_obs[i_network, :, 1], zorder=1)
+    #     plt.scatter(next_obs[i_network, :, 0], next_obs[i_network, :, 1], zorder=1)
     # plt.show()

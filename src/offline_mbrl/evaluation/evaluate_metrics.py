@@ -3,8 +3,8 @@ import os.path as osp
 
 import numpy as np
 from d4rl import get_normalized_score
-from orl_metrics.metrics import efficiency, final_performance, stability
 
+from offline_mbrl.evaluation.metrics import efficiency, final_performance, stability
 from offline_mbrl.evaluation.plot import get_all_datasets
 from offline_mbrl.utils.env_name_from_exp_name import get_env_name
 from offline_mbrl.utils.envs import HALF_CHEETAH_ENVS, HOPPER_ENVS, WALKER_ENVS

@@ -1,7 +1,9 @@
-from setuptools import find_packages, setup
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-setup(
-    name="offline-mbrl",
-    version="1.0",
-    packages=find_packages(),
-)
+"""All configuration goes into the setup.cfg file."""
+
+import setuptools
+
+if __name__ == "__main__":
+    setuptools.setup()

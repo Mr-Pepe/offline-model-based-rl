@@ -1,2 +1,24 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
+build-backend = "setuptools.build_meta"
+
+# Enables the usage of setuptools_scm
+[tool.setuptools_scm]
+
+
 [tool.isort]
 profile = "black"
+
+[tool.pytest.ini_options]
+addopts = '''
+    -v
+    --strict-markers
+    --tb=native
+    --durations 0 
+    --durations-min=0.1
+    '''
+markers = '''
+    fast: Fastest tests, a few hundred milliseconds
+    medium: Medium tests, finishing roughly less than a minute
+    slow: Slowest tests, can take hours
+    '''
