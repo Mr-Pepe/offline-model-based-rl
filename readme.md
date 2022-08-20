@@ -1,16 +1,22 @@
 # Setup
 
-Install Mujoco.
+Install [Mujoco](https://mujoco.org/).
 
-Install the environment from environment.yml (in the benchmark folder) using conda.
+Install the environment from environment.yml using conda:
 
 ```
 conda env create -f environment.yml
 ```
 
-Install D4RL with pip from the D4RL folder.
-Install orl-metrics with pip from the orl-metrics folder.
-Install benchmark with pip from the benchmark folder.
+Activate the environment:
+```
+conda activate offline-mbrl
+```
+
+Install [D4RL](https://github.com/Farama-Foundation/d4rl).
+
+Install this package:
+
 ```
 pip install .
 ```
