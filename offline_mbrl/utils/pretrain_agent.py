@@ -4,30 +4,31 @@ from offline_mbrl.utils.replay_buffer import ReplayBuffer
 from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
 
 
-def pretrain_agent(agent,
-                   model,
-                   real_buffer,
-                   n_steps=1000,
-                   n_random_actions=0,
-                   max_rollout_length=1000,
-                   pessimism=0,
-                   ood_threshold=-1,
-                   exploration_mode='state',
-                   n_rollouts=1,
-                   debug=False):
+def pretrain_agent(
+    agent,
+    model,
+    real_buffer,
+    n_steps=1000,
+    n_random_actions=0,
+    max_rollout_length=1000,
+    pessimism=0,
+    ood_threshold=-1,
+    exploration_mode="state",
+    n_rollouts=1,
+    debug=False,
+):
 
-    virtual_buffer = ReplayBuffer(model.obs_dim,
-                                  model.act_dim,
-                                  int(1e6),
-                                  device=next(model.parameters()).device)
+    virtual_buffer = ReplayBuffer(
+        model.obs_dim, model.act_dim, int(1e6), device=next(model.parameters()).device
+    )
 
     prev_obs = None
     f = plt.figure()
 
-    print('')
+    print("")
 
     for step in range(n_steps):
-        print("Pretrain agent: Step {}/{}".format(step+1, n_steps), end='\r')
+        print("Pretrain agent: Step {}/{}".format(step + 1, n_steps), end="\r")
 
         rollouts, prev_obs = generate_virtual_rollouts(
             model,
@@ -41,14 +42,16 @@ def pretrain_agent(agent,
             random_action=step < n_random_actions,
             prev_obs=prev_obs,
             max_rollout_length=max_rollout_length,
-            exploration_mode=exploration_mode
+            exploration_mode=exploration_mode,
         )
 
-        virtual_buffer.store_batch(rollouts['obs'],
-                                   rollouts['act'],
-                                   rollouts['rew'],
-                                   rollouts['next_obs'],
-                                   rollouts['done'])
+        virtual_buffer.store_batch(
+            rollouts["obs"],
+            rollouts["act"],
+            rollouts["rew"],
+            rollouts["next_obs"],
+            rollouts["done"],
+        )
 
         if step > 2000:
             agent.multi_update(2, virtual_buffer)

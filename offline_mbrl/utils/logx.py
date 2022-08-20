@@ -19,10 +19,16 @@ import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from offline_mbrl.utils.envs import (ANTMAZE_MEDIUM_ENVS, ANTMAZE_UMAZE_ENVS,
-                                     MAZE2D_UMAZE_ENVS)
-from offline_mbrl.utils.mazes import (plot_antmaze_medium, plot_antmaze_umaze,
-                                      plot_maze2d_umaze)
+from offline_mbrl.utils.envs import (
+    ANTMAZE_MEDIUM_ENVS,
+    ANTMAZE_UMAZE_ENVS,
+    MAZE2D_UMAZE_ENVS,
+)
+from offline_mbrl.utils.mazes import (
+    plot_antmaze_medium,
+    plot_antmaze_umaze,
+    plot_maze2d_umaze,
+)
 from offline_mbrl.utils.mpi_tools import mpi_statistics_scalar, proc_id
 from offline_mbrl.utils.serialization_utils import convert_json
 from torch.utils.tensorboard import SummaryWriter
@@ -36,7 +42,7 @@ color2num = dict(
     magenta=35,
     cyan=36,
     white=37,
-    crimson=38
+    crimson=38,
 )
 
 
@@ -52,8 +58,8 @@ def colorize(string, color, bold=False, highlight=False):
         num += 10
     attr.append(str(num))
     if bold:
-        attr.append('1')
-    return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
+        attr.append("1")
+    return "\x1b[%sm%s\x1b[0m" % (";".join(attr), string)
 
 
 class Logger:
@@ -64,8 +70,9 @@ class Logger:
     state of a training run, and the trained model.
     """
 
-    def __init__(self, output_dir=None, output_fname='progress.txt',
-                 exp_name=None, env_name=''):
+    def __init__(
+        self, output_dir=None, output_fname="progress.txt", exp_name=None, env_name=""
+    ):
         """
         Initialize a Logger.
 
@@ -85,19 +92,22 @@ class Logger:
                 should give them all the same ``exp_name``.)
         """
         if proc_id() == 0:
-            self.output_dir = output_dir or "/tmp/experiments/%i" % int(
-                time.time())
+            self.output_dir = output_dir or "/tmp/experiments/%i" % int(time.time())
             if osp.exists(self.output_dir):
                 print(
                     "Warning: Log dir %s already exists! \
-                    Storing info there anyway." % self.output_dir)
+                    Storing info there anyway."
+                    % self.output_dir
+                )
             else:
                 os.makedirs(self.output_dir)
-            self.output_file = open(
-                osp.join(self.output_dir, output_fname), 'w')
+            self.output_file = open(osp.join(self.output_dir, output_fname), "w")
             atexit.register(self.output_file.close)
-            print(colorize("Logging data to %s" %
-                           self.output_file.name, 'green', bold=True))
+            print(
+                colorize(
+                    "Logging data to %s" % self.output_file.name, "green", bold=True
+                )
+            )
         else:
             self.output_dir = None
             self.output_file = None
@@ -107,12 +117,11 @@ class Logger:
         self.exp_name = exp_name
         self.env_name = env_name
 
-        tensorboard_path = os.path.join(self.output_dir, 'tensorboard')
+        tensorboard_path = os.path.join(self.output_dir, "tensorboard")
         shutil.rmtree(tensorboard_path, ignore_errors=True)
-        self.tensorboard_writer = SummaryWriter(tensorboard_path,
-                                                flush_secs=30)
+        self.tensorboard_writer = SummaryWriter(tensorboard_path, flush_secs=30)
 
-    def log(self, msg, color='green'):
+    def log(self, msg, color="green"):
         """Print a colorized message to stdout."""
         if proc_id() == 0:
             print(colorize(msg, color, bold=True))
@@ -129,12 +138,16 @@ class Logger:
         if self.first_row:
             self.log_headers.append(key)
         else:
-            assert key in self.log_headers, \
-                ("Trying to introduce a new key % s that you didn't include \
-                 in the first iteration" % key)
-        assert key not in self.log_current_row, \
-            ("You already set %s this iteration. Maybe you forgot \
-                to call dump_tabular()" % key)
+            assert key in self.log_headers, (
+                "Trying to introduce a new key % s that you didn't include \
+                 in the first iteration"
+                % key
+            )
+        assert key not in self.log_current_row, (
+            "You already set %s this iteration. Maybe you forgot \
+                to call dump_tabular()"
+            % key
+        )
         self.log_current_row[key] = val
 
     def save_config(self, config):
@@ -155,13 +168,14 @@ class Logger:
         """
         config_json = convert_json(config)
         if self.exp_name is not None:
-            config_json['exp_name'] = self.exp_name
+            config_json["exp_name"] = self.exp_name
         if proc_id() == 0:
-            output = json.dumps(config_json, separators=(
-                ',', ':\t'), indent=4, sort_keys=True)
-            print(colorize('Saving config:\n', color='cyan', bold=True))
+            output = json.dumps(
+                config_json, separators=(",", ":\t"), indent=4, sort_keys=True
+            )
+            print(colorize("Saving config:\n", color="cyan", bold=True))
             print(output)
-            with open(osp.join(self.output_dir, "config.json"), 'w') as out:
+            with open(osp.join(self.output_dir, "config.json"), "w") as out:
                 out.write(output)
 
     def save_state(self, state_dict, itr=None):
@@ -186,12 +200,12 @@ class Logger:
             itr: An int, or None. Current iteration of training.
         """
         if proc_id() == 0:
-            fname = 'vars.pkl' if itr is None else 'vars%d.pkl' % itr
+            fname = "vars.pkl" if itr is None else "vars%d.pkl" % itr
             try:
                 joblib.dump(state_dict, osp.join(self.output_dir, fname))
             except Exception:
-                self.log('Warning: could not pickle state_dict.', color='red')
-            if hasattr(self, 'pytorch_saver_elements'):
+                self.log("Warning: could not pickle state_dict.", color="red")
+            if hasattr(self, "pytorch_saver_elements"):
                 self._pytorch_simple_save(itr)
 
     def setup_pytorch_saver(self, what_to_save):
@@ -216,13 +230,14 @@ class Logger:
         Saves the PyTorch model (or models).
         """
         if proc_id() == 0:
-            assert hasattr(self, 'pytorch_saver_elements'), \
-                "First have to setup saving with self.setup_pytorch_saver"
-            fpath = 'pyt_save'
+            assert hasattr(
+                self, "pytorch_saver_elements"
+            ), "First have to setup saving with self.setup_pytorch_saver"
+            fpath = "pyt_save"
             fpath = osp.join(self.output_dir, fpath)
 
             for key, value in self.pytorch_saver_elements.items():
-                fname = key + ('%d' % itr if itr is not None else '') + '.pt'
+                fname = key + ("%d" % itr if itr is not None else "") + ".pt"
                 fname = osp.join(fpath, fname)
                 os.makedirs(fpath, exist_ok=True)
                 with warnings.catch_warnings():
@@ -247,20 +262,20 @@ class Logger:
             vals = []
             key_lens = [len(key) for key in self.log_headers]
             max_key_len = max(15, max(key_lens))
-            keystr = '%'+'%d' % max_key_len
+            keystr = "%" + "%d" % max_key_len
             fmt = "| " + keystr + "s | %15s |"
             n_slashes = 22 + max_key_len
-            print("-"*n_slashes)
+            print("-" * n_slashes)
             for key in self.log_headers:
                 val = self.log_current_row.get(key, "")
                 valstr = "%8.3g" % val if hasattr(val, "__float__") else val
                 print(fmt % (key, valstr))
                 vals.append(val)
-            print("-"*n_slashes, flush=True)
+            print("-" * n_slashes, flush=True)
             if self.output_file is not None:
                 if self.first_row:
-                    self.output_file.write("\t".join(self.log_headers)+"\n")
-                self.output_file.write("\t".join(map(str, vals))+"\n")
+                    self.output_file.write("\t".join(self.log_headers) + "\n")
+                self.output_file.write("\t".join(map(str, vals)) + "\n")
                 self.output_file.flush()
         self.log_current_row.clear()
         self.first_row = False
@@ -303,12 +318,13 @@ class EpochLogger(Logger):
         values.
         """
         for k, v in kwargs.items():
-            if not(k in self.epoch_dict.keys()):
+            if not (k in self.epoch_dict.keys()):
                 self.epoch_dict[k] = []
             self.epoch_dict[k].append(v)
 
-    def log_tabular(self, key, x_tick=0, val=None, with_min_and_max=False,
-                    average_only=False):
+    def log_tabular(
+        self, key, x_tick=0, val=None, with_min_and_max=False, average_only=False
+    ):
         """
         Log a value or possibly the mean/std/min/max values of a diagnostic.
 
@@ -329,21 +345,21 @@ class EpochLogger(Logger):
         """
         plot_name = key
 
-        for prefix in ['EpLen', 'EpRet']:
+        for prefix in ["EpLen", "EpRet"]:
             if prefix in key:
-                plot_name = 'Performance/' + key
+                plot_name = "Performance/" + key
 
-        for prefix in ['LossPi', 'LossQ', 'LogPi', 'Vals']:
+        for prefix in ["LossPi", "LossQ", "LogPi", "Vals"]:
             if prefix in key:
-                plot_name = 'Agent/' + key
+                plot_name = "Agent/" + key
 
-        for prefix in ['EnvModel', 'RolloutLength']:
+        for prefix in ["EnvModel", "RolloutLength"]:
             if prefix in key:
-                plot_name = 'Model/' + key
+                plot_name = "Model/" + key
 
-        for prefix in ['Interacts', 'Time']:
+        for prefix in ["Interacts", "Time"]:
             if prefix in key:
-                plot_name = 'RunMetrics/' + key
+                plot_name = "RunMetrics/" + key
 
         scalars = dict()
 
@@ -352,24 +368,25 @@ class EpochLogger(Logger):
             scalars.update({key: val})
         else:
             v = self.epoch_dict[key]
-            vals = np.concatenate(v) if isinstance(
-                v[0], np.ndarray) and len(v[0].shape) > 0 else v
-            stats = mpi_statistics_scalar(
-                vals, with_min_and_max=with_min_and_max)
+            vals = (
+                np.concatenate(v)
+                if isinstance(v[0], np.ndarray) and len(v[0].shape) > 0
+                else v
+            )
+            stats = mpi_statistics_scalar(vals, with_min_and_max=with_min_and_max)
 
-            super().log_tabular(key if average_only else 'Average' + key,
-                                val=stats[0])
-            scalars.update({'Average' + key: stats[0]})
+            super().log_tabular(key if average_only else "Average" + key, val=stats[0])
+            scalars.update({"Average" + key: stats[0]})
 
-            if not(average_only):
-                super().log_tabular('Std'+key, val=stats[1])
+            if not (average_only):
+                super().log_tabular("Std" + key, val=stats[1])
             if with_min_and_max:
-                super().log_tabular('Max'+key, val=stats[3])
-                scalars.update({'Max'+key: stats[3]})
-                super().log_tabular('Min'+key, val=stats[2])
-                scalars.update({'Min'+key: stats[2]})
+                super().log_tabular("Max" + key, val=stats[3])
+                scalars.update({"Max" + key: stats[3]})
+                super().log_tabular("Min" + key, val=stats[2])
+                scalars.update({"Min" + key: stats[2]})
 
-        if key != 'Epoch':
+        if key != "Epoch":
             self.tensorboard_writer.add_scalars(plot_name, scalars, x_tick)
 
         self.epoch_dict[key] = []
@@ -379,8 +396,11 @@ class EpochLogger(Logger):
         Lets an algorithm ask the logger for mean/std/min/max of a diagnostic.
         """
         v = self.epoch_dict[key]
-        vals = np.concatenate(v) if isinstance(
-            v[0], np.ndarray) and len(v[0].shape) > 0 else v
+        vals = (
+            np.concatenate(v)
+            if isinstance(v[0], np.ndarray) and len(v[0].shape) > 0
+            else v
+        )
         return mpi_statistics_scalar(vals)
 
     def save_replay_buffer_to_tensorboard(self, epoch, pessimism=None):
@@ -390,8 +410,8 @@ class EpochLogger(Logger):
         if is_antmaze_umaze or is_maze2d_umaze or is_antmaze_medium:
             fig_size = (6, 6)
 
-            if 'replay_buffer' in self.pytorch_saver_elements:
-                buffer = self.pytorch_saver_elements['replay_buffer']
+            if "replay_buffer" in self.pytorch_saver_elements:
+                buffer = self.pytorch_saver_elements["replay_buffer"]
                 if self.tensorboard_writer:
                     f = plt.figure(figsize=fig_size)
 
@@ -403,13 +423,11 @@ class EpochLogger(Logger):
                         plot_antmaze_medium(buffer=buffer, n_samples=100000)
 
                     self.tensorboard_writer.add_figure(
-                        'ReplayBuffers/0RealReplayBuffer',
-                        f,
-                        epoch
+                        "ReplayBuffers/0RealReplayBuffer", f, epoch
                     )
 
-            if 'virtual_replay_buffer' in self.pytorch_saver_elements:
-                buffer = self.pytorch_saver_elements['virtual_replay_buffer']
+            if "virtual_replay_buffer" in self.pytorch_saver_elements:
+                buffer = self.pytorch_saver_elements["virtual_replay_buffer"]
                 if self.tensorboard_writer:
                     f = plt.figure(figsize=fig_size)
 
@@ -421,13 +439,19 @@ class EpochLogger(Logger):
                         plot_antmaze_medium(buffer=buffer, n_samples=100000)
 
                     self.tensorboard_writer.add_figure(
-                        'ReplayBuffers/1VirtualReplayBuffer', f, epoch)
+                        "ReplayBuffers/1VirtualReplayBuffer", f, epoch
+                    )
 
-                    print("{:.3f}% of samples outside support".format(
-                        (buffer.rew_buf == -pessimism).sum().float() / buffer.size * 100))
+                    print(
+                        "{:.3f}% of samples outside support".format(
+                            (buffer.rew_buf == -pessimism).sum().float()
+                            / buffer.size
+                            * 100
+                        )
+                    )
 
-            if 'eval_buffer' in self.pytorch_saver_elements:
-                buffer = self.pytorch_saver_elements['eval_buffer']
+            if "eval_buffer" in self.pytorch_saver_elements:
+                buffer = self.pytorch_saver_elements["eval_buffer"]
                 if self.tensorboard_writer:
                     f = plt.figure(figsize=fig_size)
 
@@ -439,6 +463,7 @@ class EpochLogger(Logger):
                         plot_antmaze_medium(buffer=buffer)
 
                     self.tensorboard_writer.add_figure(
-                        'ReplayBuffers/2TestEpisodesReplayBuffer', f, epoch)
+                        "ReplayBuffers/2TestEpisodesReplayBuffer", f, epoch
+                    )
 
-                self.pytorch_saver_elements.pop('eval_buffer')
+                self.pytorch_saver_elements.pop("eval_buffer")

@@ -10,8 +10,17 @@ def deterministic_loss(x, y, model, i_network=-1):
         return torch.square(y_pred[i_network] - y.unsqueeze(0)).mean()
 
 
-def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, no_reward=False,
-                       only_uncertainty=False, pre_fn=None):
+def probabilistic_loss(
+    x,
+    y,
+    model,
+    i_network=-1,
+    only_mse=False,
+    debug=False,
+    no_reward=False,
+    only_uncertainty=False,
+    pre_fn=None,
+):
     _, mean, logvar, max_logvar, min_logvar, uncertainty = model(x)
 
     if pre_fn is not None:
@@ -46,16 +55,19 @@ def probabilistic_loss(x, y, model, i_network=-1, only_mse=False, debug=False, n
         uncertainty_loss = uncertainty.mean()
 
         if debug:
-            print("LR: {:.5f}, State MSE: {:.5f}, Rew MSE: {:.5f}, MSE + INV VAR: {:.5f} VAR: {:.5f}, BOUNDS: {:.5f}, MAX LOGVAR: {:.5f}, MIN LOGVAR: {:.5f}, UNCERTAINTY: {:.5f}".format(
-                model.optim.param_groups[0]['lr'],
-                mse_loss[:, :, :-1].mean().item(),
-                mse_loss[:, :, -1].mean().item(),
-                mse_inv_var_loss.item(),
-                var_loss.item(),
-                var_bound_loss.item(),
-                max_logvar.mean().item(),
-                min_logvar.mean().item(),
-                uncertainty_loss.item()
-            ), end='\r')
+            print(
+                "LR: {:.5f}, State MSE: {:.5f}, Rew MSE: {:.5f}, MSE + INV VAR: {:.5f} VAR: {:.5f}, BOUNDS: {:.5f}, MAX LOGVAR: {:.5f}, MIN LOGVAR: {:.5f}, UNCERTAINTY: {:.5f}".format(
+                    model.optim.param_groups[0]["lr"],
+                    mse_loss[:, :, :-1].mean().item(),
+                    mse_loss[:, :, -1].mean().item(),
+                    mse_inv_var_loss.item(),
+                    var_loss.item(),
+                    var_bound_loss.item(),
+                    max_logvar.mean().item(),
+                    min_logvar.mean().item(),
+                    uncertainty_loss.item(),
+                ),
+                end="\r",
+            )
 
         return mse_inv_var_loss + var_loss + var_bound_loss + uncertainty_loss

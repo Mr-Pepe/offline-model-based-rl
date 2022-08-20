@@ -7,15 +7,23 @@ import ray
 import torch
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.user_config import MODELS_DIR
-from offline_mbrl.utils.envs import (HALF_CHEETAH_EXPERT, HALF_CHEETAH_MEDIUM,
-                                     HALF_CHEETAH_MEDIUM_EXPERT,
-                                     HALF_CHEETAH_MEDIUM_REPLAY,
-                                     HALF_CHEETAH_RANDOM, HOPPER_EXPERT,
-                                     HOPPER_MEDIUM, HOPPER_MEDIUM_EXPERT,
-                                     HOPPER_MEDIUM_REPLAY, HOPPER_RANDOM,
-                                     WALKER_EXPERT, WALKER_MEDIUM,
-                                     WALKER_MEDIUM_EXPERT,
-                                     WALKER_MEDIUM_REPLAY, WALKER_RANDOM)
+from offline_mbrl.utils.envs import (
+    HALF_CHEETAH_EXPERT,
+    HALF_CHEETAH_MEDIUM,
+    HALF_CHEETAH_MEDIUM_EXPERT,
+    HALF_CHEETAH_MEDIUM_REPLAY,
+    HALF_CHEETAH_RANDOM,
+    HOPPER_EXPERT,
+    HOPPER_MEDIUM,
+    HOPPER_MEDIUM_EXPERT,
+    HOPPER_MEDIUM_REPLAY,
+    HOPPER_RANDOM,
+    WALKER_EXPERT,
+    WALKER_MEDIUM,
+    WALKER_MEDIUM_EXPERT,
+    WALKER_MEDIUM_REPLAY,
+    WALKER_RANDOM,
+)
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.postprocessing import get_postprocessing_function
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
@@ -26,10 +34,9 @@ from ray.tune.suggest.hyperopt import HyperOptSearch
 
 
 def training_function(config, data, save_path=None, tuning=True):
-    model = EnvironmentModel(hidden=4*[config['n_hidden']], **config)
+    model = EnvironmentModel(hidden=4 * [config["n_hidden"]], **config)
 
-    model.train_to_convergence(
-        data=data, checkpoint_dir=None, tuning=tuning, **config)
+    model.train_to_convergence(data=data, checkpoint_dir=None, tuning=tuning, **config)
 
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -37,26 +44,24 @@ def training_function(config, data, save_path=None, tuning=True):
         print("Saved model to: {}".format(save_path))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env_name', type=str,
-                        default=WALKER_MEDIUM_REPLAY)
-    parser.add_argument('--level', type=int, default=0)
-    parser.add_argument('--patience', type=int, default=30)
-    parser.add_argument('--n_hidden', type=int, default=200)
-    parser.add_argument('--lr', type=float, default=1e-3)
-    parser.add_argument('--device', type=str, default='')
+    parser.add_argument("--env_name", type=str, default=WALKER_MEDIUM_REPLAY)
+    parser.add_argument("--level", type=int, default=0)
+    parser.add_argument("--patience", type=int, default=30)
+    parser.add_argument("--n_hidden", type=int, default=200)
+    parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--device", type=str, default="")
     args = parser.parse_args()
 
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    if args.device != '':
+    if args.device != "":
         device = args.device
 
     env = gym.make(args.env_name)
 
-    buffer, obs_dim, act_dim = load_dataset_from_env(env,
-                                                     buffer_device=device)
+    buffer, obs_dim, act_dim = load_dataset_from_env(env, buffer_device=device)
 
     pre_fn = get_preprocessing_function(args.env_name, device)
     assert pre_fn is not None
@@ -88,52 +93,39 @@ if __name__ == '__main__':
     if args.level == 0:
         # Perform training with tuned hyperparameters and save model
 
-        save_path = os.path.join(MODELS_DIR, args.env_name + '-model.pt')
+        save_path = os.path.join(MODELS_DIR, args.env_name + "-model.pt")
 
-        config.update(
-            max_n_train_epochs=-1,
-            debug=True)
+        config.update(max_n_train_epochs=-1, debug=True)
 
-        config.update(
-            lr=args.lr,
-            batch_size=256
-        )
+        config.update(lr=args.lr, batch_size=256)
 
-        assert config['lr'] is not None
-        assert config['batch_size'] is not None
+        assert config["lr"] is not None
+        assert config["batch_size"] is not None
 
-        training_function(
-            config=config,
-            data=buffer,
-            save_path=save_path,
-            tuning=False
-        )
+        training_function(config=config, data=buffer, save_path=save_path, tuning=False)
     else:
         if args.level == 1:
             config.update(
                 lr=tune.loguniform(1e-5, 1e-2),
-                batch_size=tune.choice([256, 512, 1024, 2048]))
+                batch_size=tune.choice([256, 512, 1024, 2048]),
+            )
 
-        assert config['lr'] is not None
-        assert config['batch_size'] is not None
+        assert config["lr"] is not None
+        assert config["batch_size"] is not None
 
         ray.init()
         scheduler = ASHAScheduler(
-            metric='val_loss',
-            mode='min',
-            time_attr='time_since_restore',
-            max_t=1000)
+            metric="val_loss", mode="min", time_attr="time_since_restore", max_t=1000
+        )
 
-        search_alg = HyperOptSearch(
-            metric='val_loss',
-            mode='min')
+        search_alg = HyperOptSearch(metric="val_loss", mode="min")
 
         save_name = args.env_name
 
         if args.augment_loss:
-            save_name += '-aug-loss'
+            save_name += "-aug-loss"
 
-        save_name += '-model-tuning-lvl-' + str(args.level)
+        save_name += "-model-tuning-lvl-" + str(args.level)
 
         analysis = tune.run(
             tune.with_parameters(training_function, data=buffer),
@@ -143,8 +135,7 @@ if __name__ == '__main__':
             search_alg=search_alg,
             num_samples=200,
             resources_per_trial={"gpu": 0.5},
-            fail_fast=True
+            fail_fast=True,
         )
 
-        print("Best config: ", analysis.get_best_config(
-            metric="val_loss", mode="min"))
+        print("Best config: ", analysis.get_best_config(metric="val_loss", mode="min"))

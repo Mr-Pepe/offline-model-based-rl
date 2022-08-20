@@ -3,21 +3,21 @@ import gym
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.postprocessing import get_postprocessing_function
 
-prefix = 'walker2d-'
-version = '-v2'
+prefix = "walker2d-"
+version = "-v2"
 
 dataset_names = [
-    'random',
-    'medium-replay',
-    'medium',
-    'expert',
-    'medium-expert',
+    "random",
+    "medium-replay",
+    "medium",
+    "expert",
+    "medium-expert",
 ]
 
 avg_rew = []
 per_trajectory_rews = []
 
-latex = ''
+latex = ""
 
 for dataset_name in dataset_names:
     env_name = prefix + dataset_name + version
@@ -40,11 +40,11 @@ for dataset_name in dataset_names:
         buffer.rew_buf.mean(),
         per_trajectory_rew,
         buffer.done_buf.sum(),
-        n_timeouts
+        n_timeouts,
     )
 
 print(latex)
 
 for i in range(4):
-    assert avg_rew[i] < avg_rew[i+1]
-    assert per_trajectory_rews[i] < per_trajectory_rews[i+1]
+    assert avg_rew[i] < avg_rew[i + 1]
+    assert per_trajectory_rews[i] < per_trajectory_rews[i + 1]

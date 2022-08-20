@@ -14,15 +14,22 @@ from offline_mbrl.utils.print_warning import print_warning
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--logdir', type=str, default='/home/felipe/Projects/thesis-code/data/offline_exploration')
+        "--logdir",
+        type=str,
+        default="/home/felipe/Projects/thesis-code/data/offline_exploration",
+    )
     args = parser.parse_args()
 
     all_exp_dir = args.logdir
 
-    exp_names = [name for name in os.listdir(
-        all_exp_dir) if osp.isdir(osp.join(all_exp_dir, name))]
+    exp_names = [
+        name
+        for name in os.listdir(all_exp_dir)
+        if osp.isdir(osp.join(all_exp_dir, name))
+    ]
     exp_names.sort()
 
     for exp_name in exp_names:
@@ -31,25 +38,32 @@ if __name__ == "__main__":
         mode = get_mode(exp_name)
         env = gym.make(env_name)
 
-        model = torch.load(os.path.join(
-            MODELS_DIR, env_name + '-model.pt'), map_location='cpu')
+        model = torch.load(
+            os.path.join(MODELS_DIR, env_name + "-model.pt"), map_location="cpu"
+        )
 
-        trial_names = [name for name in os.listdir(
-            exp_dir) if osp.isdir(osp.join(exp_dir, name))]
+        trial_names = [
+            name for name in os.listdir(exp_dir) if osp.isdir(osp.join(exp_dir, name))
+        ]
 
         # print(f"Found {len(trial_names)} seeds for {env_name} {mode}")
 
         n_steps = 1000
 
         obs_act = torch.zeros(
-            (len(trial_names) * n_steps, env.observation_space.shape[0] + env.action_space.shape[0]))
+            (
+                len(trial_names) * n_steps,
+                env.observation_space.shape[0] + env.action_space.shape[0],
+            )
+        )
 
         n_terminals = 0
         performances = []
 
         for i_trial, trial_name in enumerate(trial_names):
             agent = torch.load(
-                osp.join(exp_dir, trial_name, 'pyt_save', 'agent.pt'), 'cpu')
+                osp.join(exp_dir, trial_name, "pyt_save", "agent.pt"), "cpu"
+            )
 
             o = env.reset()
             interaction = 0
@@ -64,8 +78,7 @@ if __name__ == "__main__":
 
                 performance += r
 
-                obs_act[i_trial * n_steps +
-                        step] = torch.cat((torch.as_tensor(o), a))
+                obs_act[i_trial * n_steps + step] = torch.cat((torch.as_tensor(o), a))
 
                 o = o2
 
@@ -77,8 +90,16 @@ if __name__ == "__main__":
                     performances.append(performance)
                     performance = 0
 
-        prediction, means, logvars, explicit_uncertainties, epistemic_uncertainty, aleatoric_uncertainty, underestimated_reward = model.get_prediction(
-            obs_act, debug=True)
+        (
+            prediction,
+            means,
+            logvars,
+            explicit_uncertainties,
+            epistemic_uncertainty,
+            aleatoric_uncertainty,
+            underestimated_reward,
+        ) = model.get_prediction(obs_act, debug=True)
 
         print(
-            f"Uncertainty: {epistemic_uncertainty.mean():.2f}   Terminals: {n_terminals}    Reward: {d4rl.get_normalized_score(env_name, np.mean(performance))*100:.0f}   {env_name} {mode}")
+            f"Uncertainty: {epistemic_uncertainty.mean():.2f}   Terminals: {n_terminals}    Reward: {d4rl.get_normalized_score(env_name, np.mean(performance))*100:.0f}   {env_name} {mode}"
+        )

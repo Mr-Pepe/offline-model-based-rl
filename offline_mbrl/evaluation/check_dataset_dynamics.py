@@ -6,12 +6,12 @@ from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.postprocessing import get_postprocessing_function
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
 
-prefix = 'hopper-'
-version = '-v2'
+prefix = "hopper-"
+version = "-v2"
 
 dataset_names = [
     # 'random',
-    'medium-replay',
+    "medium-replay",
     # 'medium',
     # 'medium-expert',
     # 'expert',
@@ -20,7 +20,7 @@ dataset_names = [
 avg_rew = []
 per_trajectory_rews = []
 
-latex = ''
+latex = ""
 
 for dataset_name in dataset_names:
     env_name = prefix + dataset_name + version
@@ -36,9 +36,9 @@ for dataset_name in dataset_names:
     rew_errors = 0
     obs_errors = 0
 
-    for i in range(10000):#range(buffer.size):
+    for i in range(10000):  # range(buffer.size):
         if i % 100 == 0:
-            print("{}/{}".format(i, buffer.size), end='\r')
+            print("{}/{}".format(i, buffer.size), end="\r")
 
         obs = buffer.obs_buf[i]
         obs2 = buffer.obs2_buf[i]
@@ -48,7 +48,9 @@ for dataset_name in dataset_names:
 
         env.reset()
         env.set_state(
-            torch.cat((torch.as_tensor([0]), torch.as_tensor(obs[:env.model.nq-1]))), obs[env.model.nq-1:])
+            torch.cat((torch.as_tensor([0]), torch.as_tensor(obs[: env.model.nq - 1]))),
+            obs[env.model.nq - 1 :],
+        )
 
         real_obs2, real_rew, _, _ = env.step(act.numpy())
 
@@ -63,8 +65,12 @@ for dataset_name in dataset_names:
 
         pass
 
-    post_dones = post_fn(torch.as_tensor(buffer.obs2_buf).unsqueeze(0))['dones']
+    post_dones = post_fn(torch.as_tensor(buffer.obs2_buf).unsqueeze(0))["dones"]
 
     done_errors = (buffer.done_buf ^ post_dones.view(-1)).sum()
 
-    print("Obs errors: {}  Rew errors: {}  Done errors: {}".format(obs_errors, rew_errors, done_errors))
+    print(
+        "Obs errors: {}  Rew errors: {}  Done errors: {}".format(
+            obs_errors, rew_errors, done_errors
+        )
+    )

@@ -16,8 +16,8 @@ trajectories = [
 n_virtual_rollouts = 20
 rollout_length = 2
 max_step_length = 1.5
-trajectory_color = 'black'
-virtual_rollout_color = 'coral'
+trajectory_color = "black"
+virtual_rollout_color = "coral"
 
 
 points = [[x[i], y[i]] for (x, y) in trajectories for i in range(len(x))]
@@ -30,8 +30,7 @@ y = [point[1] for point in points]
 #             levels=100, thresh=0.0000000000000001)
 
 # Partitioning
-sns.kdeplot(x, y, shade=True, bw_adjust=0.6,
-            levels=2, thresh=0.4, color='blue')
+sns.kdeplot(x, y, shade=True, bw_adjust=0.6, levels=2, thresh=0.4, color="blue")
 # sns.kdeplot(x, y, shade=True, bw_adjust=0.6,
 #             levels=2, thresh=0.02, color='blue')
 
@@ -40,24 +39,42 @@ for i_rollout in range(n_virtual_rollouts):
     x, y = points[random.randint(0, len(points) - 1)]
 
     for step in range(rollout_length):
-        u = random.random()*max_step_length-0.5*max_step_length
-        v = random.random()*max_step_length-0.5*max_step_length
+        u = random.random() * max_step_length - 0.5 * max_step_length
+        v = random.random() * max_step_length - 0.5 * max_step_length
 
-        plt.quiver(x, y, u, v, angles='xy', scale=1, scale_units='xy',
-                   color=virtual_rollout_color, width=0.004)
+        plt.quiver(
+            x,
+            y,
+            u,
+            v,
+            angles="xy",
+            scale=1,
+            scale_units="xy",
+            color=virtual_rollout_color,
+            width=0.004,
+        )
 
         x += u
         y += v
 
 # Plot trajectories
 for x, y in trajectories:
-    plt.quiver(x[:-1], y[:-1], np.diff(x), np.diff(y), angles='xy',
-               scale=1, scale_units='xy', color=trajectory_color, width=0.005)
+    plt.quiver(
+        x[:-1],
+        y[:-1],
+        np.diff(x),
+        np.diff(y),
+        angles="xy",
+        scale=1,
+        scale_units="xy",
+        color=trajectory_color,
+        width=0.005,
+    )
 
     plt.scatter(x, y, color=trajectory_color, s=50)
 
 
-plt.axis('off')
+plt.axis("off")
 plt.xlim([-1, 4])
 plt.ylim([-1, 4])
 plt.tight_layout()

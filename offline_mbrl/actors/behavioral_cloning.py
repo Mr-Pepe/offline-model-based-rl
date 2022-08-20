@@ -5,15 +5,23 @@ import torch
 import torch.nn as nn
 from offline_mbrl.models.mlp import mlp
 from offline_mbrl.models.mlp_q_function import MLPQFunction
-from offline_mbrl.models.squashed_gaussian_mlp_actor import \
-    SquashedGaussianMLPActor
+from offline_mbrl.models.squashed_gaussian_mlp_actor import SquashedGaussianMLPActor
 from torch.optim.adamw import AdamW
 
 
 class BC(nn.Module):
-    def __init__(self, observation_space, action_space, hidden=(200, 200, 200, 200),
-                 activation=nn.ReLU, lr=3e-4, batch_size=100,
-                 pre_fn=None, device='cpu', **_):
+    def __init__(
+        self,
+        observation_space,
+        action_space,
+        hidden=(200, 200, 200, 200),
+        activation=nn.ReLU,
+        lr=3e-4,
+        batch_size=100,
+        pre_fn=None,
+        device="cpu",
+        **_
+    ):
 
         super().__init__()
 
@@ -37,14 +45,14 @@ class BC(nn.Module):
 
         self.to(device)
 
-        self.use_amp = 'cuda' in next(self.parameters()).device.type
-        self.scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp,
-                                                growth_factor=1.5,
-                                                backoff_factor=0.7)
+        self.use_amp = "cuda" in next(self.parameters()).device.type
+        self.scaler = torch.cuda.amp.GradScaler(
+            enabled=self.use_amp, growth_factor=1.5, backoff_factor=0.7
+        )
 
     def compute_loss_pi(self, data):
-        o = data['obs']
-        a = data['act']
+        o = data["obs"]
+        a = data["act"]
 
         if self.pre_fn:
             o = self.pre_fn(o)
@@ -92,9 +100,7 @@ class BC(nn.Module):
     def act(self, o, deterministic=False):
         self.device = next(self.parameters()).device
 
-        obs = torch.as_tensor(o,
-                              dtype=torch.float32,
-                              device=self.device)
+        obs = torch.as_tensor(o, dtype=torch.float32, device=self.device)
 
         if self.pre_fn:
             obs = self.pre_fn(obs)
@@ -103,6 +109,7 @@ class BC(nn.Module):
             return self.pi(obs)
 
     def act_randomly(self, o, deterministic=False):
-        a = torch.as_tensor([self.action_space.sample() for _ in range(len(o))],
-                            device=o.device)
+        a = torch.as_tensor(
+            [self.action_space.sample() for _ in range(len(o))], device=o.device
+        )
         return a

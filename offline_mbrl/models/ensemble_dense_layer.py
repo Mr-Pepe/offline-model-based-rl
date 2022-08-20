@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 # From: https://github.com/nnaisense/MAX/blob/master/models.py
 class EnsembleDenseLayer(nn.Module):
-    def __init__(self, n_in, n_out, ensemble_size, non_linearity='leaky_relu'):
+    def __init__(self, n_in, n_out, ensemble_size, non_linearity="leaky_relu"):
         """
         linear + activation Layer
         there are `ensemble_size` layers
@@ -26,23 +26,23 @@ class EnsembleDenseLayer(nn.Module):
         biases = torch.zeros(ensemble_size, 1, n_out).float()
 
         for weight in weights:
-            if non_linearity == 'swish':
+            if non_linearity == "swish":
                 nn.init.xavier_uniform_(weight)
-            elif non_linearity == 'leaky_relu':
+            elif non_linearity == "leaky_relu":
                 nn.init.kaiming_normal_(weight)
-            elif non_linearity == 'tanh':
+            elif non_linearity == "tanh":
                 nn.init.kaiming_normal_(weight)
-            elif non_linearity == 'linear':
+            elif non_linearity == "linear":
                 nn.init.xavier_normal_(weight)
 
         self.weights = nn.Parameter(weights)
         self.biases = nn.Parameter(biases)
 
-        if non_linearity == 'leaky_relu':
+        if non_linearity == "leaky_relu":
             self.non_linearity = F.leaky_relu
-        elif non_linearity == 'tanh':
+        elif non_linearity == "tanh":
             self.non_linearity = torch.tanh
-        elif non_linearity == 'linear':
+        elif non_linearity == "linear":
             self.non_linearity = nn.Identity()
 
     def forward(self, inp):

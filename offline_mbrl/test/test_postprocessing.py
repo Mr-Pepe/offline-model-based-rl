@@ -5,14 +5,19 @@ import numpy as np
 import pytest
 import torch
 from offline_mbrl.utils.envs import HOPPER_ORIGINAL, WALKER_ORIGINAL
-from offline_mbrl.utils.mazes import (plot_antmaze_medium, plot_antmaze_umaze,
-                                      plot_maze2d_umaze)
-from offline_mbrl.utils.postprocessing import (postprocess_antmaze_medium,
-                                               postprocess_antmaze_umaze,
-                                               postprocess_half_cheetah,
-                                               postprocess_hopper,
-                                               postprocess_maze2d_umaze,
-                                               postprocess_walker2d)
+from offline_mbrl.utils.mazes import (
+    plot_antmaze_medium,
+    plot_antmaze_umaze,
+    plot_maze2d_umaze,
+)
+from offline_mbrl.utils.postprocessing import (
+    postprocess_antmaze_medium,
+    postprocess_antmaze_umaze,
+    postprocess_half_cheetah,
+    postprocess_hopper,
+    postprocess_maze2d_umaze,
+    postprocess_walker2d,
+)
 
 
 def run_env(env, n_steps):
@@ -43,21 +48,24 @@ def test_hopper_postprocessing():
     assert dones.sum() > 0
 
     np.testing.assert_array_equal(
-        torch.stack(3*[dones]),
-        postprocess_hopper(next_obs=torch.stack(3*[next_observations]))['dones'])
+        torch.stack(3 * [dones]),
+        postprocess_hopper(next_obs=torch.stack(3 * [next_observations]))["dones"],
+    )
 
 
 @pytest.mark.fast
 def test_half_cheetah_postprocessing():
-    next_observations, dones = run_env(gym.make('HalfCheetah-v2'), 100)
+    next_observations, dones = run_env(gym.make("HalfCheetah-v2"), 100)
 
     # Halg cheetah does not generate terminal states
     assert dones.sum() == 0
 
     np.testing.assert_array_equal(
-        torch.stack(3*[dones]),
-        postprocess_half_cheetah(
-            next_obs=torch.stack(3*[next_observations]))['dones'])
+        torch.stack(3 * [dones]),
+        postprocess_half_cheetah(next_obs=torch.stack(3 * [next_observations]))[
+            "dones"
+        ],
+    )
 
 
 @pytest.mark.fast
@@ -68,42 +76,41 @@ def test_walker2d_postprocessing():
     assert dones.sum() > 0
 
     np.testing.assert_array_equal(
-        torch.stack(3*[dones]),
-        postprocess_walker2d(
-            next_obs=torch.stack(3*[next_observations]))['dones'])
+        torch.stack(3 * [dones]),
+        postprocess_walker2d(next_obs=torch.stack(3 * [next_observations]))["dones"],
+    )
 
 
 @pytest.mark.medium
 def test_antmaze_umaze_postprocessing():
 
-    env = gym.make('antmaze-umaze-v0')
+    env = gym.make("antmaze-umaze-v0")
 
     x_points = 50
     y_points = 50
     n_networks = 3
 
-    next_obs = torch.zeros((n_networks,
-                            x_points*y_points,
-                            env.observation_space.shape[0]))
+    next_obs = torch.zeros(
+        (n_networks, x_points * y_points, env.observation_space.shape[0])
+    )
 
     torch.manual_seed(0)
 
     for i_network in range(n_networks):
-        x_random = torch.rand((x_points,))*14-2
-        y_random = torch.rand((y_points,))*14-2
-        z_random = torch.rand((x_points*y_points,))*1.2
+        x_random = torch.rand((x_points,)) * 14 - 2
+        y_random = torch.rand((y_points,)) * 14 - 2
+        z_random = torch.rand((x_points * y_points,)) * 1.2
 
         for i_x, x in enumerate(x_random):
             for i_y, y in enumerate(y_random):
-                next_obs[i_network, i_x*i_y, 0] = x
-                next_obs[i_network, i_x*i_y, 1] = y
-                next_obs[i_network, i_x*i_y, 2] = z_random[i_x*i_y]
+                next_obs[i_network, i_x * i_y, 0] = x
+                next_obs[i_network, i_x * i_y, 1] = y
+                next_obs[i_network, i_x * i_y, 2] = z_random[i_x * i_y]
 
     # Check collision detection
     obs = torch.ones((next_obs.shape[1], next_obs.shape[2]))
 
-    dones = postprocess_antmaze_umaze(next_obs=next_obs,
-                                      obs=obs)['dones']
+    dones = postprocess_antmaze_umaze(next_obs=next_obs, obs=obs)["dones"]
 
     # plot_antmaze_umaze([-20, 20], [-20, 20])
     # for i_network in range(n_networks):
@@ -124,34 +131,33 @@ def test_antmaze_umaze_postprocessing():
 @pytest.mark.medium
 def test_antmaze_medium_postprocessing():
 
-    env = gym.make('antmaze-medium-diverse-v0')
+    env = gym.make("antmaze-medium-diverse-v0")
 
     x_points = 100
     y_points = 100
     n_networks = 3
 
-    next_obs = torch.zeros((n_networks,
-                            x_points*y_points,
-                            env.observation_space.shape[0]))
+    next_obs = torch.zeros(
+        (n_networks, x_points * y_points, env.observation_space.shape[0])
+    )
 
     torch.manual_seed(0)
 
     for i_network in range(n_networks):
-        x_random = torch.rand((x_points,))*35-7
-        y_random = torch.rand((y_points,))*35-7
-        z_random = torch.rand((x_points*y_points,))*0.3 + 0.3
+        x_random = torch.rand((x_points,)) * 35 - 7
+        y_random = torch.rand((y_points,)) * 35 - 7
+        z_random = torch.rand((x_points * y_points,)) * 0.3 + 0.3
 
         for i_x, x in enumerate(x_random):
             for i_y, y in enumerate(y_random):
-                next_obs[i_network, i_x*i_y, 0] = x
-                next_obs[i_network, i_x*i_y, 1] = y
-                next_obs[i_network, i_x*i_y, 2] = z_random[i_x*i_y]
+                next_obs[i_network, i_x * i_y, 0] = x
+                next_obs[i_network, i_x * i_y, 1] = y
+                next_obs[i_network, i_x * i_y, 2] = z_random[i_x * i_y]
 
     # Check collision detection
     obs = torch.ones((next_obs.shape[1], next_obs.shape[2]))
 
-    dones = postprocess_antmaze_medium(next_obs=next_obs,
-                                       obs=obs)['dones']
+    dones = postprocess_antmaze_medium(next_obs=next_obs, obs=obs)["dones"]
 
     # plot_antmaze_medium([-10, 30], [-10, 30])
     # for i_network in range(n_networks):
@@ -172,32 +178,31 @@ def test_antmaze_medium_postprocessing():
 @pytest.mark.medium
 def test_maze2d_umaze_postprocessing():
 
-    env = gym.make('maze2d-umaze-v1')
+    env = gym.make("maze2d-umaze-v1")
 
     x_points = 50
     y_points = 50
     n_networks = 3
 
-    next_obs = torch.zeros((n_networks,
-                            x_points*y_points,
-                            env.observation_space.shape[0]))
+    next_obs = torch.zeros(
+        (n_networks, x_points * y_points, env.observation_space.shape[0])
+    )
 
     torch.manual_seed(0)
 
     for i_network in range(n_networks):
-        x_random = torch.rand((x_points,))*7-2
-        y_random = torch.rand((y_points,))*7-2
+        x_random = torch.rand((x_points,)) * 7 - 2
+        y_random = torch.rand((y_points,)) * 7 - 2
 
         for i_x, x in enumerate(x_random):
             for i_y, y in enumerate(y_random):
-                next_obs[i_network, i_x*i_y, 0] = x
-                next_obs[i_network, i_x*i_y, 1] = y
+                next_obs[i_network, i_x * i_y, 0] = x
+                next_obs[i_network, i_x * i_y, 1] = y
 
     # Check collision detection
     obs = torch.ones((next_obs.shape[1], next_obs.shape[2]))
 
-    dones = postprocess_maze2d_umaze(next_obs=next_obs,
-                                     obs=obs)['dones'].view(-1)
+    dones = postprocess_maze2d_umaze(next_obs=next_obs, obs=obs)["dones"].view(-1)
 
     # plot_maze2d_umaze([-2, 5], [-2, 5])
     # for i_network in range(n_networks):

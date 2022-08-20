@@ -6,17 +6,28 @@ import torch.nn as nn
 from offline_mbrl.models.mlp import mlp
 from offline_mbrl.models.mlp_q_function import MLPQFunction
 from offline_mbrl.models.q_ensemble import QEnsemble
-from offline_mbrl.models.squashed_gaussian_mlp_actor import \
-    SquashedGaussianMLPActor
+from offline_mbrl.models.squashed_gaussian_mlp_actor import SquashedGaussianMLPActor
 from offline_mbrl.utils.modes import UNDERESTIMATION
 from torch.optim.adamw import AdamW
 
 
 class CopyCat(nn.Module):
-    def __init__(self, observation_space, action_space, hidden=(256, 256),
-                 activation=nn.ReLU, pi_lr=3e-4, q_lr=3e-4, gamma=0.99,
-                 alpha=0.2, polyak=0.995, batch_size=100, 
-                 pre_fn=None, device='cpu', **_):
+    def __init__(
+        self,
+        observation_space,
+        action_space,
+        hidden=(256, 256),
+        activation=nn.ReLU,
+        pi_lr=3e-4,
+        q_lr=3e-4,
+        gamma=0.99,
+        alpha=0.2,
+        polyak=0.995,
+        batch_size=100,
+        pre_fn=None,
+        device="cpu",
+        **_
+    ):
 
         super().__init__()
 
@@ -37,7 +48,8 @@ class CopyCat(nn.Module):
 
         # build policy and value functions
         self.pi = SquashedGaussianMLPActor(
-            obs_dim, act_dim, hidden, activation, act_limit)
+            obs_dim, act_dim, hidden, activation, act_limit
+        )
         self.q = QEnsemble(obs_dim, act_dim)
 
         # List of parameters for both Q-networks (save this for convenience)
@@ -57,8 +69,13 @@ class CopyCat(nn.Module):
             p.requires_grad = False
 
     def compute_loss_q(self, data):
-        o, a, r, o2, d = data['obs'], data['act'], \
-            data['rew'], data['obs2'], data['done']
+        o, a, r, o2, d = (
+            data["obs"],
+            data["act"],
+            data["rew"],
+            data["obs2"],
+            data["done"],
+        )
 
         if self.pre_fn:
             o = self.pre_fn(o)
@@ -74,20 +91,18 @@ class CopyCat(nn.Module):
             # Target Q-values
             q_pi_targ = self.target.q(o2, a2)
             q_pi_targ = q_pi_targ.min(dim=0).values
-            backup = r + self.gamma * \
-                ~d * (q_pi_targ - self.alpha * logp_a2)
+            backup = r + self.gamma * ~d * (q_pi_targ - self.alpha * logp_a2)
 
         # MSE loss against Bellman backup
-        loss_q = ((q - backup)**2).mean()
+        loss_q = ((q - backup) ** 2).mean()
 
         # Useful info for logging
-        q_info = dict(Q1Vals=q.cpu().detach().numpy(),
-                      Q2Vals=0)
+        q_info = dict(Q1Vals=q.cpu().detach().numpy(), Q2Vals=0)
 
         return loss_q, q_info
 
     def compute_loss_pi(self, data):
-        o = data['obs']
+        o = data["obs"]
 
         if self.pre_fn:
             o = self.pre_fn(o)
@@ -153,9 +168,7 @@ class CopyCat(nn.Module):
     def act(self, o, deterministic=False):
         self.device = next(self.parameters()).device
 
-        obs = torch.as_tensor(o,
-                              dtype=torch.float32,
-                              device=self.device)
+        obs = torch.as_tensor(o, dtype=torch.float32, device=self.device)
 
         if self.pre_fn:
             obs = self.pre_fn(obs)
@@ -165,6 +178,7 @@ class CopyCat(nn.Module):
             return a
 
     def act_randomly(self, o, deterministic=False):
-        a = torch.as_tensor([self.action_space.sample() for _ in range(len(o))],
-                            device=o.device)
+        a = torch.as_tensor(
+            [self.action_space.sample() for _ in range(len(o))], device=o.device
+        )
         return a

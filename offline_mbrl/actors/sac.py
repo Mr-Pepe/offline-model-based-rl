@@ -4,37 +4,48 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 from offline_mbrl.models.mlp_q_function import MLPQFunction
-from offline_mbrl.models.squashed_gaussian_mlp_actor import \
-    SquashedGaussianMLPActor
+from offline_mbrl.models.squashed_gaussian_mlp_actor import SquashedGaussianMLPActor
 from torch.optim.adamw import AdamW
 
 
 class SAC(nn.Module):
     # Based on https://spinningup.openai.com
 
-    def __init__(self, observation_space, action_space, hidden=(256, 256),
-                 activation=nn.ReLU, pi_lr=3e-4, q_lr=3e-4, gamma=0.99,
-                 alpha=0.2, polyak=0.995, batch_size=100, 
-                 pre_fn=None, device='cpu', **_):
-        '''
-            gamma (float): Discount factor. (Always between 0 and 1.)
+    def __init__(
+        self,
+        observation_space,
+        action_space,
+        hidden=(256, 256),
+        activation=nn.ReLU,
+        pi_lr=3e-4,
+        q_lr=3e-4,
+        gamma=0.99,
+        alpha=0.2,
+        polyak=0.995,
+        batch_size=100,
+        pre_fn=None,
+        device="cpu",
+        **_
+    ):
+        """
+        gamma (float): Discount factor. (Always between 0 and 1.)
 
-            polyak (float): Interpolation factor in polyak averaging for target
-                networks. Target networks are updated towards main networks
-                according to:
+        polyak (float): Interpolation factor in polyak averaging for target
+            networks. Target networks are updated towards main networks
+            according to:
 
-                .. math:: \\theta_{\\text{targ}} \\leftarrow
-                    \\rho \\theta_{\\text{targ}} + (1-\\rho) \\theta
+            .. math:: \\theta_{\\text{targ}} \\leftarrow
+                \\rho \\theta_{\\text{targ}} + (1-\\rho) \\theta
 
-                where :math:`\\rho` is polyak. (Always between 0 and 1, usually
-                close to 1.)
+            where :math:`\\rho` is polyak. (Always between 0 and 1, usually
+            close to 1.)
 
-            lr (float): Learning rate (used for both policy and value learning).
+        lr (float): Learning rate (used for both policy and value learning).
 
-            alpha (float): Entropy regularization coefficient. (Equivalent to
-                inverse of reward scale in the original SAC paper.)
+        alpha (float): Entropy regularization coefficient. (Equivalent to
+            inverse of reward scale in the original SAC paper.)
 
-        '''
+        """
 
         super().__init__()
 
@@ -55,13 +66,13 @@ class SAC(nn.Module):
 
         # build policy and value functions
         self.pi = SquashedGaussianMLPActor(
-            obs_dim, act_dim, hidden, activation, act_limit)
+            obs_dim, act_dim, hidden, activation, act_limit
+        )
         self.q1 = MLPQFunction(obs_dim, act_dim, hidden, activation)
         self.q2 = MLPQFunction(obs_dim, act_dim, hidden, activation)
 
         # List of parameters for both Q-networks (save this for convenience)
-        self.q_params = itertools.chain(
-            self.q1.parameters(), self.q2.parameters())
+        self.q_params = itertools.chain(self.q1.parameters(), self.q2.parameters())
 
         # Set up optimizers for policy and q-function
         self.pi_optimizer = AdamW(self.pi.parameters(), lr=pi_lr)
@@ -77,8 +88,13 @@ class SAC(nn.Module):
             p.requires_grad = False
 
     def compute_loss_q(self, data):
-        o, a, r, o2, d = data['obs'], data['act'], \
-            data['rew'], data['obs2'], data['done']
+        o, a, r, o2, d = (
+            data["obs"],
+            data["act"],
+            data["rew"],
+            data["obs2"],
+            data["done"],
+        )
 
         if self.pre_fn:
             o = self.pre_fn(o)
@@ -96,22 +112,22 @@ class SAC(nn.Module):
             q1_pi_targ = self.target.q1(o2, a2)
             q2_pi_targ = self.target.q2(o2, a2)
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
-            backup = r + self.gamma * \
-                ~d * (q_pi_targ - self.alpha * logp_a2)
+            backup = r + self.gamma * ~d * (q_pi_targ - self.alpha * logp_a2)
 
         # MSE loss against Bellman backup
-        loss_q1 = ((q1 - backup)**2).mean()
-        loss_q2 = ((q2 - backup)**2).mean()
+        loss_q1 = ((q1 - backup) ** 2).mean()
+        loss_q2 = ((q2 - backup) ** 2).mean()
         loss_q = loss_q1 + loss_q2
 
         # Useful info for logging
-        q_info = dict(Q1Vals=q1.cpu().detach().numpy(),
-                      Q2Vals=q2.cpu().detach().numpy())
+        q_info = dict(
+            Q1Vals=q1.cpu().detach().numpy(), Q2Vals=q2.cpu().detach().numpy()
+        )
 
         return loss_q, q_info
 
     def compute_loss_pi(self, data):
-        o = data['obs']
+        o = data["obs"]
 
         if self.pre_fn:
             o = self.pre_fn(o)
@@ -179,9 +195,7 @@ class SAC(nn.Module):
     def act(self, o, deterministic=False):
         self.device = next(self.parameters()).device
 
-        obs = torch.as_tensor(o,
-                              dtype=torch.float32,
-                              device=self.device)
+        obs = torch.as_tensor(o, dtype=torch.float32, device=self.device)
 
         if self.pre_fn:
             obs = self.pre_fn(obs)
@@ -191,6 +205,7 @@ class SAC(nn.Module):
             return a
 
     def act_randomly(self, o, deterministic=False):
-        a = torch.as_tensor([self.action_space.sample() for _ in range(len(o))],
-                            device=o.device)
+        a = torch.as_tensor(
+            [self.action_space.sample() for _ in range(len(o))], device=o.device
+        )
         return a

@@ -27,11 +27,7 @@ def mpi_fork(n, bind_to_core=False):
         return
     if os.getenv("IN_MPI") is None:
         env = os.environ.copy()
-        env.update(
-            MKL_NUM_THREADS="1",
-            OMP_NUM_THREADS="1",
-            IN_MPI="1"
-        )
+        env.update(MKL_NUM_THREADS="1", OMP_NUM_THREADS="1", IN_MPI="1")
         args = ["mpirun", "-np", str(n)]
         if bind_to_core:
             args += ["-bind-to", "core"]
@@ -40,9 +36,8 @@ def mpi_fork(n, bind_to_core=False):
         sys.exit()
 
 
-def msg(m, string=''):
-    print(('Message from %d: %s \t ' %
-           (MPI.COMM_WORLD.Get_rank(), string))+str(m))
+def msg(m, string=""):
+    print(("Message from %d: %s \t " % (MPI.COMM_WORLD.Get_rank(), string)) + str(m))
 
 
 def proc_id():
@@ -88,14 +83,14 @@ def mpi_statistics_scalar(x, with_min_and_max=False):
         x: An array containing samples of the scalar to produce statistics
             for.
 
-        with_min_and_max (bool): If true, return min and max of x in 
+        with_min_and_max (bool): If true, return min and max of x in
             addition to mean and std.
     """
     x = np.array(x, dtype=np.float32)
     global_sum, global_n = mpi_sum([np.sum(x), len(x)])
     mean = global_sum / global_n
 
-    global_sum_sq = mpi_sum(np.sum((x - mean)**2))
+    global_sum_sq = mpi_sum(np.sum((x - mean) ** 2))
     std = np.sqrt(global_sum_sq / global_n)  # compute global std
 
     if with_min_and_max:
