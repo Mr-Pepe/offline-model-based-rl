@@ -33,10 +33,11 @@ def test_trainer_loads_behavioral_cloning_agent():
 
 @pytest.mark.medium
 def test_BC_agent_overfits_on_single_batch():
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     env_name = HALF_CHEETAH_EXPERT_V2
     env = gym.make(env_name)
 
-    buffer, obs_dim, act_dim = load_dataset_from_env(env)
+    buffer, obs_dim, act_dim = load_dataset_from_env(env, buffer_device=device)
 
     agent = BC(
         env.observation_space,
@@ -54,53 +55,3 @@ def test_BC_agent_overfits_on_single_batch():
             print(loss, end="\r")
 
     assert loss < 1e-5
-
-
-def test_BC_agent_trains_on_dataset():
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    env_name = HALF_CHEETAH_EXPERT_V2
-    env = gym.make(env_name)
-
-    buffer, obs_dim, act_dim = load_dataset_from_env(
-        env, n_samples=-1, buffer_device=device
-    )
-
-    agent = BC(
-        env.observation_space,
-        env.action_space,
-        batch_size=256,
-        lr=1e-4,
-        pre_fn=get_preprocessing_function(env_name, device=device),
-        device=device,
-    )
-
-    for i in range(100):
-        loss = agent.multi_update(1, buffer, debug=True)
-
-        if i % 100 == 0:
-            print(loss, end="\r")
-
-
-def test_train_BC_agent():
-    epochs = 100
-    steps_per_epoch = 10000
-    init_steps = 100
-    random_steps = 50
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    trainer = Trainer(
-        HALF_CHEETAH_EXPERT_V2,
-        epochs=epochs,
-        steps_per_epoch=steps_per_epoch,
-        max_ep_len=30,
-        init_steps=init_steps,
-        random_steps=random_steps,
-        agent_kwargs=dict(type="bc", batch_size=256),
-        use_model=False,
-        env_steps_per_step=0,
-        n_samples_from_dataset=-1,
-        device=device,
-    )
-
-    test_performances, action_log = trainer.train()

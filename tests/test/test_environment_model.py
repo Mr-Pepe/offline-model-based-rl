@@ -367,7 +367,7 @@ def test_deterministic_ensemble_overfits_on_batch():
 
         print(loss.item())
 
-    assert loss.item() < 1e-4
+    assert loss.item() < 3e-4
 
 
 @pytest.mark.fast

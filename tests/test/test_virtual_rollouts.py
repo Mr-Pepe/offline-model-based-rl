@@ -10,7 +10,6 @@ from offline_mbrl.actors.sac import SAC
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.utils.envs import HOPPER_RANDOM_V2
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
-from offline_mbrl.utils.mazes import plot_antmaze_umaze
 from offline_mbrl.utils.postprocessing import (
     get_postprocessing_function,
     postprocessing_functions,
@@ -280,16 +279,6 @@ def test_continuously_grow_rollouts(plot=False):
         if d:
             o = env.reset()
 
-    if plot:
-        plot_antmaze_umaze()
-        plt.scatter(
-            buffer.obs_buf[:steps, 0].cpu(),
-            buffer.obs_buf[:steps, 1].cpu(),
-            marker=".",
-            s=2,
-        )
-        plt.show()
-
     agent = SAC(observation_space, action_space, device=device)
 
     last_observations = None
@@ -322,17 +311,3 @@ def test_continuously_grow_rollouts(plot=False):
 
         for length in last_observations["lengths"]:
             assert length > 0 and length <= max_rollout_length
-
-        if plot and step % 1 == 0:
-            plot_antmaze_umaze()
-            plt.scatter(
-                virtual_buffer.obs_buf[
-                    : (step + 1) * n_rollouts * steps_per_rollout, 0
-                ].cpu(),
-                virtual_buffer.obs_buf[
-                    : (step + 1) * n_rollouts * steps_per_rollout, 1
-                ].cpu(),
-                marker=".",
-                s=2,
-            )
-            plt.show()

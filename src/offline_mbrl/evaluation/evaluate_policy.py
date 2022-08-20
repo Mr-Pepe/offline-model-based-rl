@@ -4,10 +4,10 @@ import os
 import os.path as osp
 import time
 
+import gym
 import joblib
 import torch
 
-from offline_mbrl.utils.envs import get_test_env
 from offline_mbrl.utils.logx import EpochLogger
 from offline_mbrl.utils.setup_test_env import setup_test_env
 from offline_mbrl.utils.str2bool import str2bool
@@ -57,7 +57,7 @@ def load_policy_and_env(fpath, itr="last", deterministic=False, test_env=True):
         env = state["env"]
 
         if test_env:
-            env = get_test_env(env.spec.id)
+            env = gym.make(env.spec.id)
 
     except Exception:
         env = None

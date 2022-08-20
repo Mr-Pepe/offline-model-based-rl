@@ -12,17 +12,13 @@ from offline_mbrl.actors.sac import SAC
 from offline_mbrl.evaluation.evaluate_policy import test_agent
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.utils.actions import Actions
-from offline_mbrl.utils.envs import get_test_env
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.logx import EpochLogger
 from offline_mbrl.utils.model_needs_training import model_needs_training
 from offline_mbrl.utils.modes import ALEATORIC_PENALTY, COPYCAT
 from offline_mbrl.utils.postprocessing import get_postprocessing_function
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
-from offline_mbrl.utils.pretrain_agent import pretrain_agent
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
-from offline_mbrl.utils.reward_functions import get_reward_function
-from offline_mbrl.utils.sample_selectors import get_selector
 from offline_mbrl.utils.value_from_schedule import get_value_from_schedule
 from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
 
@@ -61,11 +57,9 @@ class Trainer:
         max_rollout_length=999999,
         continuous_rollouts=False,
         train_model_every=250,
-        use_custom_reward=False,
         real_buffer_size=int(1e6),
         virtual_buffer_size=int(1e6),
         reset_buffer=False,
-        virtual_pretrain_epochs=0,
         train_model_from_scratch=False,
         reset_maze2d_umaze=False,
         pretrain_epochs=0,
@@ -126,7 +120,7 @@ class Trainer:
 
         self.env_name = env_name
         self.env = gym.make(env_name)
-        self.test_env = get_test_env(env_name)
+        self.test_env = gym.make(env_name)
         self.obs_dim = self.env.observation_space.shape
         self.act_dim = self.env.action_space.shape[0]
 
@@ -164,12 +158,6 @@ class Trainer:
         self.pre_fn = get_preprocessing_function(env_name, device)
         self.post_fn = get_postprocessing_function(env_name)
 
-        if use_custom_reward:
-            self.rew_fn = get_reward_function(env_name)
-            model_kwargs.update({"rew_fn": self.rew_fn})
-        else:
-            self.rew_fn = None
-
         model_kwargs.update({"device": device})
         model_kwargs.update({"pre_fn": self.pre_fn})
         model_kwargs.update({"post_fn": self.post_fn})
@@ -180,8 +168,6 @@ class Trainer:
                 self.env_model = torch.load(pretrained_model_path, map_location=device)
                 self.env_model.pre_fn = self.pre_fn
                 self.env_model.post_fn = self.post_fn
-                if self.rew_fn:
-                    self.env_model.rew_fn = self.rew_fn
             else:
                 self.env_model = EnvironmentModel(
                     self.obs_dim[0], self.act_dim, **model_kwargs
@@ -256,12 +242,6 @@ class Trainer:
                 {"interaction_agent": self.interaction_agent, "model": self.model}
             )
 
-        if curriculum[0] < 1:
-            self.selector = get_selector(env_name)(self.real_replay_buffer)
-            self.selector.progress = curriculum[0]
-        else:
-            self.selector = None
-
         self.epochs = epochs
         self.steps_per_epoch = steps_per_epoch
         self.init_steps = init_steps
@@ -290,7 +270,6 @@ class Trainer:
         self.reset_buffer = reset_buffer
         self.reset_maze2d_umaze = reset_maze2d_umaze and "maze2d-umaze" in env_name
         self.train_model_from_scratch = train_model_from_scratch
-        self.virtual_pretrain_epochs = virtual_pretrain_epochs
         self.curriculum = curriculum
 
         self.num_test_episodes = num_test_episodes
@@ -339,13 +318,6 @@ class Trainer:
 
             rollout_length = get_value_from_schedule(self.rollout_schedule, epoch)
 
-            if self.selector is not None:
-                self.selector.progress = get_value_from_schedule(
-                    self.curriculum, epoch, is_float=True
-                )
-
-                self.real_replay_buffer.set_curriculum(self.selector)
-
             if not silent:
                 print(
                     "Epoch {}\tMax rollout length: {}".format(
@@ -390,22 +362,6 @@ class Trainer:
 
                     if self.reset_buffer:
                         self.virtual_replay_buffer.clear()
-
-                    if self.virtual_pretrain_epochs > 0 and epoch > 0:
-
-                        pretrain_agent(
-                            self.agent,
-                            self.env_model,
-                            self.real_replay_buffer,
-                            n_steps=self.virtual_pretrain_epochs * self.steps_per_epoch,
-                            n_random_actions=self.virtual_pretrain_epochs
-                            * self.steps_per_epoch
-                            / 4,
-                            max_rollout_length=self.max_ep_len,
-                            pessimism=self.model_pessimism,
-                            ood_threshold=self.ood_threshold,
-                            exploration_mode=self.exploration_mode,
-                        )
 
                     model_val_error = model_val_error.mean()
                     model_trained_at_all = True
@@ -659,5 +615,3 @@ def log_end_of_epoch(
 
     logger.log_tabular("Time", epoch, time.time() - start_time)
     logger.dump_tabular()
-
-    logger.save_replay_buffer_to_tensorboard(epoch, pessimism=pessimism)

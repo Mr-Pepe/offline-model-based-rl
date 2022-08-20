@@ -21,16 +21,6 @@ import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from offline_mbrl.utils.envs import (
-    ANTMAZE_MEDIUM_ENVS,
-    ANTMAZE_UMAZE_ENVS,
-    MAZE2D_UMAZE_ENVS,
-)
-from offline_mbrl.utils.mazes import (
-    plot_antmaze_medium,
-    plot_antmaze_umaze,
-    plot_maze2d_umaze,
-)
 from offline_mbrl.utils.mpi_tools import mpi_statistics_scalar, proc_id
 from offline_mbrl.utils.serialization_utils import convert_json
 
@@ -403,68 +393,3 @@ class EpochLogger(Logger):
             else v
         )
         return mpi_statistics_scalar(vals)
-
-    def save_replay_buffer_to_tensorboard(self, epoch, pessimism=None):
-        is_antmaze_umaze = self.env_name in ANTMAZE_UMAZE_ENVS
-        is_maze2d_umaze = self.env_name in MAZE2D_UMAZE_ENVS
-        is_antmaze_medium = self.env_name in ANTMAZE_MEDIUM_ENVS
-        if is_antmaze_umaze or is_maze2d_umaze or is_antmaze_medium:
-            fig_size = (6, 6)
-
-            if "replay_buffer" in self.pytorch_saver_elements:
-                buffer = self.pytorch_saver_elements["replay_buffer"]
-                if self.tensorboard_writer:
-                    f = plt.figure(figsize=fig_size)
-
-                    if is_antmaze_umaze:
-                        plot_antmaze_umaze(buffer=buffer)
-                    if is_maze2d_umaze:
-                        plot_maze2d_umaze(buffer=buffer)
-                    if is_antmaze_medium:
-                        plot_antmaze_medium(buffer=buffer, n_samples=100000)
-
-                    self.tensorboard_writer.add_figure(
-                        "ReplayBuffers/0RealReplayBuffer", f, epoch
-                    )
-
-            if "virtual_replay_buffer" in self.pytorch_saver_elements:
-                buffer = self.pytorch_saver_elements["virtual_replay_buffer"]
-                if self.tensorboard_writer:
-                    f = plt.figure(figsize=fig_size)
-
-                    if is_antmaze_umaze:
-                        plot_antmaze_umaze(buffer=buffer)
-                    if is_maze2d_umaze:
-                        plot_maze2d_umaze(buffer=buffer)
-                    if is_antmaze_medium:
-                        plot_antmaze_medium(buffer=buffer, n_samples=100000)
-
-                    self.tensorboard_writer.add_figure(
-                        "ReplayBuffers/1VirtualReplayBuffer", f, epoch
-                    )
-
-                    print(
-                        "{:.3f}% of samples outside support".format(
-                            (buffer.rew_buf == -pessimism).sum().float()
-                            / buffer.size
-                            * 100
-                        )
-                    )
-
-            if "eval_buffer" in self.pytorch_saver_elements:
-                buffer = self.pytorch_saver_elements["eval_buffer"]
-                if self.tensorboard_writer:
-                    f = plt.figure(figsize=fig_size)
-
-                    if is_antmaze_umaze:
-                        plot_antmaze_umaze(buffer=buffer)
-                    if is_maze2d_umaze:
-                        plot_maze2d_umaze(buffer=buffer)
-                    if is_antmaze_medium:
-                        plot_antmaze_medium(buffer=buffer)
-
-                    self.tensorboard_writer.add_figure(
-                        "ReplayBuffers/2TestEpisodesReplayBuffer", f, epoch
-                    )
-
-                self.pytorch_saver_elements.pop("eval_buffer")

@@ -1,11 +1,3 @@
-import d4rl  # noqa
-import gym
-
-from offline_mbrl.utils.mazes import (
-    ANTMAZE_MEDIUM_DIVERSE_GOAL,
-    ANTMAZE_UMAZE_DIVERSE_GOAL,
-    ANTMAZE_UMAZE_GOAL,
-)
 from offline_mbrl.utils.modes import (
     ALEATORIC_PARTITIONING,
     ALEATORIC_PENALTY,
@@ -14,10 +6,6 @@ from offline_mbrl.utils.modes import (
     EXPLICIT_PARTITIONING,
     EXPLICIT_PENALTY,
 )
-
-ANTMAZE_UMAZE_ENVS = ["antmaze-umaze-v0", "antmaze-umaze-diverse-v0"]
-
-MAZE2D_UMAZE_ENVS = ["maze2d-umaze-v1"]
 
 HOPPER_ORIGINAL = "Hopper-v2"
 HOPPER_RANDOM = "hopper-random-v0"
@@ -134,15 +122,11 @@ WALKER_ENVS = [
     WALKER_MEDIUM_EXPERT_V2,
 ]
 
-ANTMAZE_MEDIUM_ENVS = ["antmaze-medium-diverse-v0", "antmaze-medium-play-v0"]
 
 ENV_CATEGORIES = {
     "hopper": HOPPER_ENVS,
     "half_cheetah": HALF_CHEETAH_ENVS,
     "walker2d": WALKER_ENVS,
-    "antmaze_umaze": ANTMAZE_UMAZE_ENVS,
-    "maze2d_umaze": MAZE2D_UMAZE_ENVS,
-    "antmaze_medium": ANTMAZE_MEDIUM_ENVS,
 }
 
 # Hyperparameters
@@ -219,36 +203,3 @@ HYPERPARAMS = {
     },
     EXPLICIT_PENALTY: {},
 }
-
-
-def antmaze_umaze_test_env():
-    env = gym.make("antmaze-umaze-v0")
-    env.set_target(ANTMAZE_UMAZE_GOAL)
-    return env
-
-
-def antmaze_umaze_diverse_test_env():
-    env = gym.make("antmaze-umaze-v0")
-    env.set_target(ANTMAZE_UMAZE_DIVERSE_GOAL)
-    return env
-
-
-def antmaze_medium_diverse_test_env():
-    env = gym.make("antmaze-medium-diverse-v0")
-    env.set_target(ANTMAZE_MEDIUM_DIVERSE_GOAL)
-    return env
-
-
-TEST_ENV_MAPPING = {
-    "antmaze-umaze-v0": antmaze_umaze_test_env,
-    "antmaze-umaze-diverse-v0": antmaze_umaze_diverse_test_env,
-    "antmaze-medium-diverse-v0": antmaze_medium_diverse_test_env,
-    "antmaze-medium-play-v0": None,
-}
-
-
-def get_test_env(env_name):
-    if env_name in TEST_ENV_MAPPING:
-        return TEST_ENV_MAPPING[env_name]()
-    else:
-        return gym.make(env_name)
