@@ -43,8 +43,7 @@ class CopyCat(nn.Module):
         act_dim = action_space.shape[0]
         self.action_space = action_space
 
-        # TODO: Action limit for clamping: critically, assumes all dimensions
-        # share the same bound!
+        # Assumes all dimensions share the same bound
         act_limit = action_space.high[0]
 
         # build policy and value functions
