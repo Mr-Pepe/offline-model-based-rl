@@ -303,7 +303,7 @@ class ExperimentGrid:
         for k, v, sh in zip(self.keys, self.vals, self.shs):
             color_k = colorize(k.ljust(40), color="cyan", bold=True)
             print("", color_k, "[" + sh + "]" if sh is not None else "", "\n")
-            for i, val in enumerate(v):
+            for val in v:
                 print("\t" + str(convert_json(val)))
             print()
 

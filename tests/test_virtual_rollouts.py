@@ -127,7 +127,7 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
     rollout_length = 3
 
     start_time = time.time()
-    for i in range(n_runs):
+    for _ in range(n_runs):
         rollout, _ = generate_virtual_rollouts(
             model,
             agent,
@@ -149,7 +149,7 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
 
     start_time = time.time()
 
-    for i in range(n_runs * n_rollouts):
+    for _ in range(n_runs * n_rollouts):
         rollout = generate_virtual_rollout(
             model, agent, start_observation, rollout_length, stop_on_terminal=False
         )
@@ -287,7 +287,7 @@ def test_continuously_grow_rollouts(plot=False):
     steps_per_rollout = 1
     max_rollout_length = 10
 
-    for step in range(steps):
+    for _ in range(steps):
         rollouts, last_observations = generate_virtual_rollouts(
             model,
             agent,

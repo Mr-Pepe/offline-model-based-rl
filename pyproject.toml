@@ -48,10 +48,15 @@ ignore-patterns = ["venv.*"]
 
 [tool.pylint.messages_control]
 max-line-length = 88
+extension-pkg-whitelist = "mpi4py"
 disable = """
     too-few-public-methods,
     too-many-instance-attributes,
     too-many-arguments,
     missing-function-docstring,
-    duplicate-code
+    duplicate-code,
+    invalid-name
     """
+
+[tool.pylint.typecheck]
+generated-members = "numpy.*,torch.*"

@@ -401,7 +401,7 @@ class EnvironmentModel(nn.Module):
 
             avg_train_loss = 0
 
-            for i in range(n_train_batches):
+            for _ in range(n_train_batches):
                 x, y = get_x_y_from_batch(
                     data.sample_train_batch(batch_size, val_split), device
                 )

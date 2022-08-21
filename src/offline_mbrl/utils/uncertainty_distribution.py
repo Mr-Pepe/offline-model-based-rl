@@ -23,7 +23,7 @@ def get_uncertainty_distribution(env_name, mode, all_stats=False):
         os.path.join(MODELS_DIR, env_name + "-model.pt"), map_location=device
     )
 
-    buffer, obs_dim, act_dim = load_dataset_from_env(
+    buffer, _, _ = load_dataset_from_env(
         env, buffer_device=next(model.parameters()).device
     )
 
@@ -39,9 +39,9 @@ def get_uncertainty_distribution(env_name, mode, all_stats=False):
         obs_act = torch.cat((obs, act), dim=1)
 
         (
-            predictions,
-            this_means,
-            this_logvars,
+            _,
+            _,
+            _,
             this_explicit_uncertainty,
             this_epistemic_uncertainty,
             this_aleatoric_uncertainty,

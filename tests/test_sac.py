@@ -1,11 +1,6 @@
-import time
-
-import d4rl  # pylint: disable=unused-import
-import gym
 import pytest
 import torch
 
-from offline_mbrl.actors.sac import SAC
 from offline_mbrl.train import Trainer
 from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
@@ -83,33 +78,3 @@ def test_sac_offline():
     final_return, _ = trainer.train()
 
     assert final_return[-1, -1] > 400
-
-
-def sac_trains_faster_on_gpu_on_filled_buffer():
-
-    for device in ["cpu", "cuda"]:
-        torch.manual_seed(0)
-
-        env = gym.make(HALF_CHEETAH_RANDOM)
-        buffer, obs_dim, act_dim = load_dataset_from_env(
-            env, buffer_device=device, n_samples=100000
-        )
-
-        agent = SAC(
-            env.observation_space, env.action_space, batch_size=256, device=device
-        )
-
-        logger = EpochLogger(**logger_kwargs)
-
-        n_updates = 50
-        i_update = 0
-
-        start_time = time.time()
-
-        for _ in range(n_updates):
-            print("Update {}/{}".format(i_update, n_updates), end="\r")
-            agent.multi_update(20, buffer, logger)
-            i_update += 1
-
-        print("")
-        print("Time: {}".format(time.time() - start_time))
