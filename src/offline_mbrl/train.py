@@ -6,7 +6,6 @@ import torch
 from ray import tune
 
 from offline_mbrl.actors.behavioral_cloning import BC
-from offline_mbrl.actors.cc import CopyCat
 from offline_mbrl.actors.cql import CQL
 from offline_mbrl.actors.sac import SAC
 from offline_mbrl.evaluation.evaluate_policy import test_agent
@@ -15,7 +14,7 @@ from offline_mbrl.utils.actions import Actions
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.logx import EpochLogger
 from offline_mbrl.utils.model_needs_training import model_needs_training
-from offline_mbrl.utils.modes import ALEATORIC_PENALTY, COPYCAT
+from offline_mbrl.utils.modes import ALEATORIC_PENALTY
 from offline_mbrl.utils.postprocessing import get_postprocessing_function
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
@@ -197,12 +196,6 @@ class Trainer:
                     )
                 elif agent_kwargs["type"] == "cql":
                     self.agent = CQL(
-                        self.env.observation_space,
-                        self.env.action_space,
-                        **agent_kwargs
-                    )
-                elif agent_kwargs["type"] == "copycat":
-                    self.agent = CopyCat(
                         self.env.observation_space,
                         self.env.action_space,
                         **agent_kwargs
@@ -429,14 +422,7 @@ class Trainer:
 
                 # Update agent
                 if step_total >= self.init_steps or self.pretrain_epochs > 0:
-                    if self.agent_kwargs["type"] == COPYCAT:
-                        self.agent.multi_update(
-                            self.agent_updates_per_step,
-                            self.real_replay_buffer,
-                            self.env_model,
-                            self.logger,
-                        )
-                    elif self.use_model and self.rollouts_per_step > 0:
+                    if self.use_model and self.rollouts_per_step > 0:
                         for _ in range(self.agent_updates_per_step):
                             rollouts, prev_obs = generate_virtual_rollouts(
                                 self.env_model,

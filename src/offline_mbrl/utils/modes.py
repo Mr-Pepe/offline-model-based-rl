@@ -9,7 +9,6 @@ OFFLINE_EXPLORATION_PARTITIONING = "offline-exploration-partitioning"
 UNDERESTIMATION = "underestimation"
 BEHAVIORAL_CLONING = "behavioral-cloning"
 CQL = "cql"
-COPYCAT = "copycat"
 SAC = "sac"
 MBPO = "mbpo"
 SURVIVAL = "survival"
@@ -24,7 +23,6 @@ MODES = [
     UNDERESTIMATION,
     BEHAVIORAL_CLONING,
     CQL,
-    COPYCAT,
     OFFLINE_EXPLORATION_PENALTY,
     OFFLINE_EXPLORATION_PARTITIONING,
     SAC,

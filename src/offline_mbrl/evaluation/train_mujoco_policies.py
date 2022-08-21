@@ -24,7 +24,6 @@ from offline_mbrl.utils.envs import (
 from offline_mbrl.utils.modes import (
     ALEATORIC_PENALTY,
     BEHAVIORAL_CLONING,
-    COPYCAT,
     CQL,
     MBPO,
     MODES,
@@ -60,7 +59,7 @@ def get_exp_name(config):
     ] == 0:
         exp_name += "-offline"
 
-    if config["mode"] not in [BEHAVIORAL_CLONING, CQL, COPYCAT, SAC]:
+    if config["mode"] not in [BEHAVIORAL_CLONING, CQL, SAC]:
         exp_name += (
             "-"
             + str(config["rollouts_per_step"])
@@ -105,7 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("--level", type=int, default=0)
     parser.add_argument("--tuned_params", type=str2bool, default=False)
     parser.add_argument("--new_model", type=str2bool, default=False)
-    parser.add_argument("--mode", type=str, default=COPYCAT)
+    parser.add_argument("--mode", type=str, default=SAC)
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--num_test_episodes", type=int, default=20)
     parser.add_argument("--seeds", type=int, default=1)
@@ -150,9 +149,6 @@ if __name__ == "__main__":
     if args.mode == BEHAVIORAL_CLONING:
         use_model = False
         agent_type = "bc"
-    elif args.mode == COPYCAT:
-        use_model = True
-        agent_type = "copycat"
     elif args.mode == CQL:
         use_model = False
         agent_type = "cql"
@@ -270,10 +266,6 @@ if __name__ == "__main__":
             interaction_agent_threshold=args.interaction_threshold,
             exploration_chance=args.exploration_chance,
         )
-
-        # According to appendix in COMBO paper
-        # if args.env_name in WALKER_ENVS:
-        #     config['agent_kwargs'].update(pi_lr=1e-5, q_lr=1e-4)
 
         assert config["agent_kwargs"]["batch_size"] is not None
         assert config["agent_kwargs"]["agent_hidden"] is not None
