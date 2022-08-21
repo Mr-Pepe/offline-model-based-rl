@@ -11,27 +11,9 @@ from ray.tune.suggest.hyperopt import HyperOptSearch
 
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.user_config import MODELS_DIR
-from offline_mbrl.utils.envs import (
-    HALF_CHEETAH_EXPERT,
-    HALF_CHEETAH_MEDIUM,
-    HALF_CHEETAH_MEDIUM_EXPERT,
-    HALF_CHEETAH_MEDIUM_REPLAY,
-    HALF_CHEETAH_RANDOM,
-    HOPPER_EXPERT,
-    HOPPER_MEDIUM,
-    HOPPER_MEDIUM_EXPERT,
-    HOPPER_MEDIUM_REPLAY,
-    HOPPER_RANDOM,
-    WALKER_EXPERT,
-    WALKER_MEDIUM,
-    WALKER_MEDIUM_EXPERT,
-    WALKER_MEDIUM_REPLAY,
-    WALKER_RANDOM,
-)
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.postprocessing import get_postprocessing_function
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
-from offline_mbrl.utils.str2bool import str2bool
 
 
 def training_function(config, data, save_path=None, tuning=True):
@@ -47,7 +29,7 @@ def training_function(config, data, save_path=None, tuning=True):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env_name", type=str, default=WALKER_MEDIUM_REPLAY)
+    parser.add_argument("--env_name", type=str, required=True)
     parser.add_argument("--level", type=int, default=0)
     parser.add_argument("--patience", type=int, default=30)
     parser.add_argument("--n_hidden", type=int, default=200)

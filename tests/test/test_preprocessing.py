@@ -1,47 +1,13 @@
-import d4rl  # noqa
+import d4rl  # pylint: disable=unused-import
 import gym
 import numpy as np
 import pytest
 import torch
 
-from offline_mbrl.utils.envs import (
-    HALF_CHEETAH_EXPERT,
-    HALF_CHEETAH_EXPERT_V1,
-    HALF_CHEETAH_MEDIUM,
-    HALF_CHEETAH_MEDIUM_EXPERT,
-    HALF_CHEETAH_MEDIUM_EXPERT_V1,
-    HALF_CHEETAH_MEDIUM_REPLAY,
-    HALF_CHEETAH_MEDIUM_REPLAY_V1,
-    HALF_CHEETAH_MEDIUM_V1,
-    HALF_CHEETAH_RANDOM,
-    HALF_CHEETAH_RANDOM_V1,
-    HOPPER_EXPERT,
-    HOPPER_EXPERT_V1,
-    HOPPER_MEDIUM,
-    HOPPER_MEDIUM_EXPERT,
-    HOPPER_MEDIUM_EXPERT_V1,
-    HOPPER_MEDIUM_REPLAY,
-    HOPPER_MEDIUM_REPLAY_V1,
-    HOPPER_MEDIUM_V1,
-    HOPPER_RANDOM,
-    HOPPER_RANDOM_V1,
-    WALKER_EXPERT,
-    WALKER_MEDIUM,
-    WALKER_MEDIUM_EXPERT,
-    WALKER_MEDIUM_EXPERT_V1,
-    WALKER_MEDIUM_REPLAY,
-    WALKER_MEDIUM_REPLAY_V1,
-    WALKER_RANDOM,
-    WALKER_EXPERT_v1,
-    WALKER_MEDIUM_v1,
-    WALKER_RANDOM_v1,
-)
-from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.preprocessing import (
     envs_with_preprocessing_functions,
     get_preprocessing_function,
 )
-from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
 
 @pytest.mark.slow

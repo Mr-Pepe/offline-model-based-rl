@@ -1,4 +1,4 @@
-import d4rl  # noqa
+import d4rl  # pylint: disable=unused-import
 import numpy as np
 import pytest
 
@@ -7,10 +7,8 @@ from offline_mbrl.utils.actions import Actions
 from offline_mbrl.utils.envs import (
     HALF_CHEETAH_MEDIUM_REPLAY_V2,
     HOPPER_MEDIUM_REPLAY_V2,
-    HOPPER_ORIGINAL,
     HOPPER_RANDOM_V2,
     WALKER_MEDIUM_REPLAY_V2,
-    WALKER_ORIGINAL,
 )
 from offline_mbrl.utils.postprocessing import postprocessing_functions
 

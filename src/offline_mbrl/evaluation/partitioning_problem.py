@@ -1,6 +1,6 @@
 import os
 
-import d4rl  # noqa
+import d4rl  # pylint: disable=unused-import
 import gym
 import matplotlib.pyplot as plt
 import torch
@@ -8,7 +8,6 @@ import torch
 from offline_mbrl.actors.random_agent import RandomAgent
 from offline_mbrl.user_config import MODELS_DIR
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
-from offline_mbrl.utils.modes import ALEATORIC_PENALTY
 
 name = "Walker2d"
 prefix = name.lower() + "-"

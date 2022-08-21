@@ -1,6 +1,6 @@
 from functools import partial
 
-import d4rl  # noqa
+import d4rl  # pylint: disable=unused-import
 import gym
 import torch
 
@@ -51,7 +51,6 @@ from offline_mbrl.utils.envs import (
     WALKER_RANDOM_v1,
     WALKER_RANDOM_v2,
 )
-from offline_mbrl.utils.load_dataset import load_dataset_from_env
 
 envs_with_preprocessing_functions = [
     HALF_CHEETAH_RANDOM,

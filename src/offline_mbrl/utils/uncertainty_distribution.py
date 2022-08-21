@@ -1,29 +1,10 @@
 import os
 
-import d4rl  # noqa
+import d4rl  # pylint: disable=unused-import
 import gym
 import torch
 
 from offline_mbrl.user_config import MODELS_DIR
-from offline_mbrl.utils.envs import (
-    HALF_CHEETAH_EXPERT,
-    HALF_CHEETAH_MEDIUM,
-    HALF_CHEETAH_MEDIUM_EXPERT,
-    HALF_CHEETAH_MEDIUM_EXPERT_V1,
-    HALF_CHEETAH_MEDIUM_REPLAY,
-    HALF_CHEETAH_MEDIUM_REPLAY_V1,
-    HALF_CHEETAH_RANDOM,
-    HOPPER_EXPERT,
-    HOPPER_MEDIUM,
-    HOPPER_MEDIUM_EXPERT,
-    HOPPER_MEDIUM_EXPERT_V1,
-    HOPPER_MEDIUM_REPLAY,
-    HOPPER_MEDIUM_REPLAY_V1,
-    HOPPER_MEDIUM_V1,
-    HOPPER_RANDOM,
-    WALKER_MEDIUM,
-    WALKER_MEDIUM_REPLAY,
-)
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.modes import (
     ALEATORIC_MODES,

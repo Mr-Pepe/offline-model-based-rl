@@ -6,16 +6,9 @@ import ray
 import torch
 from ray import tune
 
-from offline_mbrl.evaluation.train_mujoco_policies import get_exp_name
 from offline_mbrl.train import Trainer
 from offline_mbrl.user_config import MODELS_DIR
-from offline_mbrl.utils.envs import HALF_CHEETAH_MEDIUM_V2, HOPPER_EXPERT_V2
-from offline_mbrl.utils.modes import (
-    ALEATORIC_PARTITIONING,
-    EPISTEMIC_PENALTY,
-    PARTITIONING_MODES,
-    PENALTY_MODES,
-)
+from offline_mbrl.utils.modes import PARTITIONING_MODES, PENALTY_MODES
 from offline_mbrl.utils.run_utils import setup_logger_kwargs
 from offline_mbrl.utils.str2bool import str2bool
 
@@ -27,8 +20,8 @@ def training_function(config, tuning=True):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env_name", type=str, default=HALF_CHEETAH_MEDIUM_V2)
-    parser.add_argument("--mode", type=str, default=EPISTEMIC_PENALTY)
+    parser.add_argument("--env_name", type=str, required=True)
+    parser.add_argument("--mode", type=str, required=True)
     parser.add_argument("--pretrained_agent_path", type=str, default="")
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--n_trials", type=int, default=50)

@@ -9,7 +9,6 @@ import subprocess
 import sys
 import time
 import zlib
-from copy import deepcopy
 from subprocess import CalledProcessError
 from textwrap import dedent
 
@@ -25,7 +24,7 @@ from offline_mbrl.user_config import (
     WAIT_BEFORE_LAUNCH,
 )
 from offline_mbrl.utils.logx import colorize
-from offline_mbrl.utils.mpi_tools import mpi_fork, msg
+from offline_mbrl.utils.mpi_tools import mpi_fork
 from offline_mbrl.utils.serialization_utils import convert_json
 
 DIV_LINE_WIDTH = 80

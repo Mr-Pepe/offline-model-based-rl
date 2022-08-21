@@ -1,41 +1,13 @@
 import os
 
-import d4rl  # noqa
+import d4rl  # pylint: disable=unused-import
 import gym
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
-from matplotlib import cm
 
 from offline_mbrl.actors.random_agent import RandomAgent
-from offline_mbrl.actors.sac import SAC
 from offline_mbrl.user_config import MODELS_DIR
-from offline_mbrl.utils.envs import (
-    HALF_CHEETAH_EXPERT,
-    HALF_CHEETAH_MEDIUM,
-    HALF_CHEETAH_MEDIUM_EXPERT,
-    HALF_CHEETAH_MEDIUM_EXPERT_V1,
-    HALF_CHEETAH_MEDIUM_REPLAY,
-    HALF_CHEETAH_MEDIUM_REPLAY_V1,
-    HALF_CHEETAH_RANDOM,
-    HOPPER_EXPERT,
-    HOPPER_MEDIUM,
-    HOPPER_MEDIUM_EXPERT,
-    HOPPER_MEDIUM_EXPERT_V1,
-    HOPPER_MEDIUM_REPLAY,
-    HOPPER_MEDIUM_REPLAY_V1,
-    HOPPER_MEDIUM_V1,
-    HOPPER_RANDOM,
-    WALKER_MEDIUM,
-    WALKER_MEDIUM_EXPERT_V2,
-    WALKER_MEDIUM_REPLAY,
-    WALKER_MEDIUM_REPLAY_V2,
-    WALKER_MEDIUM_v2,
-)
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
-from offline_mbrl.utils.modes import ALEATORIC_PENALTY
-from offline_mbrl.utils.replay_buffer import ReplayBuffer
-from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
 
 name = "Hopper"
 prefix = name.lower() + "-"

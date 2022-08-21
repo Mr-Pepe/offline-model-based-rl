@@ -1,6 +1,6 @@
 import time
 
-import d4rl  # noqa
+import d4rl  # pylint: disable=unused-import
 import gym
 import pytest
 import torch

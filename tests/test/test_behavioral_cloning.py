@@ -1,4 +1,4 @@
-import d4rl  # noqa
+import d4rl  # pylint: disable=unused-import
 import gym
 import pytest
 import torch
@@ -6,11 +6,7 @@ import torch
 from offline_mbrl.actors.behavioral_cloning import BC
 from offline_mbrl.actors.sac import SAC
 from offline_mbrl.train import Trainer
-from offline_mbrl.utils.envs import (
-    HALF_CHEETAH_EXPERT_V2,
-    HOPPER_EXPERT_V2,
-    HOPPER_MEDIUM_REPLAY_V2,
-)
+from offline_mbrl.utils.envs import HALF_CHEETAH_EXPERT_V2, HOPPER_MEDIUM_REPLAY_V2
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
 

@@ -1,6 +1,5 @@
-import d4rl  # noqa
+import d4rl  # pylint: disable=unused-import
 import gym
-import numpy as np
 import torch
 
 from offline_mbrl.utils.load_dataset import load_dataset_from_env

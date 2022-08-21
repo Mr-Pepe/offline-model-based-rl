@@ -8,6 +8,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.isort]
 profile = "black"
+line_length = 88
+
+[tool.black]
+line_length = 88
 
 [tool.pytest.ini_options]
 addopts = '''
@@ -22,3 +26,32 @@ markers = '''
     medium: Medium tests, finishing roughly less than a minute
     slow: Slowest tests, can take hours
     '''
+
+[tool.pylint.master]
+recursive = "yes"
+load-plugins= """
+    pylint.extensions.mccabe,
+    pylint.extensions.docparams
+    """
+accept-no-param-doc = "no"
+accept-no-raise-doc = "no"
+accept-no-return-doc = "no"
+accept-no-yields-doc = "no"
+ignore = [
+    "conf.py", # The Sphinx config file
+    ".tox",
+    "build",
+    "dist",
+    "log"
+]
+ignore-patterns = ["venv.*"]
+
+[tool.pylint.messages_control]
+max-line-length = 88
+disable = """
+    too-few-public-methods,
+    too-many-instance-attributes,
+    too-many-arguments,
+    missing-function-docstring,
+    duplicate-code
+    """

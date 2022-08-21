@@ -1,6 +1,6 @@
 from math import pi as PI
 
-import d4rl  # noqa
+import d4rl  # pylint: disable=unused-import
 import gym
 import matplotlib.pyplot as plt
 import numpy as np

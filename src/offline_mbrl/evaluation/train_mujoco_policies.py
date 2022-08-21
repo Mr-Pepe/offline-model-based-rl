@@ -10,30 +10,17 @@ from ray.tune.suggest.ax import AxSearch
 
 from offline_mbrl.train import Trainer
 from offline_mbrl.user_config import MODELS_DIR
-from offline_mbrl.utils.envs import (
-    HALF_CHEETAH_MEDIUM_EXPERT,
-    HALF_CHEETAH_MEDIUM_REPLAY,
-    HOPPER_MEDIUM,
-    HOPPER_MEDIUM_EXPERT,
-    HYPERPARAMS,
-    WALKER_ENVS,
-    WALKER_MEDIUM_EXPERT,
-    WALKER_MEDIUM_REPLAY,
-    WALKER_MEDIUM_REPLAY_V2,
-)
+from offline_mbrl.utils.envs import HYPERPARAMS
 from offline_mbrl.utils.modes import (
-    ALEATORIC_PENALTY,
     BEHAVIORAL_CLONING,
     MBPO,
     MODES,
     PARTITIONING_MODES,
     PENALTY_MODES,
     SAC,
-    UNDERESTIMATION,
 )
 from offline_mbrl.utils.postprocessing import get_postprocessing_function
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
-from offline_mbrl.utils.print_warning import print_warning
 from offline_mbrl.utils.run_utils import setup_logger_kwargs
 from offline_mbrl.utils.str2bool import str2bool
 from offline_mbrl.utils.uncertainty_distribution import get_uncertainty_distribution
@@ -96,7 +83,7 @@ def training_wrapper(config, seed):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--env_name", type=str, default=WALKER_MEDIUM_REPLAY_V2)
+    parser.add_argument("--env_name", type=str, required=True)
     parser.add_argument("--level", type=int, default=0)
     parser.add_argument("--tuned_params", type=str2bool, default=False)
     parser.add_argument("--new_model", type=str2bool, default=False)

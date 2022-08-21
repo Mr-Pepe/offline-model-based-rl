@@ -16,7 +16,6 @@ import time
 import warnings
 
 import joblib
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
