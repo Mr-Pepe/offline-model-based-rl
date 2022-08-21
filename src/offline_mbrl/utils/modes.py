@@ -8,7 +8,6 @@ OFFLINE_EXPLORATION_PENALTY = "offline-exploration-penalty"
 OFFLINE_EXPLORATION_PARTITIONING = "offline-exploration-partitioning"
 UNDERESTIMATION = "underestimation"
 BEHAVIORAL_CLONING = "behavioral-cloning"
-CQL = "cql"
 SAC = "sac"
 MBPO = "mbpo"
 SURVIVAL = "survival"
@@ -22,7 +21,6 @@ MODES = [
     EPISTEMIC_PENALTY,
     UNDERESTIMATION,
     BEHAVIORAL_CLONING,
-    CQL,
     OFFLINE_EXPLORATION_PENALTY,
     OFFLINE_EXPLORATION_PARTITIONING,
     SAC,

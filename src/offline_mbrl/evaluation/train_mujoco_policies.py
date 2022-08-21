@@ -24,7 +24,6 @@ from offline_mbrl.utils.envs import (
 from offline_mbrl.utils.modes import (
     ALEATORIC_PENALTY,
     BEHAVIORAL_CLONING,
-    CQL,
     MBPO,
     MODES,
     PARTITIONING_MODES,
@@ -51,15 +50,12 @@ def training_function(config, tuning=True):
 def get_exp_name(config):
     exp_name = args.env_name + "-" + config["mode"]
 
-    if config["mode"] == CQL:
-        exp_name += "-" + str(config["agent_kwargs"]["n_actions"]) + "actions"
-
     if (config["mode"] == MBPO or config["mode"] == SAC) and config[
         "env_steps_per_step"
     ] == 0:
         exp_name += "-offline"
 
-    if config["mode"] not in [BEHAVIORAL_CLONING, CQL, SAC]:
+    if config["mode"] not in [BEHAVIORAL_CLONING, SAC]:
         exp_name += (
             "-"
             + str(config["rollouts_per_step"])
@@ -123,7 +119,6 @@ if __name__ == "__main__":
     parser.add_argument("--n_rollouts", type=int, default=50)
     parser.add_argument("--n_hidden", type=int, default=128)
     parser.add_argument("--n_trials", type=int, default=20)
-    parser.add_argument("--n_cql_actions", type=int, default=20)
     parser.add_argument("--n_samples_from_dataset", type=int, default=-1)
     parser.add_argument("--agent_updates_per_step", type=int, default=1)
     parser.add_argument("--pretrained_agent_path", type=str, default="")
@@ -149,9 +144,6 @@ if __name__ == "__main__":
     if args.mode == BEHAVIORAL_CLONING:
         use_model = False
         agent_type = "bc"
-    elif args.mode == CQL:
-        use_model = False
-        agent_type = "cql"
     elif args.mode == SAC:
         use_model = False
         agent_type = "sac"
@@ -254,7 +246,6 @@ if __name__ == "__main__":
                 gamma=0.99,
                 pi_lr=3e-4,
                 q_lr=3e-4,
-                n_actions=args.n_cql_actions,
             ),
             rollouts_per_step=rollouts_per_step,
             max_rollout_length=max_rollout_length,

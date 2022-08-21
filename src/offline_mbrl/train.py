@@ -6,7 +6,6 @@ import torch
 from ray import tune
 
 from offline_mbrl.actors.behavioral_cloning import BC
-from offline_mbrl.actors.cql import CQL
 from offline_mbrl.actors.sac import SAC
 from offline_mbrl.evaluation.evaluate_policy import test_agent
 from offline_mbrl.models.environment_model import EnvironmentModel
@@ -190,12 +189,6 @@ class Trainer:
                     )
                 elif agent_kwargs["type"] == "sac":
                     self.agent = SAC(
-                        self.env.observation_space,
-                        self.env.action_space,
-                        **agent_kwargs
-                    )
-                elif agent_kwargs["type"] == "cql":
-                    self.agent = CQL(
                         self.env.observation_space,
                         self.env.action_space,
                         **agent_kwargs
