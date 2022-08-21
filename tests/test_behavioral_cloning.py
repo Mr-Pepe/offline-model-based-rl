@@ -33,7 +33,7 @@ def test_BC_agent_overfits_on_single_batch():
     env_name = HALF_CHEETAH_EXPERT_V2
     env = gym.make(env_name)
 
-    buffer, obs_dim, act_dim = load_dataset_from_env(env, buffer_device=device)
+    buffer, _, _ = load_dataset_from_env(env, buffer_device=device)
 
     agent = BC(
         env.observation_space,

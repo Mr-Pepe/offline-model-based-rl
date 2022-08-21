@@ -18,7 +18,7 @@ def run_env(env, n_steps):
     next_obss = []
     dones = []
 
-    for step in range(n_steps):
+    for _ in range(n_steps):
         next_obs, _, done, _ = env.step(env.action_space.sample())
 
         next_obss.append(next_obs)

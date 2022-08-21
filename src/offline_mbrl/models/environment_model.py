@@ -481,7 +481,7 @@ class EnvironmentModel(nn.Module):
             avg_val_losses = torch.zeros((self.n_networks))
 
             for i_network in range(self.n_networks):
-                for i in range(n_val_batches):
+                for _ in range(n_val_batches):
                     x, y = get_x_y_from_batch(
                         data.sample_val_batch(batch_size, val_split), device
                     )

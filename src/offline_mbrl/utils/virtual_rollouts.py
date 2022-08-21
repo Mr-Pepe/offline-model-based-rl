@@ -130,7 +130,7 @@ def generate_virtual_rollout(
 
     this_observation = start_observation
 
-    for step in range(steps):
+    for _ in range(steps):
         action = agent.act(this_observation)
         pred = model.get_prediction(
             torch.as_tensor(

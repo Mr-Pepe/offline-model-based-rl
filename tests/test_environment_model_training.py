@@ -136,7 +136,7 @@ def test_training_stops_after_specified_number_of_batches():
     model = EnvironmentModel(obs_dim, act_dim, n_networks=5)
     model.to(device)
 
-    val_losses, n_train_batches = model.train_to_convergence(
+    _, n_train_batches = model.train_to_convergence(
         buffer, val_split=0.2, patience=1, debug=True, max_n_train_batches=50
     )
 

@@ -11,7 +11,7 @@ def test_returns_random_actions():
     env = gym.make(HOPPER_ORIGINAL)
     agent = RandomAgent(env)
 
-    for i in range(10):
+    for _ in range(10):
         action1 = agent.act()
         action2 = agent.act()
 

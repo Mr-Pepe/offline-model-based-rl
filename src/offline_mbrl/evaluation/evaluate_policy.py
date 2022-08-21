@@ -134,7 +134,7 @@ def test_agent(
     use_setup=False,
 ):
     sum_ep_ret = 0
-    for j in range(num_test_episodes):
+    for _ in range(num_test_episodes):
         d = False
         ep_ret = 0
         ep_len = 0

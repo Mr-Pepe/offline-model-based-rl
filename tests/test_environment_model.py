@@ -52,7 +52,7 @@ def test_uncertainty_is_always_zero_for_deterministic_model():
 
     tensor_size = (3, obs_dim + act_dim)
     input = torch.rand(tensor_size)
-    output, uncertainty = model.get_prediction(input, with_uncertainty=True)
+    _, uncertainty = model.get_prediction(input, with_uncertainty=True)
 
     assert uncertainty.numel() == 3
 
@@ -69,7 +69,7 @@ def test_uncertainty_is_between_one_and_zero_for_probabilistic_model():
 
     tensor_size = (3, obs_dim + act_dim)
     input = torch.rand(tensor_size)
-    output, uncertainty = model.get_prediction(input, with_uncertainty=True)
+    _, uncertainty = model.get_prediction(input, with_uncertainty=True)
 
     assert uncertainty.numel() == 3
 
@@ -92,7 +92,7 @@ def test_single_deterministic_network_overfits_on_single_sample():
 
     y_pred = 0
 
-    for i in range(1000):
+    for _ in range(1000):
         optim.zero_grad()
         y_pred, _, _, _, _, _ = model(torch.stack(3 * [x]))
         loss = criterion(y_pred, torch.stack(3 * [y]).unsqueeze(0))
@@ -116,7 +116,7 @@ def test_single_deterministic_network_overfits_on_batch():
 
     y_pred = 0
 
-    for i in range(1000):
+    for _ in range(1000):
         optim.zero_grad()
         y_pred, _, _, _, _, _ = model(x)
         loss = criterion(y_pred, y.unsqueeze(0))
@@ -149,7 +149,7 @@ def test_deterministic_model_trains_on_offline_data():
 
     losses = []
 
-    for i in range(2000):
+    for _ in range(2000):
         idxs = np.random.randint(0, observations.shape[0] - 1, size=batch_size)
         x = torch.as_tensor(
             np.concatenate((observations[idxs], actions[idxs]), axis=1),
@@ -244,7 +244,7 @@ def test_probabilistic_model_trains_on_toy_dataset(
     y_true = torch.sin(x_true)
     plt.figure()
 
-    for i in range(steps):
+    for _ in range(steps):
         model.train_to_convergence(
             buffer,
             lr=1e-4,
@@ -255,7 +255,7 @@ def test_probabilistic_model_trains_on_toy_dataset(
         )
 
         if plot:
-            _, mean_plt, logvar_plt, max_logvar_plt, _, uncertainty = model(
+            _, mean_plt, logvar_plt, max_logvar_plt, _, _ = model(
                 torch.cat(
                     (x_true.unsqueeze(-1), torch.zeros_like(x_true.unsqueeze(-1))),
                     dim=1,
@@ -263,7 +263,6 @@ def test_probabilistic_model_trains_on_toy_dataset(
             )
             mean_plt = mean_plt[:, :, 1].detach().cpu()
             logvar_plt = logvar_plt[:, :, 1].detach().cpu()
-            max_std = torch.exp(0.5 * max_logvar_plt[:, 1].detach().cpu())
 
             print(max_logvar_plt)
 
@@ -358,7 +357,7 @@ def test_deterministic_ensemble_overfits_on_batch():
 
     loss = torch.as_tensor(0)
 
-    for step in range(500):
+    for _ in range(500):
         optim.zero_grad()
         y_pred, _, _, _, _, _ = model(x)
         loss = criterion(y_pred, torch.stack(n_networks * [y]))
@@ -471,15 +470,15 @@ def test_deterministic_model_does_not_always_output_terminal():
     )
     optim = Adam(model.parameters(), lr=1e-2)
 
-    for i in range(500):
+    for step in range(500):
 
         x, y = get_x_y_from_batch(real_buffer.sample_train_batch(256, 0), device)
 
         optim.zero_grad()
         loss = deterministic_loss(x, y, model)
 
-        if i % 100 == 0:
-            print("Step: {} Loss: {:.3f}".format(i, loss.item()))
+        if step % 100 == 0:
+            print("Step: {} Loss: {:.3f}".format(step, loss.item()))
         loss.backward(retain_graph=True)
         optim.step()
 
@@ -488,16 +487,16 @@ def test_deterministic_model_does_not_always_output_terminal():
     agent = RandomAgent(env, device=device)
     virtual_buffer = ReplayBuffer(obs_dim, act_dim, 10000, device=device)
 
-    for model_rollout in range(10):
+    for _ in range(10):
         rollout, _ = generate_virtual_rollouts(model, agent, real_buffer, 50)
 
-        for i in range(len(rollout["obs"])):
+        for step in range(len(rollout["obs"])):
             virtual_buffer.store(
-                rollout["obs"][i],
-                rollout["act"][i],
-                rollout["rew"][i],
-                rollout["next_obs"][i],
-                rollout["done"][i],
+                rollout["obs"][step],
+                rollout["act"][step],
+                rollout["rew"][step],
+                rollout["next_obs"][step],
+                rollout["done"][step],
             )
 
     terminal_ratio = virtual_buffer.get_terminal_ratio()
@@ -524,15 +523,15 @@ def test_probabilistic_model_does_not_always_output_terminal():
     )
     optim = Adam(model.parameters(), lr=1e-3)
 
-    for i in range(500):
+    for step in range(500):
 
         x, y = get_x_y_from_batch(real_buffer.sample_train_batch(256, 0), device)
 
         optim.zero_grad()
         loss = probabilistic_loss(x, y, model)
 
-        if i % 100 == 0:
-            print("Step: {} Loss: {:.3f}".format(i, loss.item()))
+        if step % 100 == 0:
+            print("Step: {} Loss: {:.3f}".format(step, loss.item()))
         loss.backward(retain_graph=True)
         optim.step()
 
@@ -541,17 +540,16 @@ def test_probabilistic_model_does_not_always_output_terminal():
     agent = RandomAgent(env, device=device)
     virtual_buffer = ReplayBuffer(obs_dim, act_dim, 10000, device=device)
 
-    for model_rollout in range(10):
-
+    for _ in range(10):
         rollout, _ = generate_virtual_rollouts(model, agent, real_buffer, 50)
 
-        for i in range(len(rollout["obs"])):
+        for step in range(len(rollout["obs"])):
             virtual_buffer.store(
-                rollout["obs"][i],
-                rollout["act"][i],
-                rollout["rew"][i],
-                rollout["next_obs"][i],
-                rollout["done"][i],
+                rollout["obs"][step],
+                rollout["act"][step],
+                rollout["rew"][step],
+                rollout["next_obs"][step],
+                rollout["done"][step],
             )
 
     terminal_ratio = virtual_buffer.get_terminal_ratio()

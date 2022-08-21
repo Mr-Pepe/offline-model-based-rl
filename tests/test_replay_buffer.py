@@ -116,7 +116,7 @@ def test_buffer_returns_whether_it_contains_a_done_state():
 
     assert not buffer.has_terminal_state()
 
-    for step in range(100):
+    for _ in range(100):
         buffer.store(
             torch.as_tensor(0),
             torch.as_tensor(0),
@@ -127,7 +127,7 @@ def test_buffer_returns_whether_it_contains_a_done_state():
 
     assert not buffer.has_terminal_state()
 
-    for step in range(100):
+    for _ in range(100):
         buffer.store(
             torch.as_tensor(0),
             torch.as_tensor(0),
@@ -222,7 +222,7 @@ def test_store_batch_throws_error_if_buffer_too_small():
 def test_clear_buffer():
     buffer = ReplayBuffer(1, 1, 200)
 
-    for step in range(100):
+    for _ in range(100):
         buffer.store(
             torch.as_tensor(1),
             torch.as_tensor(1),
