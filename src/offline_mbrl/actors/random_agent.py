@@ -10,7 +10,7 @@ class RandomAgent:
     def eval(self):
         pass
 
-    def act(self, obs=0):
+    def act(self, unused_obs=0):
         return torch.as_tensor(
             self.act_space.sample().reshape((1, -1)), device=self.device
         )

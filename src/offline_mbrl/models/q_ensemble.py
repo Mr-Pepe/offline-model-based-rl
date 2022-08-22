@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from offline_mbrl.models.ensemble_dense_layer import EnsembleDenseLayer
 
@@ -20,8 +20,8 @@ class QEnsemble(nn.Module):
         )
 
     def forward(self, obs, act):
-        input = torch.stack(self.n_networks * [torch.cat([obs, act], dim=-1)])
-        q = self.layers(input)
+        obs_act = torch.stack(self.n_networks * [torch.cat([obs, act], dim=-1)])
+        q = self.layers(obs_act)
         idx = torch.zeros((1,))
 
         while idx.sum() < 1 or idx.sum() >= self.n_networks:

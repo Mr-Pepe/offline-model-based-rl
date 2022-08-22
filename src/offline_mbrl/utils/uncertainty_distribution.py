@@ -1,3 +1,6 @@
+# pylint: disable=consider-using-f-string
+
+
 import os
 
 import d4rl  # pylint: disable=unused-import
@@ -10,7 +13,6 @@ from offline_mbrl.utils.modes import (
     ALEATORIC_MODES,
     ALEATORIC_PARTITIONING,
     EPISTEMIC_MODES,
-    EXPLICIT_MODES,
 )
 
 
@@ -112,41 +114,41 @@ def get_uncertainty_distribution(env_name, mode, all_stats=False):
                 explicit_uncertainties.std().item(),
             ),
         )
-    elif mode in ALEATORIC_MODES:
+    if mode in ALEATORIC_MODES:
         return (
             rew_span,
             aleatoric_uncertainties.max().item(),
             aleatoric_uncertainties.mean().item(),
             aleatoric_uncertainties.std().item(),
         )
-    elif mode in EPISTEMIC_MODES:
+    if mode in EPISTEMIC_MODES:
         return (
             rew_span,
             epistemic_uncertainties.max().item(),
             epistemic_uncertainties.mean().item(),
             epistemic_uncertainties.std().item(),
         )
-    elif mode in EXPLICIT_MODES:
-        return (
-            rew_span,
-            explicit_uncertainties.max().item(),
-            explicit_uncertainties.mean().item(),
-            explicit_uncertainties.std().item(),
-        )
+    # otherwise mode is in EXPLICIT_MODES:
+    return (
+        rew_span,
+        explicit_uncertainties.max().item(),
+        explicit_uncertainties.mean().item(),
+        explicit_uncertainties.std().item(),
+    )
 
 
 def format_numbers(numbers):
     out = []
     for number in numbers:
         if number < 0.01:
-            out.append("{:.2e}".format(number))
+            out.append(f"{number:.2e}")
         else:
-            out.append("{:.2f}".format(number))
+            out.append(f"{number:.2f}")
 
     return out
 
 
-if __name__ == "__main__":
+def main():
     prefix = "halfcheetah-"
     version = "-v2"
 
@@ -157,9 +159,6 @@ if __name__ == "__main__":
         # 'medium-expert',
     ]
 
-    avg_rew = []
-    per_trajectory_rews = []
-
     latex = ""
 
     for dataset_name in dataset_names:
@@ -167,18 +166,29 @@ if __name__ == "__main__":
         print(env_name)
         stats = get_uncertainty_distribution(env_name, "", all_stats=True)
 
-        latex += "& {} & {} & {} & {} & {} & {} & {} \\\\ ".format(
-            dataset_name,
-            *format_numbers(
-                (
-                    stats["aleatoric"][2],
-                    stats["aleatoric"][3],
-                    stats["aleatoric"][1],
-                    stats["epistemic"][2],
-                    stats["epistemic"][3],
-                    stats["epistemic"][1],
-                )
+        numbers = format_numbers(
+            (
+                stats["aleatoric"][2],
+                stats["aleatoric"][3],
+                stats["aleatoric"][1],
+                stats["epistemic"][2],
+                stats["epistemic"][3],
+                stats["epistemic"][1],
             )
+        )
+
+        latex += (
+            f"& {dataset_name} "
+            f"& {numbers[0]} "
+            f"& {numbers[1]} "
+            f"& {numbers[2]} "
+            f"& {numbers[3]} "
+            f"& {numbers[4]} "
+            f"& {numbers[5]} \\\\ "
         ).replace("e+00", "")
 
         print(latex)
+
+
+if __name__ == "__main__":
+    main()

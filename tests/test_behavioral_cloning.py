@@ -15,7 +15,7 @@ from offline_mbrl.utils.preprocessing import get_preprocessing_function
 def test_default_agent_is_SAC():
     trainer = Trainer(HOPPER_MEDIUM_REPLAY_V2, pretrain_epochs=0)
 
-    assert type(trainer.agent) is SAC
+    assert isinstance(trainer.agent, SAC)
 
 
 @pytest.mark.medium
@@ -24,7 +24,7 @@ def test_trainer_loads_behavioral_cloning_agent():
         HOPPER_MEDIUM_REPLAY_V2, pretrain_epochs=0, agent_kwargs=dict(type="bc")
     )
 
-    assert type(trainer.agent) is BC
+    assert isinstance(trainer.agent, BC)
 
 
 @pytest.mark.medium

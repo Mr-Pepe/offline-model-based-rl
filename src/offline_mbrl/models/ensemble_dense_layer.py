@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 
 # From: https://github.com/nnaisense/MAX/blob/master/models.py
@@ -11,8 +11,8 @@ class EnsembleDenseLayer(nn.Module):
         there are `ensemble_size` layers
         computation is done using batch matrix multiplication
         hence forward pass through all models in the ensemble can be done in one call
-        weights initialized with xavier normal for leaky relu and linear, xavier uniform for swish
-        biases are always initialized to zeros
+        weights initialized with xavier normal for leaky relu and linear, xavier uniform
+        for swish biases are always initialized to zeros
         Args:
             n_in: size of input vector
             n_out: size of output vector

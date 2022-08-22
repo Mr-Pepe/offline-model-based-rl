@@ -29,15 +29,15 @@ if __name__ == "__main__":
         EPISTEMIC_PARTITIONING,
     ]
 
-    experiments = dict()
-    performances = dict()
+    experiments = {}
+    performances = {}
 
     for category in category_names:
-        dir = osp.join(all_exp_dir, category.lower())
+        directory = osp.join(all_exp_dir, category.lower())
         exp_dirs = [
-            osp.join(dir, name)
-            for name in os.listdir(dir)
-            if osp.isdir(osp.join(dir, name))
+            osp.join(directory, name)
+            for name in os.listdir(directory)
+            if osp.isdir(osp.join(directory, name))
         ]
         exp_dirs.sort()
 
@@ -58,16 +58,18 @@ if __name__ == "__main__":
         for category in category_names:
             env_name = f"{category.lower()}-medium-v2"
 
+            final_performances = list(final_performance(performances[(env_name, mode)]))
+
             elements.append(
-                f"{get_normalized_score(env_name, list(final_performance(performances[(env_name, mode)]))[0])*100:.0f}"
+                f"{get_normalized_score(env_name, final_performances[0])*100:.0f}"
             )
 
             elements.append(
-                f"{get_normalized_score(env_name, list(final_performance(performances[(env_name, mode)]))[1])*100:.0f}"
+                f"{get_normalized_score(env_name, final_performances[1])*100:.0f}"
             )
 
             elements.append(
-                f"{get_normalized_score(env_name, list(final_performance(performances[(env_name, mode)]))[2])*100:.0f}"
+                f"{get_normalized_score(env_name, final_performances[2])*100:.0f}"
             )
 
             elements.append(f"{stability(performances[(env_name, mode)]):.2f}")

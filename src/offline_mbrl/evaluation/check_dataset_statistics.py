@@ -35,13 +35,13 @@ for dataset_name in dataset_names:
     per_trajectory_rew = buffer.rew_buf.sum() / (buffer.done_buf.sum() + n_timeouts)
     per_trajectory_rews.append(per_trajectory_rew)
 
-    latex += "& {} & {:,} & {:.2f} & {:.2f} & {} & {} \\\\ ".format(
-        dataset_name,
-        buffer.size,
-        buffer.rew_buf.mean(),
-        per_trajectory_rew,
-        buffer.done_buf.sum(),
-        n_timeouts,
+    latex += (
+        f"& {dataset_name} "
+        f"& {buffer.size:,} "
+        f"& {buffer.rew_buf.mean():.2f} "
+        f"& {per_trajectory_rew:.2f} "
+        f"& {buffer.done_buf.sum()} "
+        f"& {n_timeouts} \\\\ "
     )
 
 print(latex)

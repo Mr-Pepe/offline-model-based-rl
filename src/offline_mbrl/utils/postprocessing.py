@@ -44,8 +44,8 @@ postprocessing_functions = {
 
 
 def get_postprocessing_function(env_name):
-    for fn_name in ENV_CATEGORIES:
-        if env_name in ENV_CATEGORIES[fn_name]:
-            return postprocessing_functions[fn_name]
+    for category, envs in ENV_CATEGORIES.items():
+        if env_name in envs:
+            return postprocessing_functions[category]
 
     return None

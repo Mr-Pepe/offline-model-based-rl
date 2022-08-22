@@ -26,14 +26,14 @@ if __name__ == "__main__":
 
     for i_axis, ax in enumerate(axes):
 
-        def normalize_score(x):
-            return d4rl.get_normalized_score(env_names[i_axis], x) * 100
+        def normalize_score(x, i_env):
+            return d4rl.get_normalized_score(env_names[i_env], x) * 100
 
         plt.sca(ax)
         data = get_all_datasets(logdir[i_axis], legend=legend)
         for datum in data:
             datum["AverageTestEpRet"] = [
-                normalize_score(x) for x in datum["AverageTestEpRet"]
+                normalize_score(x, i_axis) for x in datum["AverageTestEpRet"]
             ]
         condition = "Condition1"
         estimator = getattr(np, "mean")

@@ -3,9 +3,7 @@ import torch
 
 from offline_mbrl.train import Trainer
 from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM
-from offline_mbrl.utils.load_dataset import load_dataset_from_env
-from offline_mbrl.utils.logx import EpochLogger
-from offline_mbrl.utils.run_utils import setup_logger_kwargs
+from offline_mbrl.utils.setup_logger_kwargs import setup_logger_kwargs
 
 
 @pytest.mark.fast

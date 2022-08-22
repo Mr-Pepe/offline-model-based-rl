@@ -22,7 +22,7 @@ dataset_names = [
 
 compute = True
 
-results = dict()
+results = {}
 if compute:
     for env_title in env_names:
 
@@ -92,7 +92,8 @@ if compute:
             al_over = pessimism(model_errors, aleatoric_uncertainties)
             ep_over = pessimism(model_errors, epistemic_uncertainties)
             print(
-                f"ID  (al/ep) (al/ep): {al_corr:.2f}/{ep_corr:.2f}  {al_over:.2f}/{ep_over:.2f}"
+                "ID  (al/ep) (al/ep): "
+                "{al_corr:.2f}/{ep_corr:.2f}  {al_over:.2f}/{ep_over:.2f}"
             )
 
             results[(env_name, dataset_name, "ID")] = (
@@ -159,7 +160,8 @@ if compute:
             al_over = pessimism(model_errors, aleatoric_uncertainties)
             ep_over = pessimism(model_errors, epistemic_uncertainties)
             print(
-                f"OOD  (al/ep) (al/ep): {al_corr:.2f}/{ep_corr:.2f}  {al_over:.2f}/{ep_over:.2f}"
+                "OOD  (al/ep) (al/ep): "
+                f"{al_corr:.2f}/{ep_corr:.2f}  {al_over:.2f}/{ep_over:.2f}"
             )
 
             results[(env_name, dataset_name, "OOD")] = (

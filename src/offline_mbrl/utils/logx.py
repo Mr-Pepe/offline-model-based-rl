@@ -1,5 +1,5 @@
 # Based on https://spinningup.openai.com
-
+# pylint: disable=consider-using-f-string
 """
 
 Some simple logging functionality, inspired by rllab's logging.
@@ -49,7 +49,7 @@ def colorize(string, color, bold=False, highlight=False):
     attr.append(str(num))
     if bold:
         attr.append("1")
-    return "\x1b[%sm%s\x1b[0m" % (";".join(attr), string)
+    return f"\x1b[{attr}m{string}\x1b[0m"
 
 
 class Logger:
@@ -82,7 +82,7 @@ class Logger:
                 should give them all the same ``exp_name``.)
         """
         if proc_id() == 0:
-            self.output_dir = output_dir or "/tmp/experiments/%i" % int(time.time())
+            self.output_dir = output_dir or f"/tmp/experiments/{time.time()}"
             if osp.exists(self.output_dir):
                 print(
                     "Warning: Log dir %s already exists! \
@@ -91,7 +91,9 @@ class Logger:
                 )
             else:
                 os.makedirs(self.output_dir)
-            self.output_file = open(osp.join(self.output_dir, output_fname), "w")
+            self.output_file = open(  # pylint: disable=consider-using-with
+                osp.join(self.output_dir, output_fname), "w", encoding="utf-8"
+            )
             atexit.register(self.output_file.close)
             print(
                 colorize(
@@ -106,6 +108,8 @@ class Logger:
         self.log_current_row = {}
         self.exp_name = exp_name
         self.env_name = env_name
+
+        self.pytorch_saver_elements = {}
 
         tensorboard_path = os.path.join(self.output_dir, "tensorboard")
         shutil.rmtree(tensorboard_path, ignore_errors=True)
@@ -165,7 +169,9 @@ class Logger:
             )
             print(colorize("Saving config:\n", color="cyan", bold=True))
             print(output)
-            with open(osp.join(self.output_dir, "config.json"), "w") as out:
+            with open(
+                osp.join(self.output_dir, "config.json"), "w", encoding="utf-8"
+            ) as out:
                 out.write(output)
 
     def save_state(self, state_dict, itr=None):
@@ -193,7 +199,7 @@ class Logger:
             fname = "vars.pkl" if itr is None else "vars%d.pkl" % itr
             try:
                 joblib.dump(state_dict, osp.join(self.output_dir, fname))
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 self.log("Warning: could not pickle state_dict.", color="red")
             if hasattr(self, "pytorch_saver_elements"):
                 self._pytorch_simple_save(itr)
@@ -298,7 +304,7 @@ class EpochLogger(Logger):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.epoch_dict = dict()
+        self.epoch_dict = {}
 
     def store(self, **kwargs):
         """
@@ -308,7 +314,7 @@ class EpochLogger(Logger):
         values.
         """
         for k, v in kwargs.items():
-            if not (k in self.epoch_dict.keys()):
+            if k not in self.epoch_dict:
                 self.epoch_dict[k] = []
             self.epoch_dict[k].append(v)
 
@@ -333,6 +339,7 @@ class EpochLogger(Logger):
             average_only (bool): If true, do not log the standard deviation
                 of the diagnostic over the epoch.
         """
+        # pylint: disable=arguments-renamed
         plot_name = key
 
         for prefix in ["EpLen", "EpRet"]:
@@ -351,7 +358,7 @@ class EpochLogger(Logger):
             if prefix in key:
                 plot_name = "RunMetrics/" + key
 
-        scalars = dict()
+        scalars = {}
 
         if val is not None:
             super().log_tabular(key, val=val)
@@ -368,7 +375,7 @@ class EpochLogger(Logger):
             super().log_tabular(key if average_only else "Average" + key, val=stats[0])
             scalars.update({"Average" + key: stats[0]})
 
-            if not (average_only):
+            if not average_only:
                 super().log_tabular("Std" + key, val=stats[1])
             if with_min_and_max:
                 super().log_tabular("Max" + key, val=stats[3])

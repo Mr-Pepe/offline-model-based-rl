@@ -30,6 +30,8 @@ class ReplayBuffer:
         self.split_with_val_split = -1
         self.train_idxs = []
         self.val_idxs = []
+        self.done_idx = []
+        self.not_done_idx = []
 
         self.possible_idxs = None
         self.has_changed = False
@@ -55,10 +57,8 @@ class ReplayBuffer:
 
         if remaining_batch_size > self.max_size:
             raise ValueError(
-                "Batch of size {} does not fit in replay buffer \
-                of size {}.".format(
-                    remaining_batch_size, self.max_size
-                )
+                f"Batch of size {remaining_batch_size} does not fit in replay buffer "
+                f"of size {self.max_size}."
             )
 
         while remaining_buffer_size < remaining_batch_size:
@@ -133,8 +133,8 @@ class ReplayBuffer:
 
         if return_idxs:
             return batch, idxs
-        else:
-            return batch
+
+        return batch
 
     def sample_train_batch(self, batch_size=32, val_split=0.2):
         if self.split_at_size != self.size or self.split_with_val_split != val_split:
@@ -200,6 +200,7 @@ class ReplayBuffer:
         )
 
     def clear(self):
+        # pylint: disable=unnecessary-dunder-call
         self.__init__(self.obs_dim, self.act_dim, self.max_size, device=self.device)
 
     def to(self, device):

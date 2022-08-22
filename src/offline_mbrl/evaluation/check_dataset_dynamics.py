@@ -38,7 +38,7 @@ for dataset_name in dataset_names:
 
     for i in range(10000):  # range(buffer.size):
         if i % 100 == 0:
-            print("{}/{}".format(i, buffer.size), end="\r")
+            print(f"{i}/{buffer.size}", end="\r")
 
         obs = buffer.obs_buf[i]
         obs2 = buffer.obs2_buf[i]
@@ -63,14 +63,12 @@ for dataset_name in dataset_names:
         if deviations.numel() > 0:
             obs_errors += 1
 
-        pass
-
     post_dones = post_fn(torch.as_tensor(buffer.obs2_buf).unsqueeze(0))["dones"]
 
     done_errors = (buffer.done_buf ^ post_dones.view(-1)).sum()
 
     print(
-        "Obs errors: {}  Rew errors: {}  Done errors: {}".format(
-            obs_errors, rew_errors, done_errors
-        )
+        f"Obs errors: {obs_errors}  "
+        f"Rew errors: {rew_errors}  "
+        f"Done errors: {done_errors}"
     )

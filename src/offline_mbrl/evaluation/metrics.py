@@ -40,7 +40,7 @@ def stability(performances):
 
 
 def efficiency(performances):
-    """Compute the number of steps it takes to reach 80% of the maximum policy performance.
+    """Compute the number of steps to reach 80% of the maximum policy performance.
 
     Arguments:
     performances -- n x m array with n epochs and m trials
@@ -73,7 +73,8 @@ def estimation_quality(model_errors, uncertainty_estimates):
 
 def pessimism(model_errors, uncertainty_estimates):
     """Takes one-dimensional numpy arrays for true model errors
-    and uncertainty estimates and returns how pessimistic the model is in the range [-1, 1]."""
+    and uncertainty estimates and returns how pessimistic the model is in the range
+    [-1, 1]."""
     model_errors /= model_errors.max()
     uncertainty_estimates /= uncertainty_estimates.max()
 

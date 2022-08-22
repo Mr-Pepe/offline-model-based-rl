@@ -51,8 +51,8 @@ if __name__ == "__main__":
         # MBPO
     ]
 
-    experiments = dict()
-    performances = dict()
+    experiments = {}
+    performances = {}
 
     for exp_name in exp_names:
         exp_dir = osp.join(all_exp_dir, exp_name)
@@ -117,9 +117,6 @@ if __name__ == "__main__":
         for category in category_names:
             for dataset in datasets:
                 env_name = category.lower() + dataset
-
-                # elements.append(
-                #     f'{get_normalized_score(env_name, list(final_performance(performances[(env_name, mode)]))[2])*100:.0f}')
 
                 elements.append(f"{efficiency(performances[(env_name, mode)]):.0f}")
 

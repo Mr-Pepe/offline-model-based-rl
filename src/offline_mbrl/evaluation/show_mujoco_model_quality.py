@@ -198,12 +198,6 @@ for i_dataset, dataset_name in enumerate(dataset_names):
     axes[1, i_dataset].set_xlim([0, 1])
     axes[1, i_dataset].set_ylim([0, 1])
 
-    # axes[2, i_dataset].plot([0, 1], [0, 1], color='black')
-    # axes[2, i_dataset].scatter(model_errors[:n_samples], combined_uncertainties[:n_samples], s=1, alpha=0.3, color='blue')
-    # axes[2, i_dataset].scatter(model_errors[n_samples:], combined_uncertainties[n_samples:], s=1, alpha=0.3, color='red')
-    # axes[2, i_dataset].set_xlabel('Model error')
-    # if i_dataset == 0:
-    #     axes[2, i_dataset].set_ylabel('Combined uncertainty')
 
 for ax in axes.flat:
     ax.grid(b=True, alpha=0.5, linestyle="--")

@@ -14,14 +14,12 @@ def model_needs_training(
                 if not model_trained:
                     return True
             else:
-                if (
-                    steps_since_model_training >= train_model_every
-                    and train_model_every > 0
-                ):
+                if 0 < train_model_every <= steps_since_model_training:
                     if model_trained:
                         # Ignore init_steps if pretraining happened
                         return True
-                    elif step >= init_steps:
+
+                    if step >= init_steps:
                         return True
 
     return False

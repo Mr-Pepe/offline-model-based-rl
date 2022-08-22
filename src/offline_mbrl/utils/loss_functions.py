@@ -6,8 +6,8 @@ def deterministic_loss(x, y, model, i_network=-1):
 
     if i_network == -1:
         return torch.square(y_pred - y.unsqueeze(0)).mean()
-    else:
-        return torch.square(y_pred[i_network] - y.unsqueeze(0)).mean()
+
+    return torch.square(y_pred[i_network] - y.unsqueeze(0)).mean()
 
 
 def probabilistic_loss(
@@ -45,29 +45,27 @@ def probabilistic_loss(
 
     if only_mse:
         return torch.square(mean - y).mean()
-    elif only_uncertainty:
+    if only_uncertainty:
         return uncertainty.mean()
-    else:
-        mse_loss = torch.square(mean - y)
-        mse_inv_var_loss = (mse_loss * inv_var).mean()
-        var_loss = logvar.mean()
-        var_bound_loss = 0.01 * max_logvar.mean() - 0.01 * min_logvar.mean()
-        uncertainty_loss = uncertainty.mean()
 
-        if debug:
-            print(
-                "LR: {:.5f}, State MSE: {:.5f}, Rew MSE: {:.5f}, MSE + INV VAR: {:.5f} VAR: {:.5f}, BOUNDS: {:.5f}, MAX LOGVAR: {:.5f}, MIN LOGVAR: {:.5f}, UNCERTAINTY: {:.5f}".format(
-                    model.optim.param_groups[0]["lr"],
-                    mse_loss[:, :, :-1].mean().item(),
-                    mse_loss[:, :, -1].mean().item(),
-                    mse_inv_var_loss.item(),
-                    var_loss.item(),
-                    var_bound_loss.item(),
-                    max_logvar.mean().item(),
-                    min_logvar.mean().item(),
-                    uncertainty_loss.item(),
-                ),
-                end="\r",
-            )
+    mse_loss = torch.square(mean - y)
+    mse_inv_var_loss = (mse_loss * inv_var).mean()
+    var_loss = logvar.mean()
+    var_bound_loss = 0.01 * max_logvar.mean() - 0.01 * min_logvar.mean()
+    uncertainty_loss = uncertainty.mean()
 
-        return mse_inv_var_loss + var_loss + var_bound_loss + uncertainty_loss
+    if debug:
+        print(
+            f"LR: {model.optim.param_groups[0]['lr']:.5f}, "
+            f"State MSE: {mse_loss[:, :, :-1].mean().item():.5f}, "
+            f"Rew MSE: {mse_loss[:, :, -1].mean().item():.5f}, "
+            f"MSE + INV VAR: {mse_inv_var_loss.item():.5f} "
+            f"VAR: {var_loss.item():.5f}, "
+            f"BOUNDS: {var_bound_loss.item():.5f}, "
+            f"MAX LOGVAR: {max_logvar.mean().item():.5f}, "
+            f"MIN LOGVAR: {min_logvar.mean().item():.5f}, ",
+            f"UNCERTAINTY: {uncertainty_loss.item():.5f}",
+            end="\r",
+        )
+
+    return mse_inv_var_loss + var_loss + var_bound_loss + uncertainty_loss

@@ -1,8 +1,8 @@
 import os
 
 import torch
-import torch.nn as nn
 from ray import tune
+from torch import nn
 from torch.nn.functional import softplus
 from torch.nn.parameter import Parameter
 from torch.optim.adamw import AdamW
@@ -34,8 +34,8 @@ class EnvironmentModel(nn.Module):
         self,
         obs_dim,
         act_dim,
-        hidden=[128, 128],
-        type="deterministic",
+        hidden=(128, 128),
+        type="deterministic",  # pylint: disable=redefined-builtin
         n_networks=1,
         device="cpu",
         pre_fn=None,
@@ -44,7 +44,7 @@ class EnvironmentModel(nn.Module):
         use_batch_norm=False,
         obs_bounds_trainable=True,
         r_bounds_trainable=True,
-        **_
+        **_,
     ):
         """
         type (string): deterministic or probabilistic
@@ -53,19 +53,19 @@ class EnvironmentModel(nn.Module):
         """
         super().__init__()
 
+        self.type = type
         self.obs_dim = obs_dim
         self.act_dim = act_dim
         # Append reward signal
         self.out_dim = obs_dim + 1
 
-        self.type = type
         self.n_networks = n_networks
         self.pre_fn = pre_fn
         self.post_fn = post_fn
         self.rew_fn = rew_fn
 
-        if type != "deterministic" and type != "probabilistic":
-            raise ValueError("Unknown type {}".format(type))
+        if type not in ("deterministic", "probabilistic"):
+            raise ValueError(f"Unknown type {type}")
 
         self.layers = MultiHeadMlp(
             obs_dim, act_dim, hidden, n_networks, use_batch_norm=use_batch_norm
@@ -98,7 +98,7 @@ class EnvironmentModel(nn.Module):
         self.max_reward = None
 
         n_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
-        print("Env model parameters: {}".format(n_params))
+        print(f"Env model parameters: {n_params}")
 
     def forward(self, raw_obs_act):
 
@@ -232,7 +232,9 @@ class EnvironmentModel(nn.Module):
 
         if self.max_reward is not None:
             underestimated_reward = torch.clamp_min(
-                underestimated_reward, -self.max_reward * 1.00001
+                underestimated_reward,
+                -self.max_reward  # pylint: disable=invalid-unary-operand-type
+                * 1.00001,
             )
 
         if mode != "":
@@ -279,7 +281,9 @@ class EnvironmentModel(nn.Module):
                 elif mode == EXPLICIT_PARTITIONING:
                     ood_idx = explicit_uncertainty > ood_threshold
 
-                prediction[ood_idx, -2] = -self.max_reward
+                prediction[
+                    ood_idx, -2
+                ] = -self.max_reward  # pylint: disable=invalid-unary-operand-type
                 prediction[ood_idx, -1] = 1
 
             elif mode == UNDERESTIMATION:
@@ -297,8 +301,8 @@ class EnvironmentModel(nn.Module):
             )
         if with_uncertainty:
             return prediction, explicit_uncertainty
-        else:
-            return prediction
+
+        return prediction
 
     def check_device_and_shape(self, x, device):
         x = x.to(device)
@@ -325,11 +329,11 @@ class EnvironmentModel(nn.Module):
         checkpoint_dir=None,
         tuning=False,
         in_normalized_space=False,
-        **_
+        **_,
     ):
 
-        if type(patience) is list:
-            if patience_value > 0 and len(patience) > patience_value:
+        if isinstance(patience, list):
+            if 0 < patience_value < len(patience):
                 patience = patience[patience_value]
             else:
                 patience = patience[0]
@@ -339,17 +343,16 @@ class EnvironmentModel(nn.Module):
 
         if n_train_batches == 0 or n_val_batches == 0:
             raise ValueError(
-                "Dataset of size {} not big enough to generate a {} % \
-                             validation split with batch size {}.".format(
-                    data.size, val_split * 100, batch_size
-                )
+                f"Dataset of size {data.size} not big enough to "
+                f"generate a {val_split*100} % "
+                f"validation split with batch size {batch_size}."
             )
 
         print("")
         print(
-            "Buffer size: {} Train batches per epoch: {} Stopping after {} batches".format(
-                data.size, n_train_batches, max_n_train_batches
-            )
+            f"Buffer size: {data.size} "
+            f"Train batches per epoch: {n_train_batches} "
+            f"Stopping after {max_n_train_batches} batches"
         )
 
         device = next(self.parameters()).device
@@ -476,7 +479,7 @@ class EnvironmentModel(nn.Module):
 
             if debug:
                 print("")
-                print("Train loss: {}".format(avg_train_loss / n_train_batches))
+                print(f"Train loss: {avg_train_loss / n_train_batches}")
 
             avg_val_losses = torch.zeros((self.n_networks))
 
@@ -521,8 +524,8 @@ class EnvironmentModel(nn.Module):
 
             if tuning:
                 tune.report(val_loss=float(avg_val_loss.item()))
-                with tune.checkpoint_dir(step=epoch) as checkpoint_dir:
-                    path = os.path.join(checkpoint_dir, "checkpoint")
+                with tune.checkpoint_dir(step=epoch) as tune_checkpoint_dir:
+                    path = os.path.join(tune_checkpoint_dir, "checkpoint")
                     torch.save(
                         {
                             "step": epoch,
@@ -536,9 +539,9 @@ class EnvironmentModel(nn.Module):
             epoch += 1
 
             print(
-                "Train batches: {} Patience: {}/{} Val losses: {}".format(
-                    batches_trained, n_bad_val_losses, patience, avg_val_losses.tolist()
-                ),
+                f"Train batches: {batches_trained} "
+                f"Patience: {n_bad_val_losses}/{patience} "
+                f"Val losses: {avg_val_losses.tolist()}",
                 end="\r",
             )
 
@@ -549,11 +552,11 @@ class EnvironmentModel(nn.Module):
 
     def check_prediction_arguments(self, mode, pessimism):
         if mode not in MODES:
-            raise ValueError("Unknown mode: {}".format(mode))
+            raise ValueError(f"Unknown mode: {mode}")
 
         if (
             pessimism != 0
-            and (mode == ALEATORIC_PENALTY or mode == ALEATORIC_PARTITIONING)
+            and mode in (ALEATORIC_PENALTY, ALEATORIC_PARTITIONING)
             and self.type == "deterministic"
         ):
             raise ValueError(

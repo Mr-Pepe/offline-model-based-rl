@@ -254,6 +254,8 @@ def test_actions_for_offline_model_based_training_with_fine_tuning():
 
 @pytest.mark.medium
 def test_trainer_picks_correct_postprocessing_functions():
+    # pylint: disable=comparison-with-callable
+
     trainer = Trainer(HOPPER_MEDIUM_REPLAY_V2, use_model=True)
 
     assert trainer.post_fn == postprocessing_functions["hopper"]

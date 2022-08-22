@@ -37,7 +37,7 @@ def test_generate_rollout_of_desired_length():
     model = EnvironmentModel(
         obs_dim,
         act_dim,
-        type="probabilistic",
+        model_type="probabilistic",
         post_fn=postprocessing_functions["half_cheetah"],
     )
     agent = SAC(observation_space, action_space)
@@ -73,7 +73,7 @@ def test_generate_rollout_stops_on_terminal():
     model = EnvironmentModel(
         obs_dim,
         act_dim,
-        type="probabilistic",
+        model_type="probabilistic",
         post_fn=lambda next_obs, **_: {"dones": torch.randint(2, (1, 1, 1))},
     )
     agent = SAC(observation_space, action_space)
@@ -116,7 +116,7 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
     model = EnvironmentModel(
         obs_dim,
         act_dim,
-        type="probabilistic",
+        model_type="probabilistic",
         post_fn=get_postprocessing_function("maze2d-umaze-v1"),
     )
     model.to(device)
@@ -163,9 +163,7 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
 
     assert parallel_buffer.size == sequential_buffer.size
 
-    print(
-        "Parallel: {:.3f}s Sequential: {:.3f}s".format(time_parallel, time_sequential)
-    )
+    print(f"Parallel: {time_parallel:.3f}s Sequential: {time_sequential:.3f}s")
 
     assert time_parallel < time_sequential
 
@@ -192,7 +190,7 @@ def test_use_random_actions_in_virtual_rollout():
     model = EnvironmentModel(
         obs_dim,
         act_dim,
-        type="probabilistic",
+        model_type="probabilistic",
         post_fn=get_postprocessing_function("maze2d-umaze-v1"),
     )
     model.to(device)
@@ -223,7 +221,7 @@ def test_use_random_actions_in_virtual_rollout():
 
 
 @pytest.mark.medium
-def test_continuously_grow_rollouts(plot=False):
+def test_continuously_grow_rollouts():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     env = gym.make(HOPPER_RANDOM_V2)
     observation_space = env.observation_space
@@ -242,7 +240,7 @@ def test_continuously_grow_rollouts(plot=False):
     model = EnvironmentModel(
         obs_dim,
         act_dim,
-        type="probabilistic",
+        model_type="probabilistic",
         n_networks=3,
         device=device,
         post_fn=postprocessing_functions["hopper"],
@@ -309,4 +307,4 @@ def test_continuously_grow_rollouts(plot=False):
         )
 
         for length in last_observations["lengths"]:
-            assert length > 0 and length <= max_rollout_length
+            assert 0 < length <= max_rollout_length

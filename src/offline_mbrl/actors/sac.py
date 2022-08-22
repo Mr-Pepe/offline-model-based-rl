@@ -2,7 +2,7 @@ import itertools
 from copy import deepcopy
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.optim.adamw import AdamW
 
 from offline_mbrl.models.mlp_q_function import MLPQFunction
@@ -11,7 +11,7 @@ from offline_mbrl.models.squashed_gaussian_mlp_actor import SquashedGaussianMLPA
 
 class SAC(nn.Module):
     # Based on https://spinningup.openai.com
-
+    # pylint: disable=abstract-method
     def __init__(
         self,
         observation_space,
@@ -204,7 +204,7 @@ class SAC(nn.Module):
             a, _ = self.pi(obs, deterministic, False)
             return a
 
-    def act_randomly(self, o, deterministic=False):
+    def act_randomly(self, o, unused_deterministic=False):
         a = torch.as_tensor(
             [self.action_space.sample() for _ in range(len(o))], device=o.device
         )

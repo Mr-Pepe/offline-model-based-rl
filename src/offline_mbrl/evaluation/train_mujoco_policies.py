@@ -21,7 +21,7 @@ from offline_mbrl.utils.modes import (
 )
 from offline_mbrl.utils.postprocessing import get_postprocessing_function
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
-from offline_mbrl.utils.run_utils import setup_logger_kwargs
+from offline_mbrl.utils.setup_logger_kwargs import setup_logger_kwargs
 from offline_mbrl.utils.str2bool import str2bool
 from offline_mbrl.utils.uncertainty_distribution import get_uncertainty_distribution
 
@@ -35,7 +35,7 @@ def training_function(config, tuning=True):
 
 
 def get_exp_name(config):
-    exp_name = args.env_name + "-" + config["mode"]
+    exp_name = config.env_name + "-" + config["mode"]
 
     if (config["mode"] == MBPO or config["mode"] == SAC) and config[
         "env_steps_per_step"
@@ -81,43 +81,7 @@ def training_wrapper(config, seed):
     return training_function(config, tuning=False)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--env_name", type=str, required=True)
-    parser.add_argument("--level", type=int, default=0)
-    parser.add_argument("--tuned_params", type=str2bool, default=False)
-    parser.add_argument("--new_model", type=str2bool, default=False)
-    parser.add_argument("--mode", type=str, default=SAC)
-    parser.add_argument("--epochs", type=int, default=100)
-    parser.add_argument("--num_test_episodes", type=int, default=20)
-    parser.add_argument("--seeds", type=int, default=1)
-    parser.add_argument("--train_model_every", type=int, default=0)
-    parser.add_argument("--train_model_from_scratch", type=str2bool, default=False)
-    parser.add_argument("--reset_buffer", type=str2bool, default=False)
-    parser.add_argument("--max_n_train_batches", type=int, default=-1)
-    parser.add_argument("--steps_per_epoch", type=int, default=5000)
-    parser.add_argument("--env_steps_per_step", type=int, default=0)
-    parser.add_argument("--random_steps", type=int, default=8000)
-    parser.add_argument("--init_steps", type=int, default=4000)
-    parser.add_argument("--pessimism", type=float, default=1)
-    parser.add_argument("--ood_threshold", type=float, default=0.5)
-    parser.add_argument("--start_seed", type=int, default=0)
-    parser.add_argument("--rollout_length", type=int, default=15)
-    parser.add_argument("--n_rollouts", type=int, default=50)
-    parser.add_argument("--n_hidden", type=int, default=128)
-    parser.add_argument("--n_trials", type=int, default=20)
-    parser.add_argument("--n_samples_from_dataset", type=int, default=-1)
-    parser.add_argument("--agent_updates_per_step", type=int, default=1)
-    parser.add_argument("--pretrained_agent_path", type=str, default="")
-    parser.add_argument("--pretrained_interaction_agent_path", type=str, default="")
-    parser.add_argument("--interaction_pessimism", type=float, default=1)
-    parser.add_argument("--interaction_threshold", type=float, default=0.5)
-    parser.add_argument("--exploration_chance", type=float, default=1)
-    parser.add_argument("--virtual_buffer_size", type=int, default=int(1e6))
-    parser.add_argument("--use_ray", type=str2bool, default=True)
-    parser.add_argument("--device", type=str, default="")
-    args = parser.parse_args()
-
+def main(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if args.device != "":
@@ -126,7 +90,7 @@ if __name__ == "__main__":
     pretrained_model_name = args.env_name + "-model.pt"
 
     if args.mode not in MODES:
-        raise ValueError("Unknown mode: {}".format(args.mode))
+        raise ValueError(f"Unknown mode: {args.mode}")
 
     if args.mode == BEHAVIORAL_CLONING:
         use_model = False
@@ -199,7 +163,7 @@ if __name__ == "__main__":
         reset_maze2d_umaze=False,
         pretrain_epochs=0,
         setup_test_env=False,
-        logger_kwargs=dict(),
+        logger_kwargs={},
         save_freq=1,
         device=device,
         render=False,
@@ -311,9 +275,8 @@ if __name__ == "__main__":
             std_uncertainty = float(std_uncertainty)
 
             print(
-                "R_max: {}, Max uncertainty: {}, Mean uncertainty: {}".format(
-                    r_max, max_uncertainty, mean_uncertainty
-                )
+                f"R_max: {r_max}, Max uncertainty: {max_uncertainty}, "
+                f"Mean uncertainty: {mean_uncertainty}"
             )
 
             if args.mode in PARTITIONING_MODES:
@@ -385,3 +348,42 @@ if __name__ == "__main__":
             "Best config: ",
             analysis.get_best_config(metric="avg_test_return", mode="max"),
         )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--env_name", type=str, required=True)
+    parser.add_argument("--level", type=int, default=0)
+    parser.add_argument("--tuned_params", type=str2bool, default=False)
+    parser.add_argument("--new_model", type=str2bool, default=False)
+    parser.add_argument("--mode", type=str, default=SAC)
+    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--num_test_episodes", type=int, default=20)
+    parser.add_argument("--seeds", type=int, default=1)
+    parser.add_argument("--train_model_every", type=int, default=0)
+    parser.add_argument("--train_model_from_scratch", type=str2bool, default=False)
+    parser.add_argument("--reset_buffer", type=str2bool, default=False)
+    parser.add_argument("--max_n_train_batches", type=int, default=-1)
+    parser.add_argument("--steps_per_epoch", type=int, default=5000)
+    parser.add_argument("--env_steps_per_step", type=int, default=0)
+    parser.add_argument("--random_steps", type=int, default=8000)
+    parser.add_argument("--init_steps", type=int, default=4000)
+    parser.add_argument("--pessimism", type=float, default=1)
+    parser.add_argument("--ood_threshold", type=float, default=0.5)
+    parser.add_argument("--start_seed", type=int, default=0)
+    parser.add_argument("--rollout_length", type=int, default=15)
+    parser.add_argument("--n_rollouts", type=int, default=50)
+    parser.add_argument("--n_hidden", type=int, default=128)
+    parser.add_argument("--n_trials", type=int, default=20)
+    parser.add_argument("--n_samples_from_dataset", type=int, default=-1)
+    parser.add_argument("--agent_updates_per_step", type=int, default=1)
+    parser.add_argument("--pretrained_agent_path", type=str, default="")
+    parser.add_argument("--pretrained_interaction_agent_path", type=str, default="")
+    parser.add_argument("--interaction_pessimism", type=float, default=1)
+    parser.add_argument("--interaction_threshold", type=float, default=0.5)
+    parser.add_argument("--exploration_chance", type=float, default=1)
+    parser.add_argument("--virtual_buffer_size", type=int, default=int(1e6))
+    parser.add_argument("--use_ray", type=str2bool, default=True)
+    parser.add_argument("--device", type=str, default="")
+
+    main(parser.parse_args())

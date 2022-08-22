@@ -11,5 +11,5 @@ def get_value_from_schedule(schedule, epoch, is_float=False):
     )
     if is_float:
         return value
-    else:
-        return int(value)
+
+    return int(value)

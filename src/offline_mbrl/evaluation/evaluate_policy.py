@@ -39,13 +39,12 @@ def load_policy_and_env(fpath, itr="last", deterministic=False, test_env=True):
             if len(x) > 8 and "model" in x
         ]
 
-        itr = "%d" % max(saves) if len(saves) > 0 else ""
+        itr = str(max(saves)) if len(saves) > 0 else ""
 
     else:
         assert isinstance(
             itr, int
-        ), "Bad value provided for itr (needs to be int or 'last')."
-        itr = "%d" % itr
+        ), f"Bad value provided for {itr} (needs to be int or 'last')."
 
     # load the get_action function
     get_action = load_pytorch_policy(fpath, itr, deterministic)
@@ -59,17 +58,17 @@ def load_policy_and_env(fpath, itr="last", deterministic=False, test_env=True):
         if test_env:
             env = gym.make(env.spec.id)
 
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         env = None
 
     return env, get_action
 
 
-def load_pytorch_policy(fpath, itr, deterministic=False):
+def load_pytorch_policy(fpath, itr):
     """Load a pytorch policy saved with Spinning Up Logger."""
 
     fname = osp.join(fpath, "pyt_save", "agent" + itr + ".pt")
-    print("\n\nLoading from %s.\n\n" % fname)
+    print(f"\n\nLoading from {fname}.\n\n")
 
     model = torch.load(fname, map_location="cpu")
 
@@ -110,7 +109,7 @@ def run_policy(env, get_action, max_ep_len=None, num_episodes=100, render=True):
 
         if d or (ep_len == max_ep_len):
             logger.store(EpRet=ep_ret, EpLen=ep_len)
-            print("Episode %d \t EpRet %.3f \t EpLen %d" % (n, ep_ret, ep_len))
+            print(f"Episode {n} \t EpRet {ep_ret:.3f} \t EpLen {ep_len}")
             r = 0
             d = False
             ep_ret = 0
@@ -171,6 +170,16 @@ def test_agent(
     return sum_ep_ret / num_test_episodes
 
 
+def main(args):
+    env, get_action = load_policy_and_env(
+        args.fpath,
+        args.itr if args.itr >= 0 else "last",
+        args.deterministic,
+        args.test_env,
+    )
+    run_policy(env, get_action, args.len, args.episodes, not args.norender)
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -182,11 +191,4 @@ if __name__ == "__main__":
     parser.add_argument("--itr", "-i", type=int, default=-1)
     parser.add_argument("--deterministic", "-d", action="store_true")
     parser.add_argument("--test_env", type=str2bool, default=True)
-    args = parser.parse_args()
-    env, get_action = load_policy_and_env(
-        args.fpath,
-        args.itr if args.itr >= 0 else "last",
-        args.deterministic,
-        args.test_env,
-    )
-    run_policy(env, get_action, args.len, args.episodes, not (args.norender))
+    main(parser.parse_args())

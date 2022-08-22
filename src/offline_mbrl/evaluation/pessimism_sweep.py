@@ -24,18 +24,7 @@ def training_function(config, tuning=True):
     return trainer.train(tuning=tuning, silent=True)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--env_name", type=str, default=HOPPER_EXPERT_V2)
-    parser.add_argument("--mode", type=str, default=ALEATORIC_PARTITIONING)
-    parser.add_argument("--epochs", type=int, default=100)
-    parser.add_argument("--n_trials", type=int, default=50)
-    parser.add_argument("--bounds", default=[0, 1], nargs=2, type=float)
-    parser.add_argument("--rollout_length", type=int, default=15)
-    parser.add_argument("--n_samples_from_dataset", type=int, default=-1)
-    parser.add_argument("--device", type=str, default="")
-    args = parser.parse_args()
-
+def main(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if args.device != "":
@@ -57,7 +46,7 @@ if __name__ == "__main__":
         model_pessimism=None,
         ood_threshold=None,
         rollouts_per_step=50,
-        model_kwargs=dict(),
+        model_kwargs={},
         dataset_path="",
         seed=0,
         epochs=args.epochs,
@@ -87,13 +76,11 @@ if __name__ == "__main__":
         reset_maze2d_umaze=False,
         pretrain_epochs=0,
         setup_test_env=False,
-        logger_kwargs=dict(),
+        logger_kwargs={},
         save_freq=1,
         device=device,
         render=False,
     )
-
-    parameters = []
 
     if args.mode in PARTITIONING_MODES:
         ood_threshold = tune.grid_search(
@@ -111,7 +98,7 @@ if __name__ == "__main__":
 
     ray.init()
 
-    analysis = tune.run(
+    tune.run(
         tune.with_parameters(training_function),
         name="sweep"
         + args.env_name
@@ -125,3 +112,16 @@ if __name__ == "__main__":
         max_failures=2,
         resources_per_trial={"gpu": 0.5},
     )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--env_name", type=str, default=HOPPER_EXPERT_V2)
+    parser.add_argument("--mode", type=str, default=ALEATORIC_PARTITIONING)
+    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--n_trials", type=int, default=50)
+    parser.add_argument("--bounds", default=[0, 1], nargs=2, type=float)
+    parser.add_argument("--rollout_length", type=int, default=15)
+    parser.add_argument("--n_samples_from_dataset", type=int, default=-1)
+    parser.add_argument("--device", type=str, default="")
+    main(parser.parse_args())

@@ -55,7 +55,9 @@ if __name__ == "__main__":
 
         for trial_name in trial_names:
             seed = int(trial_name[-1])
-            with open(osp.join(exp_dir, trial_name, "progress.txt"), "r") as f:
+            with open(
+                osp.join(exp_dir, trial_name, "progress.txt"), encoding="utf-8"
+            ) as f:
                 trial_log = list(csv.DictReader(f, delimiter="\t"))
 
                 # Check that trial was run for 50 or 100 epochs
@@ -101,16 +103,10 @@ if __name__ == "__main__":
         mean_at_max_performance = std_performances[arg_max_performance]
 
         print(
-            "{} {}:  {}{:.2f} +- {:.2f}\t({:.2f} +- {:.2f}  @{})".format(
-                env_name,
-                mode,
-                tab,
-                mean_performances[-1],
-                std_performances[-1],
-                max_performance,
-                mean_at_max_performance,
-                arg_max_performance,
-            )
+            f"{env_name} {mode}:  "
+            f"{tab}{mean_performances[-1]:.2f} +- {std_performances[-1]:.2f}\t"
+            f"({max_performance:.2f} +- {mean_at_max_performance:.2f}  "
+            f"@{arg_max_performance})"
         )
 
         last_env_name = env_name

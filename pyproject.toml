@@ -29,14 +29,6 @@ markers = '''
 
 [tool.pylint.master]
 recursive = "yes"
-load-plugins= """
-    pylint.extensions.mccabe,
-    pylint.extensions.docparams
-    """
-accept-no-param-doc = "no"
-accept-no-raise-doc = "no"
-accept-no-return-doc = "no"
-accept-no-yields-doc = "no"
 ignore = [
     "conf.py", # The Sphinx config file
     ".tox",
@@ -51,9 +43,17 @@ max-line-length = 88
 extension-pkg-whitelist = "mpi4py"
 disable = """
     too-few-public-methods,
+    too-many-locals,
     too-many-instance-attributes,
     too-many-arguments,
+    too-many-statements,
+    too-many-branches,
+    too-many-function-args,
+    too-many-nested-blocks,
+    too-many-return-statements,
     missing-function-docstring,
+    missing-module-docstring,
+    missing-class-docstring,
     duplicate-code,
     invalid-name
     """

@@ -1,11 +1,12 @@
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.optim.adamw import AdamW
 
 from offline_mbrl.models.mlp import mlp
 
 
 class BC(nn.Module):
+    # pylint: disable=abstract-method
     def __init__(
         self,
         observation_space,
@@ -89,7 +90,9 @@ class BC(nn.Module):
         if debug:
             return losses.mean()
 
-    def act(self, o, deterministic=False):
+        return None
+
+    def act(self, o, unused_deterministic=True):
         self.device = next(self.parameters()).device
 
         obs = torch.as_tensor(o, dtype=torch.float32, device=self.device)
@@ -100,7 +103,7 @@ class BC(nn.Module):
         with torch.no_grad():
             return self.pi(obs)
 
-    def act_randomly(self, o, deterministic=False):
+    def act_randomly(self, o, unused_deterministic=False):
         a = torch.as_tensor(
             [self.action_space.sample() for _ in range(len(o))], device=o.device
         )

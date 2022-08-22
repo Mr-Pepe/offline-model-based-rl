@@ -17,59 +17,7 @@ from offline_mbrl.utils.modes import (
 )
 
 
-def plot_hyperparameters(env_name, mode, trials):
-    x = [trials[i]["rollout_length"] for i in range(len(trials))]
-    y = [trials[i]["pessimism"] for i in range(len(trials))]
-    z = [trials[i]["final_return"] for i in range(len(trials))]
-
-    xlabel = "Rollout length"
-
-    if mode in PENALTY_MODES:
-        ylabel = "Penalty coefficient"
-    else:
-        ylabel = "OOD threshold"
-
-    fig, axes = plt.subplots(1, 2, figsize=(8, 5))
-
-    sc = axes[0].scatter(x, y, c=z)
-    axes[0].set_title(env_name + " " + mode)
-    axes[0].set_xlabel(xlabel)
-    axes[0].set_ylabel(ylabel)
-    # axes[0].colorbar()
-
-    def hover(event):
-        if event.inaxes == axes[0]:
-            cont, ind = sc.contains(event)
-            if cont:
-                idx = int(ind["ind"][0])
-                axes[1].clear()
-                axes[1].set_title(
-                    "{:.2f}  Rollouts: {}  Pessimism: {:.5f}".format(
-                        trials[idx]["final_return"],
-                        trials[idx]["rollout_length"],
-                        trials[idx]["pessimism"],
-                    )
-                )
-                axes[1].plot(trials[idx]["returns"])
-                axes[1].set_ylim([-5, 105])
-                fig.canvas.draw_idle()
-            else:
-                pass
-
-    fig.canvas.mpl_connect("motion_notify_event", hover)
-
-    plt.show()
-
-    pass
-
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--logdir", type=str, default="")
-    args = parser.parse_args()
-
+def main(args):
     all_exp_dir = args.logdir
 
     exp_names = [
@@ -79,7 +27,7 @@ if __name__ == "__main__":
     ]
     exp_names.sort()
 
-    experiments = dict()
+    experiments = {}
 
     for exp_name in exp_names:
         exp_dir = osp.join(all_exp_dir, exp_name)
@@ -90,13 +38,15 @@ if __name__ == "__main__":
             name for name in os.listdir(exp_dir) if osp.isdir(osp.join(exp_dir, name))
         ]
 
-        trial_performances = []
-
         for trial_name in trial_names:
-            with open(osp.join(exp_dir, trial_name, "progress.csv"), "r") as f:
+            with open(
+                osp.join(exp_dir, trial_name, "progress.csv"), encoding="utf-8"
+            ) as f:
                 trial_log = list(csv.DictReader(f, delimiter=","))
 
-            with open(osp.join(exp_dir, trial_name, "params.json"), "r") as f:
+            with open(
+                osp.join(exp_dir, trial_name, "params.json"), encoding="utf-8"
+            ) as f:
                 params = json.load(f)
 
             # Only consider trials that ran for 10 iterations
@@ -164,7 +114,6 @@ if __name__ == "__main__":
                 x = [trial[0] for trial in trials]
                 y = [trial[1] for trial in trials]
                 y = [e / max(y) for e in y]
-                z = [trial[2] for trial in trials]
 
                 ax.scatter(x, y, s=8)
                 ax.scatter(
@@ -231,3 +180,11 @@ if __name__ == "__main__":
         top=0.81, bottom=0.135, left=0.25, right=0.99, hspace=0.105, wspace=0.1
     )
     plt.show()
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--logdir", type=str, default="")
+    main(parser.parse_args())

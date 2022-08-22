@@ -25,8 +25,8 @@ class Trainer:
     def __init__(
         self,
         env_name,
-        agent_kwargs=dict(),
-        model_kwargs=dict(),
+        agent_kwargs=None,
+        model_kwargs=None,
         dataset_path="",
         seed=0,
         epochs=100,
@@ -37,7 +37,7 @@ class Trainer:
         n_samples_from_dataset=0,
         agent_updates_per_step=1,
         num_test_episodes=10,
-        curriculum=[1, 1, 20, 100],
+        curriculum=None,
         max_ep_len=1000,
         use_model=False,
         pretrained_agent_path="",
@@ -51,7 +51,7 @@ class Trainer:
         mode=ALEATORIC_PENALTY,
         model_max_n_train_batches=-1,
         rollouts_per_step=10,
-        rollout_schedule=[1, 1, 20, 100],
+        rollout_schedule=None,
         max_rollout_length=999999,
         continuous_rollouts=False,
         train_model_every=250,
@@ -62,7 +62,7 @@ class Trainer:
         reset_maze2d_umaze=False,
         pretrain_epochs=0,
         setup_test_env=False,
-        logger_kwargs=dict(),
+        logger_kwargs=None,
         save_freq=1,
         device="cpu",
         render=False,
@@ -105,6 +105,18 @@ class Trainer:
                 the current policy and value function.
 
         """
+
+        if agent_kwargs is None:
+            agent_kwargs = {}
+        if model_kwargs is None:
+            model_kwargs = {}
+        if logger_kwargs is None:
+            logger_kwargs = {}
+
+        if rollout_schedule is None:
+            rollout_schedule = [1, 1, 20, 100]
+        if curriculum is None:
+            curriculum = [1, 1, 20, 100]
 
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -185,18 +197,16 @@ class Trainer:
                     self.agent = BC(
                         self.env.observation_space,
                         self.env.action_space,
-                        **agent_kwargs
+                        **agent_kwargs,
                     )
                 elif agent_kwargs["type"] == "sac":
                     self.agent = SAC(
                         self.env.observation_space,
                         self.env.action_space,
-                        **agent_kwargs
+                        **agent_kwargs,
                     )
                 else:
-                    raise ValueError(
-                        "Unknown agent type: {}".format(agent_kwargs["type"])
-                    )
+                    raise ValueError(f"Unknown agent type: {agent_kwargs['type']}")
             else:
                 self.agent = SAC(
                     self.env.observation_space, self.env.action_space, **agent_kwargs
@@ -214,14 +224,7 @@ class Trainer:
                 device=device,
             )
 
-        self.logger.setup_pytorch_saver(
-            {
-                "agent": self.agent,
-                # 'model': self.env_model,
-                # 'replay_buffer': self.real_replay_buffer,
-                # 'virtual_replay_buffer': self.virtual_replay_buffer,
-            }
-        )
+        self.logger.setup_pytorch_saver({"agent": self.agent})
 
         if self.interaction_agent is not None:
             self.logger.add_to_pytorch_saver(
@@ -305,11 +308,7 @@ class Trainer:
             rollout_length = get_value_from_schedule(self.rollout_schedule, epoch)
 
             if not silent:
-                print(
-                    "Epoch {}\tMax rollout length: {}".format(
-                        epoch, self.max_rollout_length
-                    )
-                )
+                print(f"Epoch {epoch}\tMax rollout length: {self.max_rollout_length}")
 
             for step_epoch in range(self.steps_per_epoch):
                 actions_this_step = [0 for i in range(len(Actions))]
@@ -334,7 +333,7 @@ class Trainer:
                         self.env_model = EnvironmentModel(
                             self.env_model.obs_dim,
                             self.env_model.act_dim,
-                            **self.model_kwargs
+                            **self.model_kwargs,
                         )
 
                     model_val_error, _ = self.env_model.train_to_convergence(
@@ -343,7 +342,7 @@ class Trainer:
                         max_n_train_batches=-1
                         if epoch < 1
                         else self.model_max_n_train_batches,
-                        **self.model_kwargs
+                        **self.model_kwargs,
                     )
 
                     if self.reset_buffer:
@@ -359,9 +358,7 @@ class Trainer:
 
                 if (step_epoch + 1) % 10 == 0 and not tuning and not silent:
                     print(
-                        "Epoch {}, step {}/{}".format(
-                            epoch, step_epoch + 1, self.steps_per_epoch
-                        ),
+                        f"Epoch {epoch}, step {step_epoch+1}/{self.steps_per_epoch}",
                         end="\r",
                     )
 
@@ -535,7 +532,6 @@ class Trainer:
                 rollout_length,
                 episode_finished,
                 tested_agent,
-                self.model_pessimism,
             )
 
         return torch.as_tensor(test_performances, dtype=torch.float32), torch.as_tensor(
@@ -553,7 +549,6 @@ def log_end_of_epoch(
     rollout_length,
     episode_finished,
     tested_agent,
-    pessimism,
 ):
 
     logger.log_tabular("Epoch", epoch, epoch)

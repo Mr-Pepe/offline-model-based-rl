@@ -1,7 +1,7 @@
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 from torch.distributions.normal import Normal
 
 from offline_mbrl.models.mlp import mlp
@@ -36,10 +36,12 @@ class SquashedGaussianMLPActor(nn.Module):
             pi_action = pi_distribution.rsample()
 
         if with_logprob:
-            # Compute logprob from Gaussian, and then apply correction for Tanh squashing.
-            # NOTE: The correction formula is a little bit magic. To get an understanding
-            # of where it comes from, check out the original SAC paper (arXiv 1801.01290)
-            # and look in appendix C. This is a more numerically-stable equivalent to Eq 21.
+            # Compute logprob from Gaussian, and then apply correction for Tanh
+            # squashing.
+            # NOTE: The correction formula is a little bit magic. To get an
+            # understanding of where it comes from, check out the original SAC paper
+            # (arXiv 1801.01290) and look in appendix C. This is a more
+            # numerically-stable equivalent to Eq 21.
             # Try deriving it yourself as a (very difficult) exercise. :)
             logp_pi = pi_distribution.log_prob(pi_action).sum(axis=-1)
             logp_pi -= (2 * (np.log(2) - pi_action - F.softplus(-2 * pi_action))).sum(

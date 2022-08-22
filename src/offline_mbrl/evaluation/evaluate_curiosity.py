@@ -98,6 +98,12 @@ if __name__ == "__main__":
             underestimated_reward,
         ) = model.get_prediction(obs_act, debug=True)
 
+        normalized_score = (
+            d4rl.get_normalized_score(env_name, np.mean(performance)) * 100
+        )
+
         print(
-            f"Uncertainty: {epistemic_uncertainty.mean():.2f}   Terminals: {n_terminals}    Reward: {d4rl.get_normalized_score(env_name, np.mean(performance))*100:.0f}   {env_name} {mode}"
+            f"Uncertainty: {epistemic_uncertainty.mean():.2f}   "
+            f"Terminals: {n_terminals}    "
+            f"Reward: {normalized_score:.0f}   {env_name} {mode}"
         )

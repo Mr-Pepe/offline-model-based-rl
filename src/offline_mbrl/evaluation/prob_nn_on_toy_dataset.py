@@ -1,9 +1,7 @@
 import argparse
 
-from offline_mbrl.test.test_environment_model import (
-    test_probabilistic_model_trains_on_toy_dataset,
-)
 from offline_mbrl.utils.str2bool import str2bool
+from tests.test_environment_model import test_probabilistic_model_trains_on_toy_dataset
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--augment_loss", type=str2bool, default=True)

@@ -38,7 +38,7 @@ def test_train_probabilistic_model():
         env, buffer_device=device, n_samples=100000
     )
 
-    model = EnvironmentModel(obs_dim, act_dim, type="probabilistic")
+    model = EnvironmentModel(obs_dim, act_dim, model_type="probabilistic")
 
     model.to(device)
 
@@ -83,7 +83,7 @@ def test_train_probabilistic_ensemble():
         env, buffer_device=device, n_samples=100000
     )
 
-    model = EnvironmentModel(obs_dim, act_dim, type="probabilistic", n_networks=2)
+    model = EnvironmentModel(obs_dim, act_dim, model_type="probabilistic", n_networks=2)
 
     model.to(device)
 

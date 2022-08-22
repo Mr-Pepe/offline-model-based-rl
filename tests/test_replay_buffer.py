@@ -237,7 +237,7 @@ def test_clear_buffer():
     assert buffer.obs_dim == 1
     assert buffer.ptr == 100
     assert buffer.size == 100
-    buffer.obs_buf[80] == 1
+    assert buffer.obs_buf[80] == 1
 
     buffer.clear()
 
@@ -247,7 +247,7 @@ def test_clear_buffer():
     assert buffer.obs_dim == 1
     assert buffer.ptr == 0
     assert buffer.size == 0
-    buffer.obs_buf[80] == 1
+    assert buffer.obs_buf[80] == 1
 
 
 @pytest.mark.fast

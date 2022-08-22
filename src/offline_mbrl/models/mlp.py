@@ -1,4 +1,4 @@
-import torch.nn as nn
+from torch import nn
 
 
 def mlp(sizes, activation, output_activation=nn.Identity):

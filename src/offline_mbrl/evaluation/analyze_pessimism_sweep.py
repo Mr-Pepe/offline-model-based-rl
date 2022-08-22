@@ -18,14 +18,12 @@ from offline_mbrl.utils.modes import (
     PENALTY_MODES,
 )
 
-if __name__ == "__main__":
+
+def main():
     exp_dirs = []
 
-    al_max, al_mean, al_std = 0.015116, 0.001189, 0.003457
-    ep_max, ep_mean, ep_std = 1.014396, 0.020224, 0.037798
-
-    al_scale = al_mean + al_std
-    ep_scale = ep_mean + ep_std
+    al_max = 0.015116
+    ep_max = 1.014396
 
     f, axes = plt.subplots(1, 4, figsize=(8, 3))
 
@@ -43,15 +41,16 @@ if __name__ == "__main__":
         pessimisms = []
 
         for trial_name in trial_names:
-            with open(osp.join(exp_dir, trial_name, "progress.csv"), "r") as f:
+            with open(
+                osp.join(exp_dir, trial_name, "progress.csv"), encoding="utf-8"
+            ) as f:
                 trial_log = list(csv.DictReader(f, delimiter=","))
 
-            with open(osp.join(exp_dir, trial_name, "params.json"), "r") as f:
+            with open(
+                osp.join(exp_dir, trial_name, "params.json"), encoding="utf-8"
+            ) as f:
                 params = json.load(f)
 
-            final = 100 * d4rl.get_normalized_score(
-                env_name, float(trial_log[-1]["avg_test_return"])
-            )
             returns = [
                 100
                 * d4rl.get_normalized_score(
@@ -112,3 +111,7 @@ if __name__ == "__main__":
     )
 
     plt.show()
+
+
+if __name__ == "__main__":
+    main()
