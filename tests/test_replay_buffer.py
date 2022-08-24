@@ -247,13 +247,13 @@ def test_clear_buffer():
     assert buffer.obs_dim == 1
     assert buffer.ptr == 0
     assert buffer.size == 0
-    assert buffer.obs_buf[80] == 1
+    assert buffer.obs_buf[80] == 0
 
 
 @pytest.mark.fast
 def test_buffer_to_device(request):
     if not torch.cuda.is_available():
-        mark = pytest.mark.xfail(reason="Cuda not available.")
+        mark = pytest.mark.xfail(reason="CUDA not available")
         request.node.add_marker(mark)
 
     buffer = ReplayBuffer(1, 1, 100)
