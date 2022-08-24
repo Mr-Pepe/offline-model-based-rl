@@ -5,7 +5,10 @@ import numpy as np
 from offline_mbrl.evaluation.plot import get_all_datasets, plot_data
 
 if __name__ == "__main__":
-    logdir = [[], []]
+    # A list of lists
+    # Each sublist contains paths to experiment directories that contain a progress.txt
+    # Experiments from each sublist are plotted together
+    logdirs: list[list[str]] = []
 
     env_names = [
         "halfcheetah-medium-v2",
@@ -30,7 +33,7 @@ if __name__ == "__main__":
             return d4rl.get_normalized_score(env_names[i_env], x) * 100
 
         plt.sca(ax)
-        data = get_all_datasets(logdir[i_axis], legend=legend)
+        data = get_all_datasets(logdirs[i_axis], legend=legend)
         for datum in data:
             datum["AverageTestEpRet"] = [
                 normalize_score(x, i_axis) for x in datum["AverageTestEpRet"]

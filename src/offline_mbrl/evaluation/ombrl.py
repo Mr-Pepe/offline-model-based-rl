@@ -20,9 +20,11 @@ trajectory_color = "black"
 virtual_rollout_color = "coral"
 
 
-points = [[x[i], y[i]] for (x, y) in trajectories for i in range(len(x))]
-x = [point[0] for point in points]
-y = [point[1] for point in points]
+points: list[tuple[float, float]] = [
+    (x[i], y[i]) for (x, y) in trajectories for i in range(len(x))
+]
+xs = [point[0] for point in points]
+ys = [point[1] for point in points]
 
 # Penalty
 # sns.kdeplot(x, y, shade=True, bw_adjust=4, levels=100)
@@ -30,13 +32,14 @@ y = [point[1] for point in points]
 #             levels=100, thresh=0.0000000000000001)
 
 # Partitioning
-sns.kdeplot(x, y, shade=True, bw_adjust=0.6, levels=2, thresh=0.4, color="blue")
+sns.kdeplot(xs, ys, shade=True, bw_adjust=0.6, levels=2, thresh=0.4, color="blue")
 # sns.kdeplot(x, y, shade=True, bw_adjust=0.6,
 #             levels=2, thresh=0.02, color='blue')
 
 
 for i_rollout in range(n_virtual_rollouts):
-    x, y = points[random.randint(0, len(points) - 1)]
+    point = points[random.randint(0, len(points) - 1)]
+    x, y = point
 
     for step in range(rollout_length):
         u = random.random() * max_step_length - 0.5 * max_step_length
@@ -58,12 +61,12 @@ for i_rollout in range(n_virtual_rollouts):
         y += v
 
 # Plot trajectories
-for x, y in trajectories:
+for xs, ys in trajectories:
     plt.quiver(
-        x[:-1],
-        y[:-1],
-        np.diff(x),
-        np.diff(y),
+        xs[:-1],
+        ys[:-1],
+        np.diff(xs),
+        np.diff(ys),
         angles="xy",
         scale=1,
         scale_units="xy",
@@ -71,7 +74,7 @@ for x, y in trajectories:
         width=0.005,
     )
 
-    plt.scatter(x, y, color=trajectory_color, s=50)
+    plt.scatter(xs, ys, color=trajectory_color, s=50)
 
 
 plt.axis("off")

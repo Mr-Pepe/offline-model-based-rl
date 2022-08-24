@@ -86,10 +86,10 @@ if __name__ == "__main__":
                 "Couldn't read all trial performances for {} {}", (env_name, mode)
             )
 
-        trial_performances = torch.as_tensor(trial_performances).transpose(0, 1)
+        trial_performances_tensor = torch.as_tensor(trial_performances).transpose(0, 1)
 
-        mean_performances = trial_performances.mean(dim=1)
-        std_performances = trial_performances.std(dim=1)
+        mean_performances = trial_performances_tensor.mean(dim=1)
+        std_performances = trial_performances_tensor.std(dim=1)
 
         if last_env_name != env_name:
             print("")

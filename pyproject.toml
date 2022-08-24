@@ -27,14 +27,17 @@ markers = '''
     slow: Slowest tests, can take hours
     '''
 
+[tool.mypy]
+ignore_missing_imports = true
+exclude = ["venv.*/",  "build/", "dist/", "data/"]
+
 [tool.pylint.master]
 recursive = "yes"
 ignore = [
-    "conf.py", # The Sphinx config file
     ".tox",
     "build",
     "dist",
-    "log"
+    "data"
 ]
 ignore-patterns = ["venv.*"]
 

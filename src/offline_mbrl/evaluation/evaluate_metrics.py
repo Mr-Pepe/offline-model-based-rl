@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
         experiments.update({(env_name, mode): exp_dir})
 
-    for i_category, category in enumerate(categories):
+    for i_category in range(len(categories)):
         for i_dataset, dataset in enumerate(datasets):
             env_name = str.lower(category_names[i_category]) + dataset
 
