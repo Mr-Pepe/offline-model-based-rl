@@ -65,7 +65,7 @@ def test_uncertainty_is_between_one_and_zero_for_probabilistic_model():
     obs_dim = 5
     act_dim = 6
 
-    model = EnvironmentModel(obs_dim, act_dim, [2, 2], model_type="probabilistic")
+    model = EnvironmentModel(obs_dim, act_dim, [2, 2], type="probabilistic")
 
     tensor_size = (3, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
@@ -178,7 +178,7 @@ def test_probabilistic_model_returns_different_results_for_same_input():
     obs_dim = 5
     act_dim = 6
 
-    model = EnvironmentModel(obs_dim, act_dim, [2, 2], model_type="probabilistic")
+    model = EnvironmentModel(obs_dim, act_dim, [2, 2], type="probabilistic")
 
     tensor_size = (3, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
@@ -196,7 +196,7 @@ def test_probabilistic_model_returns_different_results_for_same_input():
 @pytest.mark.fast
 def test_raises_error_if_type_unknown():
     with pytest.raises(ValueError):
-        EnvironmentModel(1, 2, [2, 2], model_type="asdasd")
+        EnvironmentModel(1, 2, [2, 2], type="asdasd")
 
 
 @pytest.mark.slow
@@ -235,7 +235,7 @@ def test_probabilistic_model_trains_on_toy_dataset(
         1,
         1,
         hidden=[4, 8, 4],
-        model_type="probabilistic",
+        type="probabilistic",
         n_networks=n_networks,
         device=device,
     )
@@ -416,7 +416,7 @@ def test_probabilistic_model_returns_binary_done_signal():
     act_dim = 6
     torch.manual_seed(0)
 
-    model = EnvironmentModel(obs_dim, act_dim, model_type="probabilistic")
+    model = EnvironmentModel(obs_dim, act_dim, type="probabilistic")
 
     tensor_size = (100, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
@@ -455,7 +455,7 @@ def test_deterministic_model_does_not_always_output_terminal():
     model = EnvironmentModel(
         obs_dim,
         act_dim,
-        model_type="deterministic",
+        type="deterministic",
         post_fn=postprocessing_functions["hopper"],
         device=device,
     )
@@ -508,7 +508,7 @@ def test_probabilistic_model_does_not_always_output_terminal():
     model = EnvironmentModel(
         obs_dim,
         act_dim,
-        model_type="probabilistic",
+        type="probabilistic",
         post_fn=postprocessing_functions["hopper"],
         device=device,
     )
@@ -589,7 +589,7 @@ def test_get_prediction_from_pessimistic_model():
         obs_dim,
         act_dim,
         hidden=[2, 2],
-        model_type="probabilistic",
+        type="probabilistic",
         n_networks=n_networks,
     )
 
