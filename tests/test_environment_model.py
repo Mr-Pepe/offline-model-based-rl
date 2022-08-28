@@ -1,3 +1,4 @@
+import argparse
 from math import pi as PI
 
 import d4rl  # pylint: disable=unused-import
@@ -19,6 +20,7 @@ from offline_mbrl.utils.loss_functions import deterministic_loss, probabilistic_
 from offline_mbrl.utils.modes import ALEATORIC_PENALTY
 from offline_mbrl.utils.postprocessing import postprocessing_functions
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
+from offline_mbrl.utils.str2bool import str2bool
 from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
 
 gym.logger.set_level(40)
@@ -619,4 +621,20 @@ def test_get_prediction_from_pessimistic_model():
         np.testing.assert_array_equal,
         optimistic_output1,
         pessimistic_output,
+    )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--augment_loss", type=str2bool, default=True)
+    parser.add_argument("--add_points_between", type=str2bool, default=False)
+    parser.add_argument("--steps_per_plot", type=int, default=100)
+    args = parser.parse_args()
+
+    test_probabilistic_model_trains_on_toy_dataset(
+        steps=50000,
+        plot=True,
+        augment_loss=args.augment_loss,
+        steps_per_plot=args.steps_per_plot,
+        add_points_between=args.add_points_between,
     )
