@@ -4,7 +4,11 @@ import numpy as np
 import pytest
 import torch
 
-from offline_mbrl.utils.envs import HOPPER_ORIGINAL, WALKER_ORIGINAL
+from offline_mbrl.utils.envs import (
+    HALF_CHEETAH_RANDOM_V2,
+    HOPPER_RANDOM_V2,
+    WALKER_RANDOM_V2,
+)
 from offline_mbrl.utils.postprocessing import (
     postprocess_half_cheetah,
     postprocess_hopper,
@@ -35,7 +39,7 @@ def run_env(env, n_steps):
 
 @pytest.mark.fast
 def test_hopper_postprocessing():
-    next_observations, dones = run_env(gym.make(HOPPER_ORIGINAL), 100)
+    next_observations, dones = run_env(gym.make(HOPPER_RANDOM_V2), 100)
 
     assert dones.sum() > 0
 
@@ -47,7 +51,7 @@ def test_hopper_postprocessing():
 
 @pytest.mark.fast
 def test_half_cheetah_postprocessing():
-    next_observations, dones = run_env(gym.make("HalfCheetah-v2"), 100)
+    next_observations, dones = run_env(gym.make(HALF_CHEETAH_RANDOM_V2), 100)
 
     # Halg cheetah does not generate terminal states
     assert dones.sum() == 0
@@ -63,7 +67,7 @@ def test_half_cheetah_postprocessing():
 @pytest.mark.fast
 def test_walker2d_postprocessing():
 
-    next_observations, dones = run_env(gym.make(WALKER_ORIGINAL), 100)
+    next_observations, dones = run_env(gym.make(WALKER_RANDOM_V2), 100)
 
     assert dones.sum() > 0
 

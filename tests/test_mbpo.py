@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from offline_mbrl.train import Trainer
-from offline_mbrl.utils.envs import HOPPER_ORIGINAL
+from offline_mbrl.utils.envs import HOPPER_RANDOM_V2
 from offline_mbrl.utils.setup_logger_kwargs import setup_logger_kwargs
 
 
@@ -12,7 +12,7 @@ def test_mbpo_online():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     trainer = Trainer(
-        HOPPER_ORIGINAL,
+        HOPPER_RANDOM_V2,
         steps_per_epoch=1000,
         model_kwargs=dict(batch_size=256, type="probabilistic", n_networks=3),
         init_steps=1300,

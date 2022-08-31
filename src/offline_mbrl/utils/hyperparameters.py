@@ -3,7 +3,7 @@
 
 """This module contains optimizied hyperparameters for the different environments."""
 
-from offline_mbrl.utils.envs import *
+from offline_mbrl.utils.envs import *  # pylint: disable=wildcard-import, unused-wildcard-import
 from offline_mbrl.utils.modes import (
     ALEATORIC_PARTITIONING,
     ALEATORIC_PENALTY,

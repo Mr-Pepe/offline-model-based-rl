@@ -33,7 +33,7 @@ def main(args):
         model_pessimism=None,
         ood_threshold=None,
         rollouts_per_step=50,
-        model_kwargs=dict(in_normalized_space=True, patience=5),
+        model_kwargs=dict(patience=5),
         dataset_path="",
         seed=0,
         epochs=args.epochs,

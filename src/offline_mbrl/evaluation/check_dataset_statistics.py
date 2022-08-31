@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
         env = gym.make(env_name)
 
-        buffer, obs_dim, act_dim = load_dataset_from_env(env, with_timeouts=True)
+        buffer, obs_dim, act_dim = load_dataset_from_env(env)
 
         avg_rew.append(buffer.rew_buf.mean())
 

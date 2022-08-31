@@ -1,27 +1,27 @@
 import os.path as osp
 from pathlib import Path
 
+import d4rl  # pylint: disable=unused-import
 import gym
 import matplotlib.pyplot as plt
 
 from offline_mbrl.utils.envs import (
-    HALF_CHEETAH_ORIGINAL,
-    HOPPER_ORIGINAL,
-    WALKER_ORIGINAL,
+    HALF_CHEETAH_RANDOM_V2,
+    HOPPER_RANDOM_V2,
+    WALKER_RANDOM_V2,
 )
 
 if __name__ == "__main__":
     seeds = [53, 71, 123]
     envs = [
-        gym.make(HALF_CHEETAH_ORIGINAL),
-        gym.make(HOPPER_ORIGINAL),
-        gym.make(WALKER_ORIGINAL),
+        gym.make(HALF_CHEETAH_RANDOM_V2),
+        gym.make(HOPPER_RANDOM_V2),
+        gym.make(WALKER_RANDOM_V2),
     ]
     images = []
 
     for i, env in enumerate(envs):
-        env.reset()
-        env.seed(seeds[i])
+        env.reset(seed=seeds[i])
         env.action_space.seed(seeds[i])
 
         for step in range(30):

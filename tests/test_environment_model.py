@@ -18,7 +18,6 @@ from offline_mbrl.models.environment_model import (
 )
 from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM_V2, HOPPER_RANDOM_V2
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
-from offline_mbrl.utils.loss_functions import deterministic_loss, probabilistic_loss
 from offline_mbrl.utils.modes import ALEATORIC_PENALTY
 from offline_mbrl.utils.postprocessing import postprocessing_functions
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
@@ -472,7 +471,7 @@ def test_deterministic_model_does_not_always_output_terminal():
         )
 
         optim.zero_grad()
-        loss = deterministic_loss(x, y, model)
+        loss = model.deterministic_loss(x, y)
 
         if step % 100 == 0:
             print(f"Step: {step} Loss: {loss.item():.3f}")
@@ -527,7 +526,7 @@ def test_probabilistic_model_does_not_always_output_terminal():
         )
 
         optim.zero_grad()
-        loss = probabilistic_loss(x, y, model)
+        loss = model.probabilistic_loss(x, y)
 
         if step % 100 == 0:
             print(f"Step: {step} Loss: {loss.item():.3f}")

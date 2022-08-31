@@ -6,11 +6,11 @@ import torch
 from ax.service.ax_client import AxClient
 from ray import tune
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
-from ray.tune.suggest.ax import AxSearch
+from ray.tune.search.ax import AxSearch
 
 from offline_mbrl.train import Trainer
 from offline_mbrl.user_config import MODELS_DIR
-from offline_mbrl.utils.envs import HYPERPARAMS
+from offline_mbrl.utils.hyperparameters import HYPERPARAMS
 from offline_mbrl.utils.modes import (
     BEHAVIORAL_CLONING,
     MBPO,
@@ -121,7 +121,6 @@ def main(args):
         ood_threshold=None,
         rollouts_per_step=args.n_rollouts,
         model_kwargs=dict(
-            in_normalized_space=True,
             lr=1e-3,
             batch_size=256,
             hidden=[200, 200, 200, 200],

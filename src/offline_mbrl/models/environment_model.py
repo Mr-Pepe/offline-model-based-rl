@@ -1,4 +1,5 @@
 import os
+from typing import Callable, Optional
 
 import torch
 from ray import tune
@@ -8,21 +9,14 @@ from torch.nn.parameter import Parameter
 from torch.optim.adamw import AdamW
 
 from offline_mbrl.models.multi_head_mlp import MultiHeadMlp
-from offline_mbrl.utils.loss_functions import deterministic_loss, probabilistic_loss
 from offline_mbrl.utils.modes import (
     ALEATORIC_PARTITIONING,
     ALEATORIC_PENALTY,
     EPISTEMIC_PARTITIONING,
     EPISTEMIC_PENALTY,
-    EXPLICIT_PARTITIONING,
-    EXPLICIT_PENALTY,
     MODES,
-    OFFLINE_EXPLORATION_PARTITIONING,
-    OFFLINE_EXPLORATION_PENALTY,
     PARTITIONING_MODES,
     PENALTY_MODES,
-    SURVIVAL,
-    UNDERESTIMATION,
 )
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
@@ -160,7 +154,7 @@ class EnvironmentModel(nn.Module):
         raw_obs_act,
         i_network=-1,
         pessimism=0,
-        mode="",
+        mode: Optional[str] = None,
         ood_threshold=10000,
         with_uncertainty=False,
         debug=False,
@@ -237,37 +231,15 @@ class EnvironmentModel(nn.Module):
                 * 1.00001,
             )
 
-        if mode != "":
+        if mode is not None:
 
             self.check_prediction_arguments(mode, pessimism)
 
-            if mode == OFFLINE_EXPLORATION_PENALTY:
-                prediction[:, -2] = pessimism * epistemic_uncertainty
-                ood_idx = epistemic_uncertainty > ood_threshold
-                prediction[ood_idx, -1] = 1
-
-            elif mode == OFFLINE_EXPLORATION_PARTITIONING:
-                exp_idx = epistemic_uncertainty > pessimism
-                prediction[exp_idx, -2] = 1
-
-                ood_idx = epistemic_uncertainty > ood_threshold
-                prediction[ood_idx, -2] = 0
-                prediction[ood_idx, -1] = 1
-
-            elif mode == SURVIVAL:
-                prediction[:, -2] = 1
-
-                ood_idx = epistemic_uncertainty > ood_threshold
-                prediction[ood_idx, -2] = 0
-                prediction[ood_idx, -1] = 1
-
-            elif mode in PENALTY_MODES:
+            if mode in PENALTY_MODES:
                 if mode == ALEATORIC_PENALTY:
                     uncertainty = aleatoric_uncertainty
                 elif mode == EPISTEMIC_PENALTY:
                     uncertainty = epistemic_uncertainty
-                elif mode == EXPLICIT_PENALTY:
-                    uncertainty = explicit_uncertainty
 
                 prediction[:, -2] = (
                     means[:, :, -1].mean(dim=0) - pessimism * uncertainty
@@ -278,16 +250,11 @@ class EnvironmentModel(nn.Module):
                     ood_idx = aleatoric_uncertainty > ood_threshold
                 elif mode == EPISTEMIC_PARTITIONING:
                     ood_idx = epistemic_uncertainty > ood_threshold
-                elif mode == EXPLICIT_PARTITIONING:
-                    ood_idx = explicit_uncertainty > ood_threshold
 
                 prediction[
                     ood_idx, -2
                 ] = -self.max_reward  # pylint: disable=invalid-unary-operand-type
                 prediction[ood_idx, -1] = 1
-
-            elif mode == UNDERESTIMATION:
-                prediction[:, -2] = underestimated_reward
 
         if debug:
             return (
@@ -322,13 +289,10 @@ class EnvironmentModel(nn.Module):
         patience_value=0,
         debug=False,
         max_n_train_batches=-1,
-        lr_schedule=None,
         no_reward=False,
-        augmentation_fn=None,
         max_n_train_epochs=-1,
         checkpoint_dir=None,
         tuning=False,
-        in_normalized_space=False,
         **_,
     ):
 
@@ -363,17 +327,6 @@ class EnvironmentModel(nn.Module):
 
         if self.optim is None:
             self.optim = AdamW(self.parameters(), lr=lr)
-
-        lr_scheduler = None
-        if lr_schedule is not None:
-            lr_scheduler = torch.optim.lr_scheduler.CyclicLR(
-                self.optim,
-                lr_schedule[0],
-                lr_schedule[1],
-                mode="triangular2",
-                step_size_up=n_train_batches,
-                cycle_momentum=False,
-            )
 
         if checkpoint_dir:
             print("Loading from checkpoint.")
@@ -416,31 +369,18 @@ class EnvironmentModel(nn.Module):
                         self.max_reward, ground_truth[:, -1].max()
                     )
 
-                if augmentation_fn is not None:
-                    augmentation_fn(model_input, ground_truth)
-
                 self.optim.zero_grad()
                 with torch.cuda.amp.autocast(enabled=use_amp):
                     if self.type == "deterministic":
-                        loss = deterministic_loss(model_input, ground_truth, self)
+                        loss = self.deterministic_loss(model_input, ground_truth)
                     else:
-                        if in_normalized_space:
-                            loss = probabilistic_loss(
-                                model_input,
-                                ground_truth,
-                                self,
-                                debug=debug,
-                                no_reward=no_reward,
-                                pre_fn=self.pre_fn,
-                            )
-                        else:
-                            loss = probabilistic_loss(
-                                model_input,
-                                ground_truth,
-                                self,
-                                debug=debug,
-                                no_reward=no_reward,
-                            )
+                        loss = self.probabilistic_loss(
+                            model_input,
+                            ground_truth,
+                            no_reward=no_reward,
+                            pre_fn=self.pre_fn,
+                            debug=debug,
+                        )
 
                         if self.max_obs_act is None:
                             self.max_obs_act = model_input.max(dim=0).values
@@ -456,26 +396,10 @@ class EnvironmentModel(nn.Module):
                                 model_input.min(dim=0).values - self.min_obs_act
                             ) * 0.001
 
-                        for _ in range(1):
-                            aug_x = torch.rand_like(model_input)
-
-                            aug_x *= (self.max_obs_act - self.min_obs_act) * 2
-                            aug_x += (
-                                self.min_obs_act
-                                - (self.max_obs_act - self.min_obs_act) * 0.5
-                            )
-
-                            loss -= probabilistic_loss(
-                                aug_x, aug_x, self, only_uncertainty=True
-                            )
-
                 avg_train_loss += loss.item()
                 scaler.scale(loss).backward(retain_graph=True)
                 scaler.step(self.optim)
                 scaler.update()
-
-                if lr_scheduler is not None:
-                    lr_scheduler.step()
 
                 if max_n_train_batches != -1 and max_n_train_batches <= batches_trained:
                     stop_training = True
@@ -499,28 +423,18 @@ class EnvironmentModel(nn.Module):
                     )
 
                     if self.type == "deterministic":
-                        avg_val_losses[i_network] += deterministic_loss(
-                            model_input, ground_truth, self, i_network
+                        avg_val_losses[i_network] += self.deterministic_loss(
+                            model_input, ground_truth, i_network
                         ).item()
                     else:
-                        if in_normalized_space:
-                            avg_val_losses[i_network] += probabilistic_loss(
-                                model_input,
-                                ground_truth,
-                                self,
-                                i_network,
-                                only_mse=True,
-                                no_reward=no_reward,
-                                pre_fn=self.pre_fn,
-                            ).item()
-                        else:
-                            avg_val_losses[i_network] += probabilistic_loss(
-                                model_input,
-                                ground_truth,
-                                self,
-                                i_network,
-                                only_mse=True,
-                            ).item()
+                        avg_val_losses[i_network] += self.probabilistic_loss(
+                            model_input,
+                            ground_truth,
+                            i_network,
+                            only_mse=True,
+                            no_reward=no_reward,
+                            pre_fn=self.pre_fn,
+                        ).item()
 
                 avg_val_losses[i_network] /= n_val_batches
 
@@ -575,6 +489,95 @@ class EnvironmentModel(nn.Module):
             raise ValueError(
                 "Can not use aleatoric methods with deterministic ensemble."
             )
+
+    def deterministic_loss(
+        self,
+        model_input: torch.Tensor,
+        ground_truth_output: torch.Tensor,
+        i_network: int = -1,
+    ) -> torch.Tensor:
+        """Computes the deterministic mean squared error.
+
+        Args:
+            model_input (torch.Tensor): The model input.
+            ground_truth_output (torch.Tensor): The ground truth output to compute the
+                loss against.
+            i_network (int, optional): The network to compute the loss for. Pass -1 to
+                compute the mean loss across all networks of the model. Defaults to -1.
+
+        Returns:
+            torch.Tensor: _description_
+        """
+        predicted_output, _, _, _, _, _ = self(model_input)
+
+        if i_network == -1:
+            return torch.square(
+                predicted_output - ground_truth_output.unsqueeze(0)
+            ).mean()
+
+        return torch.square(
+            predicted_output[i_network] - ground_truth_output.unsqueeze(0)
+        ).mean()
+
+    def probabilistic_loss(
+        self,
+        model_input: torch.Tensor,
+        ground_truth_output: torch.Tensor,
+        i_network: int = -1,
+        only_mse: bool = False,
+        no_reward: bool = False,
+        only_uncertainty: bool = False,
+        pre_fn: Callable = None,
+        debug: bool = False,
+    ):
+        _, mean, logvar, max_logvar, min_logvar, uncertainty = self(model_input)
+
+        if pre_fn is not None:
+            mean[:, :, :-1] = pre_fn(mean[:, :, :-1], detach=False)
+            ground_truth_output[:, :-1] = pre_fn(ground_truth_output[:, :-1])
+
+        if no_reward:
+            model_input = model_input[:, :-1]
+            ground_truth_output = ground_truth_output[:, :-1]
+            mean = mean[:, :, :-1]
+            logvar = logvar[:, :, :-1]
+            max_logvar = max_logvar[:, :-1]
+            min_logvar = min_logvar[:, :-1]
+
+        if i_network > -1:
+            mean = mean[i_network]
+            logvar = logvar[i_network]
+            max_logvar = max_logvar[i_network]
+            min_logvar = min_logvar[i_network]
+
+        inv_var = torch.exp(-logvar)
+
+        if only_mse:
+            return torch.square(mean - ground_truth_output).mean()
+        if only_uncertainty:
+            return uncertainty.mean()
+
+        mse_loss = torch.square(mean - ground_truth_output)
+        mse_inv_var_loss = (mse_loss * inv_var).mean()
+        var_loss = logvar.mean()
+        var_bound_loss = 0.01 * max_logvar.mean() - 0.01 * min_logvar.mean()
+        uncertainty_loss = uncertainty.mean()
+
+        if debug:
+            print(
+                f"LR: {self.optim.param_groups[0]['lr']:.5f}, "
+                f"State MSE: {mse_loss[:, :, :-1].mean().item():.5f}, "
+                f"Rew MSE: {mse_loss[:, :, -1].mean().item():.5f}, "
+                f"MSE + INV VAR: {mse_inv_var_loss.item():.5f} "
+                f"VAR: {var_loss.item():.5f}, "
+                f"BOUNDS: {var_bound_loss.item():.5f}, "
+                f"MAX LOGVAR: {max_logvar.mean().item():.5f}, "
+                f"MIN LOGVAR: {min_logvar.mean().item():.5f}, ",
+                f"UNCERTAINTY: {uncertainty_loss.item():.5f}",
+                end="\r",
+            )
+
+        return mse_inv_var_loss + var_loss + var_bound_loss + uncertainty_loss
 
 
 def get_model_input_and_ground_truth_from_batch(

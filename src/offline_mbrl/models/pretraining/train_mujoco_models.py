@@ -7,7 +7,7 @@ import ray
 import torch
 from ray import tune
 from ray.tune.schedulers.async_hyperband import ASHAScheduler
-from ray.tune.suggest.hyperopt import HyperOptSearch
+from ray.tune.search.hyperopt import HyperOptSearch
 
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
@@ -68,7 +68,6 @@ if __name__ == "__main__":
         "n_hidden": args.n_hidden,
         "lr": None,
         "batch_size": None,
-        "in_normalized_space": True,
     }
 
     if args.level == 0:

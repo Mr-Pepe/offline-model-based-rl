@@ -51,7 +51,8 @@ ignore = [
     ".tox",
     "build",
     "dist",
-    "data"
+    "data",
+    "conf.py"
 ]
 ignore-patterns = ["venv.*"]
 

@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from offline_mbrl.train import Trainer
-from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM
+from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM_V2
 from offline_mbrl.utils.setup_logger_kwargs import setup_logger_kwargs
 
 
@@ -53,7 +53,7 @@ def test_sac_converges():
 def test_sac_offline():
     logger_kwargs = setup_logger_kwargs("test_sac_offline")
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    env = HALF_CHEETAH_RANDOM
+    env = HALF_CHEETAH_RANDOM_V2
     n_samples = 900000
 
     trainer = Trainer(
