@@ -14,7 +14,7 @@ from offline_mbrl.utils.hyperparameters import HYPERPARAMS
 from offline_mbrl.utils.modes import (
     BEHAVIORAL_CLONING,
     MBPO,
-    MODES,
+    ALL_MODES,
     PARTITIONING_MODES,
     PENALTY_MODES,
     SAC,
@@ -89,7 +89,7 @@ def main(args):
 
     pretrained_model_name = args.env_name + "-model.pt"
 
-    if args.mode not in MODES:
+    if args.mode not in ALL_MODES:
         raise ValueError(f"Unknown mode: {args.mode}")
 
     if args.mode == BEHAVIORAL_CLONING:

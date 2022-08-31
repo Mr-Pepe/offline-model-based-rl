@@ -14,7 +14,7 @@ from offline_mbrl.utils.modes import (
     ALEATORIC_PENALTY,
     EPISTEMIC_PARTITIONING,
     EPISTEMIC_PENALTY,
-    MODES,
+    ALL_MODES,
     PARTITIONING_MODES,
     PENALTY_MODES,
 )
@@ -478,7 +478,7 @@ class EnvironmentModel(nn.Module):
         return avg_val_losses, batches_trained
 
     def check_prediction_arguments(self, mode, pessimism):
-        if mode not in MODES:
+        if mode not in ALL_MODES:
             raise ValueError(f"Unknown mode: {mode}")
 
         if (

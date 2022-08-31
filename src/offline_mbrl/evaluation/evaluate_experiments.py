@@ -6,7 +6,7 @@ import d4rl
 import torch
 
 from offline_mbrl.utils.env_name_from_exp_name import get_env_name_from_experiment_name
-from offline_mbrl.utils.mode_from_exp_name import get_mode
+from offline_mbrl.utils.mode_from_exp_name import get_mode_from_experiment_name
 from offline_mbrl.utils.modes import PENALTY_MODES
 from offline_mbrl.utils.print_warning import print_warning
 
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     for exp_name in exp_names:
         exp_dir = osp.join(all_exp_dir, exp_name)
         env_name = get_env_name_from_experiment_name(exp_name)
-        mode = get_mode(exp_name)
+        mode = get_mode_from_experiment_name(exp_name)
 
         if last_env_name == "":
             last_env_name = env_name

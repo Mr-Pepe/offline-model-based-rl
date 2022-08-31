@@ -8,7 +8,7 @@ from offline_mbrl.evaluation.metrics import efficiency, final_performance, stabi
 from offline_mbrl.evaluation.plot import get_all_datasets
 from offline_mbrl.utils.env_name_from_exp_name import get_env_name_from_experiment_name
 from offline_mbrl.utils.envs import HALF_CHEETAH_ENVS, HOPPER_ENVS, WALKER_ENVS
-from offline_mbrl.utils.mode_from_exp_name import get_mode
+from offline_mbrl.utils.mode_from_exp_name import get_mode_from_experiment_name
 from offline_mbrl.utils.modes import (
     ALEATORIC_PARTITIONING,
     ALEATORIC_PENALTY,
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     for exp_name in exp_names:
         exp_dir = osp.join(all_exp_dir, exp_name)
         env_name = get_env_name_from_experiment_name(exp_name)
-        mode = get_mode(exp_name)
+        mode = get_mode_from_experiment_name(exp_name)
 
         experiments.update({(env_name, mode): exp_dir})
 

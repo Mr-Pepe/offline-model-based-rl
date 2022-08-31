@@ -7,7 +7,7 @@ import d4rl
 import matplotlib.pyplot as plt
 
 from offline_mbrl.utils.env_name_from_exp_name import get_env_name_from_experiment_name
-from offline_mbrl.utils.mode_from_exp_name import get_mode
+from offline_mbrl.utils.mode_from_exp_name import get_mode_from_experiment_name
 from offline_mbrl.utils.modes import (
     ALEATORIC_PARTITIONING,
     ALEATORIC_PENALTY,
@@ -32,7 +32,7 @@ def main(args):
     for exp_name in exp_names:
         exp_dir = osp.join(all_exp_dir, exp_name)
         env_name = get_env_name_from_experiment_name(exp_name)
-        mode = get_mode(exp_name)
+        mode = get_mode_from_experiment_name(exp_name)
 
         trial_names = [
             name for name in os.listdir(exp_dir) if osp.isdir(osp.join(exp_dir, name))
