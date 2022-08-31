@@ -1,24 +1,24 @@
+from typing import Optional, Union
+
 import numpy as np
 import torch
-
-from offline_mbrl.utils.combined_shape import combined_shape
 
 
 class ReplayBuffer:
     """
-    A simple FIFO experience replay buffer for SAC agents.
+    A simple FIFO experience replay buffer.
     Based on https://spinningup.openai.com
     """
 
     def __init__(self, obs_dim, act_dim, size, device="cpu"):
         self.obs_buf = torch.zeros(
-            combined_shape(size, obs_dim), dtype=torch.float32, device=device
+            _combined_shape(size, obs_dim), dtype=torch.float32, device=device
         )
         self.obs2_buf = torch.zeros(
-            combined_shape(size, obs_dim), dtype=torch.float32, device=device
+            _combined_shape(size, obs_dim), dtype=torch.float32, device=device
         )
         self.act_buf = torch.zeros(
-            combined_shape(size, act_dim), dtype=torch.float32, device=device
+            _combined_shape(size, act_dim), dtype=torch.float32, device=device
         )
         self.rew_buf = torch.zeros(size, dtype=torch.float32, device=device)
         self.done_buf = torch.zeros(size, dtype=torch.bool, device=device)
@@ -210,5 +210,13 @@ class ReplayBuffer:
         self.rew_buf = self.rew_buf.to(device)
         self.done_buf = self.done_buf.to(device)
 
-    def set_curriculum(self, selector):
-        self.possible_idxs = selector.select(self)
+
+def _combined_shape(
+    length: int, shape: Optional[Union[int, tuple[int, ...]]] = None
+) -> tuple[int, ...]:
+    # Based on https://spinningup.openai.com
+
+    if shape is None:
+        return (length,)
+
+    return (length, shape) if np.isscalar(shape) else (length, *shape)
