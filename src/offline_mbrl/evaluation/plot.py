@@ -10,7 +10,7 @@ import seaborn as sns
 import torch
 from d4rl import get_normalized_score
 
-from offline_mbrl.utils.env_name_from_exp_name import get_env_name
+from offline_mbrl.utils.env_name_from_exp_name import get_env_name_from_experiment_name
 from offline_mbrl.utils.envs import HALF_CHEETAH_ENVS, HOPPER_ENVS, WALKER_ENVS
 from offline_mbrl.utils.mode_from_exp_name import get_mode
 from offline_mbrl.utils.modes import (
@@ -239,7 +239,7 @@ def main(args):
 
         for exp_name in exp_names:
             exp_dir = osp.join(all_exp_dir, exp_name)
-            env_name = get_env_name(exp_name)
+            env_name = get_env_name_from_experiment_name(exp_name)
             mode = get_mode(exp_name)
 
             experiments.update({(env_name, mode): exp_dir})

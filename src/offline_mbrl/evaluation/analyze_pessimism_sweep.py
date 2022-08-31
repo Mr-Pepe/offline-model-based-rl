@@ -7,7 +7,7 @@ import d4rl  # noqa
 import numpy as np
 from matplotlib import pyplot as plt
 
-from offline_mbrl.utils.env_name_from_exp_name import get_env_name
+from offline_mbrl.utils.env_name_from_exp_name import get_env_name_from_experiment_name
 from offline_mbrl.utils.mode_from_exp_name import get_mode
 from offline_mbrl.utils.modes import (
     ALEATORIC_PARTITIONING,
@@ -30,7 +30,7 @@ def main():
     for i_exp, exp_dir in enumerate(exp_dirs):
         ax = axes[i_exp]
 
-        env_name = get_env_name(exp_dir)
+        env_name = get_env_name_from_experiment_name(exp_dir)
         mode = get_mode(exp_dir)
 
         trial_names = [
