@@ -5,9 +5,27 @@ from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
 
 def load_dataset_from_env(
-    env, n_samples=-1, buffer_size=-1, buffer_device="cpu", with_timeouts=False
-):
-    dataset = d4rl.qlearning_dataset(env)
+    env_name: str,
+    n_samples: int = -1,
+    buffer_size: int = -1,
+    buffer_device: str = "cpu",
+) -> tuple[ReplayBuffer, int, int]:
+    """Loads an environment's dataset into a replay buffer.
+
+    Args:
+        env_name (str): The environment name.
+        n_samples (int, optional): The number of samples to load from the dataset. Pass
+            -1 to load all samples. Defaults to -1.
+        buffer_size (int, optional): The replay buffer size. Pass -1 to make the replay
+            buffer size match the number of loaded samples. Defaults to -1.
+        buffer_device (str, optional): The device to push the replay buffer content to.
+            Defaults to "cpu".
+
+    Returns:
+        tuple[ReplayBuffer, int, int]: The replay buffer, the dimensionality of an
+            observation, and the dimensionality of an action.
+    """
+    dataset = d4rl.qlearning_dataset(env_name)
 
     if n_samples == -1:
         observations = torch.as_tensor(dataset["observations"])
@@ -33,7 +51,7 @@ def load_dataset_from_env(
 
     buffer.store_batch(observations, actions, rewards, next_observations, dones)
 
-    if with_timeouts and "timeouts" in dataset:
+    if "timeouts" in dataset:
         buffer.timeouts = dataset["timeouts"]
 
     return buffer, observations.shape[1], actions.shape[1]

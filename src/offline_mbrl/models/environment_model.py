@@ -8,7 +8,6 @@ from torch.nn.parameter import Parameter
 from torch.optim.adamw import AdamW
 
 from offline_mbrl.models.multi_head_mlp import MultiHeadMlp
-from offline_mbrl.utils.get_x_y_from_batch import get_x_y_from_batch
 from offline_mbrl.utils.loss_functions import deterministic_loss, probabilistic_loss
 from offline_mbrl.utils.modes import (
     ALEATORIC_PARTITIONING,
@@ -25,6 +24,7 @@ from offline_mbrl.utils.modes import (
     SURVIVAL,
     UNDERESTIMATION,
 )
+from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
 
 class EnvironmentModel(nn.Module):
@@ -314,7 +314,7 @@ class EnvironmentModel(nn.Module):
 
     def train_to_convergence(
         self,
-        data,
+        data: ReplayBuffer,
         lr=1e-3,
         batch_size=1024,
         val_split=0.2,
@@ -405,27 +405,29 @@ class EnvironmentModel(nn.Module):
             avg_train_loss = 0
 
             for _ in range(n_train_batches):
-                x, y = get_x_y_from_batch(
+                model_input, ground_truth = get_model_input_and_ground_truth_from_batch(
                     data.sample_train_batch(batch_size, val_split), device
                 )
 
                 if self.max_reward is None:
-                    self.max_reward = y[:, -1].max()
+                    self.max_reward = ground_truth[:, -1].max()
                 else:
-                    self.max_reward = torch.max(self.max_reward, y[:, -1].max())
+                    self.max_reward = torch.max(
+                        self.max_reward, ground_truth[:, -1].max()
+                    )
 
                 if augmentation_fn is not None:
-                    augmentation_fn(x, y)
+                    augmentation_fn(model_input, ground_truth)
 
                 self.optim.zero_grad()
                 with torch.cuda.amp.autocast(enabled=use_amp):
                     if self.type == "deterministic":
-                        loss = deterministic_loss(x, y, self)
+                        loss = deterministic_loss(model_input, ground_truth, self)
                     else:
                         if in_normalized_space:
                             loss = probabilistic_loss(
-                                x,
-                                y,
+                                model_input,
+                                ground_truth,
                                 self,
                                 debug=debug,
                                 no_reward=no_reward,
@@ -433,25 +435,29 @@ class EnvironmentModel(nn.Module):
                             )
                         else:
                             loss = probabilistic_loss(
-                                x, y, self, debug=debug, no_reward=no_reward
+                                model_input,
+                                ground_truth,
+                                self,
+                                debug=debug,
+                                no_reward=no_reward,
                             )
 
                         if self.max_obs_act is None:
-                            self.max_obs_act = x.max(dim=0).values
+                            self.max_obs_act = model_input.max(dim=0).values
                         else:
                             self.max_obs_act += (
-                                x.max(dim=0).values - self.max_obs_act
+                                model_input.max(dim=0).values - self.max_obs_act
                             ) * 0.001
 
                         if self.min_obs_act is None:
-                            self.min_obs_act = x.min(dim=0).values
+                            self.min_obs_act = model_input.min(dim=0).values
                         else:
                             self.min_obs_act += (
-                                x.min(dim=0).values - self.min_obs_act
+                                model_input.min(dim=0).values - self.min_obs_act
                             ) * 0.001
 
                         for _ in range(1):
-                            aug_x = torch.rand_like(x)
+                            aug_x = torch.rand_like(model_input)
 
                             aug_x *= (self.max_obs_act - self.min_obs_act) * 2
                             aug_x += (
@@ -485,19 +491,22 @@ class EnvironmentModel(nn.Module):
 
             for i_network in range(self.n_networks):
                 for _ in range(n_val_batches):
-                    x, y = get_x_y_from_batch(
+                    (
+                        model_input,
+                        ground_truth,
+                    ) = get_model_input_and_ground_truth_from_batch(
                         data.sample_val_batch(batch_size, val_split), device
                     )
 
                     if self.type == "deterministic":
                         avg_val_losses[i_network] += deterministic_loss(
-                            x, y, self, i_network
+                            model_input, ground_truth, self, i_network
                         ).item()
                     else:
                         if in_normalized_space:
                             avg_val_losses[i_network] += probabilistic_loss(
-                                x,
-                                y,
+                                model_input,
+                                ground_truth,
                                 self,
                                 i_network,
                                 only_mse=True,
@@ -506,7 +515,11 @@ class EnvironmentModel(nn.Module):
                             ).item()
                         else:
                             avg_val_losses[i_network] += probabilistic_loss(
-                                x, y, self, i_network, only_mse=True
+                                model_input,
+                                ground_truth,
+                                self,
+                                i_network,
+                                only_mse=True,
                             ).item()
 
                 avg_val_losses[i_network] /= n_val_batches
@@ -562,3 +575,26 @@ class EnvironmentModel(nn.Module):
             raise ValueError(
                 "Can not use aleatoric methods with deterministic ensemble."
             )
+
+
+def get_model_input_and_ground_truth_from_batch(
+    batch: dict[str, torch.Tensor], device: str
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Returns the model inputs and ground truth outputs from a batch.
+
+    Args:
+        batch (dict[str, torch.Tensor]): A batch sampled from a
+            :py:class:`.ReplayBuffer`.
+        device (str): The device to push the tensors to.
+
+    Returns:
+        tuple[torch.Tensor, torch.Tensor]: The model input and ground truth output from
+            a batch.
+    """
+    model_input = torch.cat((batch["obs"], batch["act"]), dim=1)
+    ground_truth = torch.cat((batch["obs2"], batch["rew"].unsqueeze(1)), dim=1)
+
+    model_input = model_input.to(device)
+    ground_truth = ground_truth.to(device)
+
+    return model_input, ground_truth

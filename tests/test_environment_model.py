@@ -12,9 +12,11 @@ from torch import nn
 from torch.optim.adam import Adam
 
 from offline_mbrl.actors.random_agent import RandomAgent
-from offline_mbrl.models.environment_model import EnvironmentModel
+from offline_mbrl.models.environment_model import (
+    EnvironmentModel,
+    get_model_input_and_ground_truth_from_batch,
+)
 from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM_V2, HOPPER_RANDOM_V2
-from offline_mbrl.utils.get_x_y_from_batch import get_x_y_from_batch
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.loss_functions import deterministic_loss, probabilistic_loss
 from offline_mbrl.utils.modes import ALEATORIC_PENALTY
@@ -465,7 +467,9 @@ def test_deterministic_model_does_not_always_output_terminal():
 
     for step in range(500):
 
-        x, y = get_x_y_from_batch(real_buffer.sample_train_batch(256, 0), device)
+        x, y = get_model_input_and_ground_truth_from_batch(
+            real_buffer.sample_train_batch(256, 0), device
+        )
 
         optim.zero_grad()
         loss = deterministic_loss(x, y, model)
@@ -518,7 +522,9 @@ def test_probabilistic_model_does_not_always_output_terminal():
 
     for step in range(500):
 
-        x, y = get_x_y_from_batch(real_buffer.sample_train_batch(256, 0), device)
+        x, y = get_model_input_and_ground_truth_from_batch(
+            real_buffer.sample_train_batch(256, 0), device
+        )
 
         optim.zero_grad()
         loss = probabilistic_loss(x, y, model)

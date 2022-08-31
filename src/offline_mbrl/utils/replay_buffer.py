@@ -24,7 +24,7 @@ class ReplayBuffer:
         self.done_buf = torch.zeros(size, dtype=torch.bool, device=device)
         self.ptr, self.size, self.max_size = 0, 0, size
 
-        self.timeouts = None
+        self.timeouts: Optional[torch.Tensor] = None
 
         self.split_at_size = -1
         self.split_with_val_split = -1
@@ -51,7 +51,14 @@ class ReplayBuffer:
 
         self.has_changed = True
 
-    def store_batch(self, obs, act, rew, next_obs, done):
+    def store_batch(
+        self,
+        obs: torch.Tensor,
+        act: torch.Tensor,
+        rew: torch.Tensor,
+        next_obs: torch.Tensor,
+        done: torch.Tensor,
+    ) -> None:
         remaining_batch_size = len(obs)
         remaining_buffer_size = self.max_size - self.ptr
 
@@ -136,7 +143,9 @@ class ReplayBuffer:
 
         return batch
 
-    def sample_train_batch(self, batch_size=32, val_split=0.2):
+    def sample_train_batch(
+        self, batch_size=32, val_split=0.2
+    ) -> dict[str, torch.Tensor]:
         if self.split_at_size != self.size or self.split_with_val_split != val_split:
             self.split(val_split)
 
