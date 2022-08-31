@@ -1,107 +1,68 @@
 from functools import partial
+from typing import Callable, Optional
 
 import d4rl  # pylint: disable=unused-import
 import gym
 import torch
+from d4rl.offline_env import OfflineEnv
 
-from offline_mbrl.utils.envs import (
-    HALF_CHEETAH_EXPERT,
-    HALF_CHEETAH_EXPERT_V1,
-    HALF_CHEETAH_EXPERT_V2,
-    HALF_CHEETAH_MEDIUM,
-    HALF_CHEETAH_MEDIUM_EXPERT,
-    HALF_CHEETAH_MEDIUM_EXPERT_V1,
-    HALF_CHEETAH_MEDIUM_EXPERT_V2,
-    HALF_CHEETAH_MEDIUM_REPLAY,
-    HALF_CHEETAH_MEDIUM_REPLAY_V1,
-    HALF_CHEETAH_MEDIUM_REPLAY_V2,
-    HALF_CHEETAH_MEDIUM_V1,
-    HALF_CHEETAH_MEDIUM_V2,
-    HALF_CHEETAH_RANDOM,
-    HALF_CHEETAH_RANDOM_V1,
-    HALF_CHEETAH_RANDOM_V2,
-    HOPPER_EXPERT,
-    HOPPER_EXPERT_V1,
-    HOPPER_EXPERT_V2,
-    HOPPER_MEDIUM,
-    HOPPER_MEDIUM_EXPERT,
-    HOPPER_MEDIUM_EXPERT_V1,
-    HOPPER_MEDIUM_EXPERT_V2,
-    HOPPER_MEDIUM_REPLAY,
-    HOPPER_MEDIUM_REPLAY_V1,
-    HOPPER_MEDIUM_REPLAY_V2,
-    HOPPER_MEDIUM_V1,
-    HOPPER_MEDIUM_V2,
-    HOPPER_RANDOM,
-    HOPPER_RANDOM_V1,
-    HOPPER_RANDOM_V2,
-    WALKER_EXPERT,
-    WALKER_MEDIUM,
-    WALKER_MEDIUM_EXPERT,
-    WALKER_MEDIUM_EXPERT_V1,
-    WALKER_MEDIUM_EXPERT_V2,
-    WALKER_MEDIUM_REPLAY,
-    WALKER_MEDIUM_REPLAY_V1,
-    WALKER_MEDIUM_REPLAY_V2,
-    WALKER_RANDOM,
-    WALKER_EXPERT_v1,
-    WALKER_EXPERT_v2,
-    WALKER_MEDIUM_v1,
-    WALKER_MEDIUM_v2,
-    WALKER_RANDOM_v1,
-    WALKER_RANDOM_v2,
-)
-
-envs_with_preprocessing_functions = [
-    HALF_CHEETAH_RANDOM,
-    HALF_CHEETAH_MEDIUM,
-    HALF_CHEETAH_EXPERT,
-    HALF_CHEETAH_MEDIUM_REPLAY,
-    HALF_CHEETAH_MEDIUM_EXPERT,
-    HOPPER_RANDOM,
-    HOPPER_MEDIUM,
-    HOPPER_EXPERT,
-    HOPPER_MEDIUM_REPLAY,
-    HOPPER_MEDIUM_EXPERT,
-    WALKER_RANDOM,
-    WALKER_MEDIUM,
-    WALKER_EXPERT,
-    WALKER_MEDIUM_REPLAY,
-    WALKER_MEDIUM_EXPERT,
-    HALF_CHEETAH_RANDOM_V1,
-    HALF_CHEETAH_MEDIUM_V1,
-    HALF_CHEETAH_EXPERT_V1,
-    HALF_CHEETAH_MEDIUM_REPLAY_V1,
-    HALF_CHEETAH_MEDIUM_EXPERT_V1,
-    HOPPER_RANDOM_V1,
-    HOPPER_MEDIUM_V1,
-    HOPPER_EXPERT_V1,
-    HOPPER_MEDIUM_REPLAY_V1,
-    HOPPER_MEDIUM_EXPERT_V1,
-    WALKER_RANDOM_v1,
-    WALKER_MEDIUM_v1,
-    WALKER_EXPERT_v1,
-    WALKER_MEDIUM_REPLAY_V1,
-    WALKER_MEDIUM_EXPERT_V1,
-    HALF_CHEETAH_RANDOM_V2,
-    HALF_CHEETAH_MEDIUM_V2,
-    HALF_CHEETAH_EXPERT_V2,
-    HALF_CHEETAH_MEDIUM_REPLAY_V2,
-    HALF_CHEETAH_MEDIUM_EXPERT_V2,
-    HOPPER_RANDOM_V2,
-    HOPPER_MEDIUM_V2,
-    HOPPER_EXPERT_V2,
-    HOPPER_MEDIUM_REPLAY_V2,
-    HOPPER_MEDIUM_EXPERT_V2,
-    WALKER_RANDOM_v2,
-    WALKER_MEDIUM_v2,
-    WALKER_EXPERT_v2,
-    WALKER_MEDIUM_REPLAY_V2,
-    WALKER_MEDIUM_EXPERT_V2,
-]
+from offline_mbrl.utils.envs import ALL_ENVS
 
 
-def preprocess(mean, std, obs_act, detach=True):
+def get_preprocessing_function(
+    env_name: str, device: str = "cpu"
+) -> Optional[Callable]:
+    """Retrieves a preprocessing function for a given environment.
+
+    The preprocessing function performs normalization based on the mean and standard
+    deviation of the offline dataset for an environment.
+
+    Args:
+        env_name (str): The environment name.
+        device (str, optional): The PyTorch device. Defaults to "cpu".
+
+    Returns:
+        Optional[Callable]: The preprocessing function for that environment.
+    """
+    if env_name not in ALL_ENVS:
+        raise ValueError(
+            f"No preprocessing function found for environment '{env_name}'. "
+            f"Allowed environments: {ALL_ENVS}"
+        )
+
+    env: OfflineEnv = gym.make(env_name)
+    dataset = env.get_dataset()
+
+    obs_act = torch.cat(
+        (torch.as_tensor(dataset["observations"]), torch.as_tensor(dataset["actions"])),
+        dim=1,
+    )
+
+    mean = obs_act.mean(dim=0).to(device)
+    std = obs_act.std(dim=0).to(device)
+
+    return partial(_preprocess, mean, std)
+
+
+def _preprocess(
+    mean: torch.Tensor, std: torch.Tensor, obs_act: torch.Tensor, detach: bool = True
+) -> torch.Tensor:
+    """Preprocess a batch of concatenated observations and actions.
+
+    Uses normalization for preprocessing with statistics defined in :code:`mean` and
+    :code:`std`.
+
+    Args:
+        mean (torch.Tensor): The mean value to use for normalization.
+        std (torch.Tensor): The std value to use for normalization.
+        obs_act (torch.Tensor): A tensor containing samples of concatenated observations
+            and actions.
+        detach (bool, optional): Whether to detach the samples before preprocessing.
+            Defaults to True.
+
+    Returns:
+        torch.Tensor: A tensor of the same shape as obs_act with normalized samples.
+    """
     if detach:
         obs_act = obs_act.detach().clone()
 
@@ -112,25 +73,3 @@ def preprocess(mean, std, obs_act, detach=True):
     obs_act /= std[:length]
 
     return obs_act
-
-
-def get_preprocessing_function(env_name, device=""):
-    if env_name not in envs_with_preprocessing_functions:
-        return None
-
-    env = gym.make(env_name)
-    dataset = env.get_dataset()
-
-    obs_act = torch.cat(
-        (torch.as_tensor(dataset["observations"]), torch.as_tensor(dataset["actions"])),
-        dim=1,
-    )
-
-    mean = obs_act.mean(dim=0)
-    std = obs_act.std(dim=0)
-
-    if device != "":
-        mean = mean.to(device)
-        std = std.to(device)
-
-    return partial(preprocess, mean, std)

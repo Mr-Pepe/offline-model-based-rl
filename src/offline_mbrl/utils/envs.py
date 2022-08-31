@@ -1,24 +1,14 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""This module defines the environments available in this package."""
+
 from offline_mbrl.utils.modes import (
     ALEATORIC_PARTITIONING,
     ALEATORIC_PENALTY,
     EPISTEMIC_PARTITIONING,
     EPISTEMIC_PENALTY,
-    EXPLICIT_PARTITIONING,
-    EXPLICIT_PENALTY,
 )
-
-HOPPER_ORIGINAL = "Hopper-v2"
-HOPPER_RANDOM = "hopper-random-v0"
-HOPPER_MEDIUM = "hopper-medium-v0"
-HOPPER_EXPERT = "hopper-expert-v0"
-HOPPER_MEDIUM_REPLAY = "hopper-medium-replay-v0"
-HOPPER_MEDIUM_EXPERT = "hopper-medium-expert-v0"
-
-HOPPER_RANDOM_V1 = "hopper-random-v1"
-HOPPER_MEDIUM_V1 = "hopper-medium-v1"
-HOPPER_EXPERT_V1 = "hopper-expert-v1"
-HOPPER_MEDIUM_REPLAY_V1 = "hopper-medium-replay-v1"
-HOPPER_MEDIUM_EXPERT_V1 = "hopper-medium-expert-v1"
 
 HOPPER_RANDOM_V2 = "hopper-random-v2"
 HOPPER_MEDIUM_V2 = "hopper-medium-v2"
@@ -27,17 +17,6 @@ HOPPER_MEDIUM_REPLAY_V2 = "hopper-medium-replay-v2"
 HOPPER_MEDIUM_EXPERT_V2 = "hopper-medium-expert-v2"
 
 HOPPER_ENVS = [
-    HOPPER_ORIGINAL,
-    HOPPER_RANDOM,
-    HOPPER_MEDIUM,
-    HOPPER_EXPERT,
-    HOPPER_MEDIUM_REPLAY,
-    HOPPER_MEDIUM_EXPERT,
-    HOPPER_RANDOM_V1,
-    HOPPER_MEDIUM_V1,
-    HOPPER_EXPERT_V1,
-    HOPPER_MEDIUM_REPLAY_V1,
-    HOPPER_MEDIUM_EXPERT_V1,
     HOPPER_RANDOM_V2,
     HOPPER_MEDIUM_V2,
     HOPPER_EXPERT_V2,
@@ -45,18 +24,6 @@ HOPPER_ENVS = [
     HOPPER_MEDIUM_EXPERT_V2,
 ]
 
-HALF_CHEETAH_ORIGINAL = "HalfCheetah-v2"
-HALF_CHEETAH_RANDOM = "halfcheetah-random-v0"
-HALF_CHEETAH_MEDIUM = "halfcheetah-medium-v0"
-HALF_CHEETAH_EXPERT = "halfcheetah-expert-v0"
-HALF_CHEETAH_MEDIUM_REPLAY = "halfcheetah-medium-replay-v0"
-HALF_CHEETAH_MEDIUM_EXPERT = "halfcheetah-medium-expert-v0"
-
-HALF_CHEETAH_RANDOM_V1 = "halfcheetah-random-v1"
-HALF_CHEETAH_MEDIUM_V1 = "halfcheetah-medium-v1"
-HALF_CHEETAH_EXPERT_V1 = "halfcheetah-expert-v1"
-HALF_CHEETAH_MEDIUM_REPLAY_V1 = "halfcheetah-medium-replay-v1"
-HALF_CHEETAH_MEDIUM_EXPERT_V1 = "halfcheetah-medium-expert-v1"
 
 HALF_CHEETAH_RANDOM_V2 = "halfcheetah-random-v2"
 HALF_CHEETAH_MEDIUM_V2 = "halfcheetah-medium-v2"
@@ -65,17 +32,6 @@ HALF_CHEETAH_MEDIUM_REPLAY_V2 = "halfcheetah-medium-replay-v2"
 HALF_CHEETAH_MEDIUM_EXPERT_V2 = "halfcheetah-medium-expert-v2"
 
 HALF_CHEETAH_ENVS = [
-    HALF_CHEETAH_ORIGINAL,
-    HALF_CHEETAH_RANDOM,
-    HALF_CHEETAH_MEDIUM,
-    HALF_CHEETAH_EXPERT,
-    HALF_CHEETAH_MEDIUM_REPLAY,
-    HALF_CHEETAH_MEDIUM_EXPERT,
-    HALF_CHEETAH_RANDOM_V1,
-    HALF_CHEETAH_MEDIUM_V1,
-    HALF_CHEETAH_EXPERT_V1,
-    HALF_CHEETAH_MEDIUM_REPLAY_V1,
-    HALF_CHEETAH_MEDIUM_EXPERT_V1,
     HALF_CHEETAH_RANDOM_V2,
     HALF_CHEETAH_MEDIUM_V2,
     HALF_CHEETAH_EXPERT_V2,
@@ -83,51 +39,30 @@ HALF_CHEETAH_ENVS = [
     HALF_CHEETAH_MEDIUM_EXPERT_V2,
 ]
 
-WALKER_ORIGINAL = "Walker2d-v2"
-WALKER_RANDOM = "walker2d-random-v0"
-WALKER_MEDIUM = "walker2d-medium-v0"
-WALKER_EXPERT = "walker2d-expert-v0"
-WALKER_MEDIUM_REPLAY = "walker2d-medium-replay-v0"
-WALKER_MEDIUM_EXPERT = "walker2d-medium-expert-v0"
 
-WALKER_RANDOM_v1 = "walker2d-random-v1"
-WALKER_MEDIUM_v1 = "walker2d-medium-v1"
-WALKER_EXPERT_v1 = "walker2d-expert-v1"
-WALKER_MEDIUM_REPLAY_V1 = "walker2d-medium-replay-v1"
-WALKER_MEDIUM_EXPERT_V1 = "walker2d-medium-expert-v1"
-
-WALKER_RANDOM_v2 = "walker2d-random-v2"
-WALKER_MEDIUM_v2 = "walker2d-medium-v2"
-WALKER_EXPERT_v2 = "walker2d-expert-v2"
+WALKER_RANDOM_V2 = "walker2d-random-v2"
+WALKER_MEDIUM_V2 = "walker2d-medium-v2"
+WALKER_EXPERT_V2 = "walker2d-expert-v2"
 WALKER_MEDIUM_REPLAY_V2 = "walker2d-medium-replay-v2"
 WALKER_MEDIUM_EXPERT_V2 = "walker2d-medium-expert-v2"
 
 
 WALKER_ENVS = [
-    WALKER_ORIGINAL,
-    WALKER_RANDOM,
-    WALKER_MEDIUM,
-    WALKER_EXPERT,
-    WALKER_MEDIUM_REPLAY,
-    WALKER_MEDIUM_EXPERT,
-    WALKER_RANDOM_v1,
-    WALKER_MEDIUM_v1,
-    WALKER_EXPERT_v1,
-    WALKER_MEDIUM_REPLAY_V1,
-    WALKER_MEDIUM_EXPERT_V1,
-    WALKER_RANDOM_v2,
-    WALKER_MEDIUM_v2,
-    WALKER_EXPERT_v2,
+    WALKER_RANDOM_V2,
+    WALKER_MEDIUM_V2,
+    WALKER_EXPERT_V2,
     WALKER_MEDIUM_REPLAY_V2,
     WALKER_MEDIUM_EXPERT_V2,
 ]
-
 
 ENV_CATEGORIES = {
     "hopper": HOPPER_ENVS,
     "half_cheetah": HALF_CHEETAH_ENVS,
     "walker2d": WALKER_ENVS,
 }
+
+ALL_ENVS = [*HOPPER_ENVS, *HALF_CHEETAH_ENVS, *WALKER_ENVS]
+
 
 # Hyperparameters
 # (rollouts, rollout length, pessimism/ OOD threshold)
@@ -143,11 +78,11 @@ HYPERPARAMS = {
         HOPPER_MEDIUM_REPLAY_V2: (50, 9, 0.0483),
         HOPPER_MEDIUM_EXPERT_V2: (50, 9, 0.0473),
         HOPPER_EXPERT_V2: (50, 20, 0.00145),
-        WALKER_RANDOM_v2: (50, 17, 0.40423),
-        WALKER_MEDIUM_v2: (50, 10, 1.8323),
+        WALKER_RANDOM_V2: (50, 17, 0.40423),
+        WALKER_MEDIUM_V2: (50, 10, 1.8323),
         WALKER_MEDIUM_REPLAY_V2: (50, 20, 1.1510),
         WALKER_MEDIUM_EXPERT_V2: (50, 15, 2.4947),
-        WALKER_EXPERT_v2: (50, 8, 1.3946),
+        WALKER_EXPERT_V2: (50, 8, 1.3946),
     },
     EPISTEMIC_PARTITIONING: {
         HALF_CHEETAH_RANDOM_V2: (50, 18, 4.2511),
@@ -160,13 +95,12 @@ HYPERPARAMS = {
         HOPPER_MEDIUM_REPLAY_V2: (50, 20, 0.599),
         HOPPER_MEDIUM_EXPERT_V2: (50, 20, 1.0881),
         HOPPER_EXPERT_V2: (50, 18, 0.19435),
-        WALKER_RANDOM_v2: (50, 15, 1.1804),
-        WALKER_MEDIUM_v2: (50, 11, 1.5975),
+        WALKER_RANDOM_V2: (50, 15, 1.1804),
+        WALKER_MEDIUM_V2: (50, 11, 1.5975),
         WALKER_MEDIUM_REPLAY_V2: (50, 4, 3.12812),
         WALKER_MEDIUM_EXPERT_V2: (50, 10, 1.9587),
-        WALKER_EXPERT_v2: (50, 19, 3.0755),
+        WALKER_EXPERT_V2: (50, 19, 3.0755),
     },
-    EXPLICIT_PARTITIONING: {},
     ALEATORIC_PENALTY: {
         HALF_CHEETAH_RANDOM_V2: (50, 17, 0),
         HALF_CHEETAH_MEDIUM_V2: (50, 3, 1.8882),
@@ -178,11 +112,11 @@ HYPERPARAMS = {
         HOPPER_MEDIUM_REPLAY_V2: (50, 8, 48.06),
         HOPPER_MEDIUM_EXPERT_V2: (50, 15, 380),
         HOPPER_EXPERT_V2: (50, 40, 438.51),
-        WALKER_RANDOM_v2: (50, 20, 0.1491),
-        WALKER_MEDIUM_v2: (50, 9, 1.51),
+        WALKER_RANDOM_V2: (50, 20, 0.1491),
+        WALKER_MEDIUM_V2: (50, 9, 1.51),
         WALKER_MEDIUM_REPLAY_V2: (50, 20, 1.32213),
         WALKER_MEDIUM_EXPERT_V2: (50, 19, 2.3841),
-        WALKER_EXPERT_v2: (50, 17, 1.8705),
+        WALKER_EXPERT_V2: (50, 17, 1.8705),
     },
     EPISTEMIC_PENALTY: {
         HALF_CHEETAH_RANDOM_V2: (50, 17, 0.22774),
@@ -195,11 +129,10 @@ HYPERPARAMS = {
         HOPPER_MEDIUM_REPLAY_V2: (50, 15, 35),
         HOPPER_MEDIUM_EXPERT_V2: (50, 15, 45),
         HOPPER_EXPERT_V2: (50, 15, 30),
-        WALKER_RANDOM_v2: (50, 15, 2.5),
-        WALKER_MEDIUM_v2: (50, 15, 4.3),
+        WALKER_RANDOM_V2: (50, 15, 2.5),
+        WALKER_MEDIUM_V2: (50, 15, 4.3),
         WALKER_MEDIUM_REPLAY_V2: (50, 15, 4.3),
         WALKER_MEDIUM_EXPERT_V2: (50, 15, 4.3),
-        WALKER_EXPERT_v2: (50, 15, 2.5),
+        WALKER_EXPERT_V2: (50, 15, 2.5),
     },
-    EXPLICIT_PENALTY: {},
 }

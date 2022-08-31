@@ -4,15 +4,13 @@ import numpy as np
 import pytest
 import torch
 
-from offline_mbrl.utils.preprocessing import (
-    envs_with_preprocessing_functions,
-    get_preprocessing_function,
-)
+from offline_mbrl.utils.envs import ALL_ENVS
+from offline_mbrl.utils.preprocessing import get_preprocessing_function
 
 
 @pytest.mark.slow
-def test_preprocessing():
-    for env_name in envs_with_preprocessing_functions:
+def est_preprocessing() -> None:
+    for env_name in ALL_ENVS:
         print(env_name)
         torch.manual_seed(0)
 
@@ -40,3 +38,10 @@ def test_preprocessing():
 
         assert preprocessed.mean(dim=0).abs().sum() < 0.15
         assert (1 - preprocessed.std(dim=0)).abs().sum() < 0.1
+
+
+def test_retrieving_preprocessing_function_for_unknown_env_raises_error() -> None:
+    with pytest.raises(
+        ValueError, match="No preprocessing function found for environment 'abc'"
+    ):
+        get_preprocessing_function("abc")
