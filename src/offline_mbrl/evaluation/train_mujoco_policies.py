@@ -58,9 +58,6 @@ def get_exp_name(config):
         if config["mode"] in PARTITIONING_MODES:
             exp_name += "-" + str(config["ood_threshold"]) + "threshold"
 
-    if config["pretrained_interaction_agent_path"] != "":
-        exp_name += "-double_agent-" + str(config["exploration_chance"])
-
     if config["pretrained_agent_path"] != "":
         exp_name += "-pretrained"
 
@@ -202,9 +199,6 @@ def main(args):
             model_pessimism=model_pessimism,
             ood_threshold=ood_threshold,
             pretrained_agent_path=args.pretrained_agent_path,
-            pretrained_interaction_agent_path=args.pretrained_interaction_agent_path,
-            interaction_agent_pessimism=args.interaction_pessimism,
-            interaction_agent_threshold=args.interaction_threshold,
             exploration_chance=args.exploration_chance,
         )
 
@@ -377,7 +371,6 @@ if __name__ == "__main__":
     parser.add_argument("--n_samples_from_dataset", type=int, default=-1)
     parser.add_argument("--agent_updates_per_step", type=int, default=1)
     parser.add_argument("--pretrained_agent_path", type=str, default="")
-    parser.add_argument("--pretrained_interaction_agent_path", type=str, default="")
     parser.add_argument("--interaction_pessimism", type=float, default=1)
     parser.add_argument("--interaction_threshold", type=float, default=0.5)
     parser.add_argument("--exploration_chance", type=float, default=1)
