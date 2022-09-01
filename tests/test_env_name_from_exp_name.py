@@ -3,6 +3,7 @@ import pytest
 from offline_mbrl.utils.env_name_from_exp_name import get_env_name_from_experiment_name
 
 
+@pytest.mark.fast
 def test_env_name_gets_retrieved_from_experiment_name() -> None:
     assert (
         get_env_name_from_experiment_name("blablahopper-random-v2-blabla")
@@ -10,6 +11,7 @@ def test_env_name_gets_retrieved_from_experiment_name() -> None:
     )
 
 
+@pytest.mark.fast
 def test_error_is_raised_if_env_name_not_found() -> None:
     with pytest.raises(
         ValueError,

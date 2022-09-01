@@ -2,7 +2,7 @@ import d4rl  # pylint: disable=unused-import
 import gym
 
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
-from offline_mbrl.utils.postprocessing import get_postprocessing_function
+from offline_mbrl.utils.termination_functions import get_termination_function
 
 if __name__ == "__main__":
     prefix = "walker2d-"
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     for dataset_name in dataset_names:
         env_name = prefix + dataset_name + version
         print(env_name)
-        post_fn = get_postprocessing_function(env_name)
+        termination_function = get_termination_function(env_name)
 
         env = gym.make(env_name)
 

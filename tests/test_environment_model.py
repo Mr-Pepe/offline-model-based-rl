@@ -19,9 +19,9 @@ from offline_mbrl.models.environment_model import (
 from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM_V2, HOPPER_RANDOM_V2
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.modes import ALEATORIC_PENALTY
-from offline_mbrl.utils.postprocessing import postprocessing_functions
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
 from offline_mbrl.utils.str2bool import str2bool
+from offline_mbrl.utils.termination_functions import termination_functions
 from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
 
 gym.logger.set_level(40)
@@ -430,13 +430,13 @@ def test_probabilistic_model_returns_binary_done_signal():
 
 
 @pytest.mark.fast
-def test_deterministic_model_returns_binary_done_signal_when_post_fn_used():
+def test_deterministic_model_returns_binary_done_signal_when_using_termination_fn():
     obs_dim = 5
     act_dim = 6
     torch.manual_seed(2)
 
     model = EnvironmentModel(
-        obs_dim, act_dim, post_fn=postprocessing_functions["hopper"]
+        obs_dim, act_dim, termination_function=termination_functions["hopper"]
     )
 
     tensor_size = (100, obs_dim + act_dim)
@@ -459,7 +459,7 @@ def test_deterministic_model_does_not_always_output_terminal():
         obs_dim,
         act_dim,
         type="deterministic",
-        post_fn=postprocessing_functions["hopper"],
+        termination_function=termination_functions["hopper"],
         device=device,
     )
     optim = Adam(model.parameters(), lr=1e-2)
@@ -514,7 +514,7 @@ def test_probabilistic_model_does_not_always_output_terminal():
         obs_dim,
         act_dim,
         type="probabilistic",
-        post_fn=postprocessing_functions["hopper"],
+        termination_function=termination_functions["hopper"],
         device=device,
     )
     optim = Adam(model.parameters(), lr=1e-3)

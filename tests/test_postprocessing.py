@@ -9,10 +9,11 @@ from offline_mbrl.utils.envs import (
     HOPPER_RANDOM_V2,
     WALKER_RANDOM_V2,
 )
-from offline_mbrl.utils.postprocessing import (
-    postprocess_half_cheetah,
-    postprocess_hopper,
-    postprocess_walker2d,
+from offline_mbrl.utils.termination_functions import (
+    get_termination_function,
+    half_cheetah_termination_function,
+    hopper_termination_function,
+    walker2d_termination_function,
 )
 
 
@@ -45,7 +46,9 @@ def test_hopper_postprocessing():
 
     np.testing.assert_array_equal(
         torch.stack(3 * [dones]),
-        postprocess_hopper(next_obs=torch.stack(3 * [next_observations]))["dones"],
+        hopper_termination_function(next_obs=torch.stack(3 * [next_observations]))[
+            "dones"
+        ],
     )
 
 
@@ -58,9 +61,9 @@ def test_half_cheetah_postprocessing():
 
     np.testing.assert_array_equal(
         torch.stack(3 * [dones]),
-        postprocess_half_cheetah(next_obs=torch.stack(3 * [next_observations]))[
-            "dones"
-        ],
+        half_cheetah_termination_function(
+            next_obs=torch.stack(3 * [next_observations])
+        )["dones"],
     )
 
 
@@ -73,5 +76,15 @@ def test_walker2d_postprocessing():
 
     np.testing.assert_array_equal(
         torch.stack(3 * [dones]),
-        postprocess_walker2d(next_obs=torch.stack(3 * [next_observations]))["dones"],
+        walker2d_termination_function(next_obs=torch.stack(3 * [next_observations]))[
+            "dones"
+        ],
     )
+
+
+@pytest.mark.fast
+def test_raises_error_if_no_post_processing_function_found():
+    with pytest.raises(
+        ValueError, match="No postprocessing function found for environment 'abc'."
+    ):
+        get_termination_function("abc")

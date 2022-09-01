@@ -1,7 +1,10 @@
+import pytest
+
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.utils.model_needs_training import model_needs_training
 
 
+@pytest.mark.fast
 def test_returns_false_if_model_is_None() -> None:
     assert (
         model_needs_training(
@@ -16,6 +19,7 @@ def test_returns_false_if_model_is_None() -> None:
     )
 
 
+@pytest.mark.fast
 def test_returns_true_if_schdule_is_due() -> None:
     model = EnvironmentModel(1, 1)
 
@@ -32,6 +36,7 @@ def test_returns_true_if_schdule_is_due() -> None:
     )
 
 
+@pytest.mark.fast
 def test_returns_false_if_schdule_is_not_due() -> None:
     model = EnvironmentModel(1, 1)
 
@@ -48,6 +53,7 @@ def test_returns_false_if_schdule_is_not_due() -> None:
     )
 
 
+@pytest.mark.fast
 def test_returns_true_if_performing_offline_training() -> None:
     model = EnvironmentModel(1, 1)
 
@@ -64,6 +70,7 @@ def test_returns_true_if_performing_offline_training() -> None:
     )
 
 
+@pytest.mark.fast
 def test_ignores_init_steps_if_offline_training_happened_before() -> None:
     model = EnvironmentModel(1, 1)
     model.has_been_trained_at_least_once = True
@@ -81,6 +88,7 @@ def test_ignores_init_steps_if_offline_training_happened_before() -> None:
     )
 
 
+@pytest.mark.fast
 def test_false_if_not_using_offline_training_and_init_steps_not_reached() -> None:
     model = EnvironmentModel(1, 1)
 
@@ -97,6 +105,7 @@ def test_false_if_not_using_offline_training_and_init_steps_not_reached() -> Non
     )
 
 
+@pytest.mark.fast
 def test_returns_false_if_buffer_is_empty() -> None:
     model = EnvironmentModel(1, 1)
 
@@ -113,6 +122,7 @@ def test_returns_false_if_buffer_is_empty() -> None:
     )
 
 
+@pytest.mark.fast
 def test_trains_model_only_once_during_offline_training() -> None:
     model = EnvironmentModel(1, 1)
     model.has_been_trained_at_least_once = True

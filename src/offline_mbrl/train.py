@@ -15,9 +15,9 @@ from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.logx import EpochLogger
 from offline_mbrl.utils.model_needs_training import model_needs_training
 from offline_mbrl.utils.modes import ALEATORIC_PENALTY
-from offline_mbrl.utils.postprocessing import get_postprocessing_function
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
+from offline_mbrl.utils.termination_functions import get_termination_function
 from offline_mbrl.utils.value_from_schedule import get_value_from_schedule
 from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
 
@@ -57,7 +57,6 @@ class Trainer:
         virtual_buffer_size=int(1e6),
         reset_buffer=False,
         train_model_from_scratch=False,
-        reset_maze2d_umaze=False,
         pretrain_epochs=0,
         setup_test_env=False,
         logger_kwargs=None,
@@ -164,11 +163,11 @@ class Trainer:
         )
 
         self.pre_fn = get_preprocessing_function(env_name, device)
-        self.post_fn = get_postprocessing_function(env_name)
+        self.termination_function = get_termination_function(env_name)
 
         model_kwargs.update({"device": device})
         model_kwargs.update({"pre_fn": self.pre_fn})
-        model_kwargs.update({"post_fn": self.post_fn})
+        model_kwargs.update({"termination_function": self.termination_function})
         self.model_kwargs = model_kwargs
 
         self.env_model: Optional[EnvironmentModel] = None
@@ -177,7 +176,7 @@ class Trainer:
             if pretrained_model_path != "":
                 self.env_model = torch.load(pretrained_model_path, map_location=device)
                 self.env_model.pre_fn = self.pre_fn
-                self.env_model.post_fn = self.post_fn
+                self.env_model.termination_function = self.termination_function
             else:
                 self.env_model = EnvironmentModel(
                     self.obs_dim[0], self.act_dim, **model_kwargs
@@ -235,7 +234,6 @@ class Trainer:
         self.mode = mode
         self.model_max_n_train_batches = model_max_n_train_batches
         self.reset_buffer = reset_buffer
-        self.reset_maze2d_umaze = reset_maze2d_umaze and "maze2d-umaze" in env_name
         self.train_model_from_scratch = train_model_from_scratch
         self.curriculum = curriculum
 
@@ -252,14 +250,6 @@ class Trainer:
 
         start_time = time.time()
         o, ep_ret, ep_len = self.env.reset(), 0, 0
-
-        maze2d_umaze_start_state = np.array([3, 1, 0, 0])
-
-        if self.reset_maze2d_umaze:
-            self.env.set_state(
-                maze2d_umaze_start_state[:2], maze2d_umaze_start_state[2:]
-            )
-            o = maze2d_umaze_start_state
 
         if self.total_steps < self.init_steps:
             raise ValueError(
@@ -336,12 +326,6 @@ class Trainer:
                             episode_finished = True
                             self.logger.store(EpRet=ep_ret, EpLen=ep_len)
                             o, ep_ret, ep_len = self.env.reset(), 0, 0
-                            if self.reset_maze2d_umaze:
-                                self.env.set_state(
-                                    maze2d_umaze_start_state[:2],
-                                    maze2d_umaze_start_state[2:],
-                                )
-                                o = maze2d_umaze_start_state
 
                     self.steps_since_model_training += 1
                     self.actions_last_step[Actions.INTERACT_WITH_ENV] = 1

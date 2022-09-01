@@ -9,11 +9,11 @@ from offline_mbrl.actors.sac import SAC
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.utils.envs import HOPPER_RANDOM_V2
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
-from offline_mbrl.utils.postprocessing import (
-    get_postprocessing_function,
-    postprocessing_functions,
-)
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
+from offline_mbrl.utils.termination_functions import (
+    get_termination_function,
+    termination_functions,
+)
 from offline_mbrl.utils.virtual_rollouts import (
     generate_virtual_rollout,
     generate_virtual_rollouts,
@@ -38,7 +38,7 @@ def test_generate_rollout_of_desired_length():
         obs_dim,
         act_dim,
         model_type="probabilistic",
-        post_fn=postprocessing_functions["half_cheetah"],
+        termination_function=termination_functions["half_cheetah"],
     )
     agent = SAC(observation_space, action_space)
 
@@ -74,7 +74,9 @@ def test_generate_rollout_stops_on_terminal():
         obs_dim,
         act_dim,
         model_type="probabilistic",
-        post_fn=lambda next_obs, **_: {"dones": torch.randint(2, (1, 1, 1))},
+        termination_function=lambda next_obs, **_: {
+            "dones": torch.randint(2, (1, 1, 1))
+        },
     )
     agent = SAC(observation_space, action_space)
 
@@ -92,7 +94,7 @@ def test_generate_rollout_stops_on_terminal():
 @pytest.mark.medium
 def test_generating_and_saving_rollouts_in_parallel_is_faster():
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    env = gym.make("maze2d-umaze-v1")
+    env = gym.make(HOPPER_RANDOM_V2)
     observation_space = env.observation_space
     action_space = env.action_space
 
@@ -117,7 +119,7 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
         obs_dim,
         act_dim,
         model_type="probabilistic",
-        post_fn=get_postprocessing_function("maze2d-umaze-v1"),
+        post_fn=get_termination_function(HOPPER_RANDOM_V2),
     )
     model.to(device)
     agent = SAC(observation_space, action_space, device=device)
@@ -171,7 +173,7 @@ def test_generating_and_saving_rollouts_in_parallel_is_faster():
 @pytest.mark.medium
 def test_use_random_actions_in_virtual_rollout():
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    env = gym.make("maze2d-umaze-v1")
+    env = gym.make(HOPPER_RANDOM_V2)
     observation_space = env.observation_space
     action_space = env.action_space
 
@@ -191,7 +193,7 @@ def test_use_random_actions_in_virtual_rollout():
         obs_dim,
         act_dim,
         model_type="probabilistic",
-        post_fn=get_postprocessing_function("maze2d-umaze-v1"),
+        termination_function=get_termination_function(HOPPER_RANDOM_V2),
     )
     model.to(device)
     agent = SAC(observation_space, action_space, device=device)
@@ -243,7 +245,7 @@ def test_continuously_grow_rollouts():
         model_type="probabilistic",
         n_networks=3,
         device=device,
-        post_fn=postprocessing_functions["hopper"],
+        termination_function=termination_functions["hopper"],
     )
 
     model.train_to_convergence(buffer, patience=1)

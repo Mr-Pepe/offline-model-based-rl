@@ -60,7 +60,6 @@ def main(args):
         reset_buffer=False,
         virtual_pretrain_epochs=0,
         train_model_from_scratch=False,
-        reset_maze2d_umaze=False,
         pretrain_epochs=0,
         setup_test_env=False,
         logger_kwargs={},

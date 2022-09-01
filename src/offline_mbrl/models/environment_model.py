@@ -33,7 +33,7 @@ class EnvironmentModel(nn.Module):
         n_networks=1,
         device="cpu",
         pre_fn=None,
-        post_fn=None,
+        termination_function=None,
         rew_fn=None,
         use_batch_norm=False,
         obs_bounds_trainable=True,
@@ -55,7 +55,7 @@ class EnvironmentModel(nn.Module):
 
         self.n_networks = n_networks
         self.pre_fn = pre_fn
-        self.post_fn = post_fn
+        self.termination_function = termination_function
         self.rew_fn = rew_fn
 
         if type not in ("deterministic", "probabilistic"):
@@ -177,28 +177,18 @@ class EnvironmentModel(nn.Module):
         pred_next_obs = predictions[:, :, :-1]
         pred_rewards = predictions[:, :, -1].unsqueeze(-1)
 
-        dones = None
+        dones = torch.zeros((self.n_networks, raw_obs_act.shape[0], 1), device=device)
 
-        if self.post_fn:
-            post = self.post_fn(next_obs=pred_next_obs, means=means, logvars=logvars)
-
-            if "dones" in post:
-                dones = post["dones"].to(device)
-            if "means" in post:
-                means = post["means"].to(device)
-            if "logvars" in post:
-                logvars = post["logvars"].to(device)
+        if self.termination_function:
+            dones = self.termination_function(
+                next_obs=pred_next_obs, means=means, logvars=logvars
+            ).to(device)
 
         if self.rew_fn:
             pred_rewards = self.rew_fn(
                 obs=raw_obs_act[:, : self.obs_dim],
                 act=raw_obs_act[:, self.obs_dim :],
                 next_obs=pred_next_obs,
-            )
-
-        if dones is None:
-            dones = torch.zeros(
-                (self.n_networks, raw_obs_act.shape[0], 1), device=device
             )
 
         predictions = torch.cat((pred_next_obs, pred_rewards, dones), dim=2)

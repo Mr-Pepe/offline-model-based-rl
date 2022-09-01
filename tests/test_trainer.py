@@ -10,7 +10,7 @@ from offline_mbrl.utils.envs import (
     HOPPER_RANDOM_V2,
     WALKER_MEDIUM_REPLAY_V2,
 )
-from offline_mbrl.utils.postprocessing import postprocessing_functions
+from offline_mbrl.utils.termination_functions import termination_functions
 
 
 @pytest.mark.medium
@@ -258,15 +258,15 @@ def test_trainer_picks_correct_postprocessing_functions():
 
     trainer = Trainer(HOPPER_MEDIUM_REPLAY_V2, use_model=True)
 
-    assert trainer.post_fn == postprocessing_functions["hopper"]
+    assert trainer.termination_function == termination_functions["hopper"]
 
     trainer = Trainer(HALF_CHEETAH_MEDIUM_REPLAY_V2, use_model=True)
 
-    assert trainer.post_fn == postprocessing_functions["half_cheetah"]
+    assert trainer.termination_function == termination_functions["half_cheetah"]
 
     trainer = Trainer(WALKER_MEDIUM_REPLAY_V2, use_model=True)
 
-    assert trainer.post_fn == postprocessing_functions["walker2d"]
+    assert trainer.termination_function == termination_functions["walker2d"]
 
 
 @pytest.mark.slow

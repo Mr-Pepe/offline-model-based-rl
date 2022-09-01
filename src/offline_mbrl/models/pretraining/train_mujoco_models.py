@@ -11,8 +11,8 @@ from ray.tune.search.hyperopt import HyperOptSearch
 
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
-from offline_mbrl.utils.postprocessing import get_postprocessing_function
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
+from offline_mbrl.utils.termination_functions import get_termination_function
 
 
 def training_function(config, data, save_path=None, tuning=True):
@@ -46,8 +46,7 @@ if __name__ == "__main__":
     buffer, obs_dim, act_dim = load_dataset_from_env(env, buffer_device=device)
 
     pre_fn = get_preprocessing_function(args.env_name, device)
-    post_fn = get_postprocessing_function(args.env_name)
-    assert post_fn is not None
+    termination_function = get_termination_function(args.env_name)
 
     # None values must be filled for tuning and final training
     config = {
@@ -61,7 +60,7 @@ if __name__ == "__main__":
         "type": "probabilistic",
         "n_networks": 7,
         "pre_fn": pre_fn,
-        "post_fn": post_fn,
+        "termination_function": termination_function,
         "debug": False,
         "no_reward": False,
         "use_batch_norm": False,

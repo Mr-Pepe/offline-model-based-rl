@@ -19,10 +19,10 @@ from offline_mbrl.utils.modes import (
     PENALTY_MODES,
     SAC,
 )
-from offline_mbrl.utils.postprocessing import get_postprocessing_function
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
 from offline_mbrl.utils.setup_logger_kwargs import setup_logger_kwargs
 from offline_mbrl.utils.str2bool import str2bool
+from offline_mbrl.utils.termination_functions import get_termination_function
 from offline_mbrl.utils.uncertainty_distribution import get_uncertainty_distribution
 
 
@@ -124,7 +124,7 @@ def main(args):
             type="probabilistic",
             n_networks=7,
             pre_fn=get_preprocessing_function(args.env_name),
-            post_fn=get_postprocessing_function(args.env_name),
+            termination_function=get_termination_function(args.env_name),
             no_reward=False,
             use_batch_norm=False,
         ),
@@ -156,7 +156,6 @@ def main(args):
         reset_buffer=args.reset_buffer,
         virtual_pretrain_epochs=0,
         train_model_from_scratch=args.train_model_from_scratch,
-        reset_maze2d_umaze=False,
         pretrain_epochs=0,
         setup_test_env=False,
         logger_kwargs={},
