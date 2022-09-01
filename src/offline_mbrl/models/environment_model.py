@@ -12,9 +12,9 @@ from offline_mbrl.models.multi_head_mlp import MultiHeadMlp
 from offline_mbrl.utils.modes import (
     ALEATORIC_PARTITIONING,
     ALEATORIC_PENALTY,
+    ALL_MODES,
     EPISTEMIC_PARTITIONING,
     EPISTEMIC_PENALTY,
-    ALL_MODES,
     PARTITIONING_MODES,
     PENALTY_MODES,
 )
@@ -86,6 +86,8 @@ class EnvironmentModel(nn.Module):
         self.max_logvar = torch.cat((self.obs_max_logvar, self.rew_max_logvar), dim=1)
 
         self.optim = None
+
+        self.has_been_trained_at_least_once = False
 
         self.max_obs_act = None
         self.min_obs_act = None
@@ -285,8 +287,7 @@ class EnvironmentModel(nn.Module):
         lr=1e-3,
         batch_size=1024,
         val_split=0.2,
-        patience=20,
-        patience_value=0,
+        patience: int = 20,
         debug=False,
         max_n_train_batches=-1,
         no_reward=False,
@@ -295,12 +296,6 @@ class EnvironmentModel(nn.Module):
         tuning=False,
         **_,
     ):
-
-        if isinstance(patience, list):
-            if 0 < patience_value < len(patience):
-                patience = patience[patience_value]
-            else:
-                patience = patience[0]
 
         n_train_batches = int((data.size * (1 - val_split)) // batch_size)
         n_val_batches = int((data.size * val_split) // batch_size)
@@ -475,6 +470,7 @@ class EnvironmentModel(nn.Module):
             if debug:
                 print("")
 
+        self.has_been_trained_at_least_once = True
         return avg_val_losses, batches_trained
 
     def check_prediction_arguments(self, mode, pessimism):

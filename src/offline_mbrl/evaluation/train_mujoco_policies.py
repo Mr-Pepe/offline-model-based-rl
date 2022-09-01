@@ -12,9 +12,9 @@ from offline_mbrl.train import Trainer
 from offline_mbrl.user_config import MODELS_DIR
 from offline_mbrl.utils.hyperparameters import HYPERPARAMS
 from offline_mbrl.utils.modes import (
+    ALL_MODES,
     BEHAVIORAL_CLONING,
     MBPO,
-    ALL_MODES,
     PARTITIONING_MODES,
     PENALTY_MODES,
     SAC,

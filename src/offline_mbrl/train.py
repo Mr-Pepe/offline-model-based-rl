@@ -242,7 +242,6 @@ class Trainer:
 
         self.agent_updates_per_step = agent_updates_per_step
 
-        self.use_model = use_model
         self.pretrained_model_path = pretrained_model_path
         self.rollouts_per_step = rollouts_per_step
         self.rollout_schedule = rollout_schedule
@@ -266,6 +265,10 @@ class Trainer:
         self.save_freq = save_freq
         self.render = render
 
+        self.steps_since_model_training = 1e10
+        self.model_trained_last_epoch = False
+        self.actions_last_step = [0 for i in range(len(Actions))]
+
     def train(self, tuning=False, silent=False):
 
         start_time = time.time()
@@ -286,12 +289,9 @@ class Trainer:
             )
 
         step_total = -self.pretrain_epochs * self.steps_per_epoch
-        steps_since_model_training = 1e10
 
         test_performances = []
         action_log = []
-
-        model_trained_at_all = False
 
         prev_obs = None
         interaction_agent_prev_obs = None
@@ -301,7 +301,7 @@ class Trainer:
         for epoch in range(-self.pretrain_epochs + 1, self.epochs + 1):
 
             agent_update_performed = False
-            model_trained_this_epoch = False
+            self.model_trained_last_epoch = False
             episode_finished = False
             tested_agent = False
 
@@ -311,50 +311,14 @@ class Trainer:
                 print(f"Epoch {epoch}\tMax rollout length: {self.max_rollout_length}")
 
             for step_epoch in range(self.steps_per_epoch):
-                actions_this_step = [0 for i in range(len(Actions))]
+                self.actions_last_step = [0 for i in range(len(Actions))]
 
                 take_random_action = (
                     step_total + self.pretrain_epochs * self.steps_per_epoch
                     < self.random_steps
                 )
 
-                # Train environment model on real experience
-                if model_needs_training(
-                    step_total,
-                    self.use_model,
-                    self.real_replay_buffer.size,
-                    self.init_steps,
-                    steps_since_model_training,
-                    self.train_model_every,
-                    model_trained_at_all,
-                ):
-
-                    if self.train_model_from_scratch:
-                        self.env_model = EnvironmentModel(
-                            self.env_model.obs_dim,
-                            self.env_model.act_dim,
-                            **self.model_kwargs,
-                        )
-
-                    model_val_error, _ = self.env_model.train_to_convergence(
-                        self.real_replay_buffer,
-                        patience_value=0 if epoch < 1 else 1,
-                        max_n_train_batches=-1
-                        if epoch < 1
-                        else self.model_max_n_train_batches,
-                        **self.model_kwargs,
-                    )
-
-                    if self.reset_buffer:
-                        self.virtual_replay_buffer.clear()
-
-                    model_val_error = model_val_error.mean()
-                    model_trained_at_all = True
-                    model_trained_this_epoch = True
-                    steps_since_model_training = 0
-                    self.logger.store(LossEnvModel=model_val_error)
-                    actions_this_step[Actions.TRAIN_MODEL] = 1
-                    print("")
+                self.train_model_if_necessary(epoch, step_total, self.env_model)
 
                 if (step_epoch + 1) % 10 == 0 and not tuning and not silent:
                     print(
@@ -367,7 +331,7 @@ class Trainer:
                     for _ in range(self.env_steps_per_step):
                         if take_random_action:
                             a = self.env.action_space.sample()
-                            actions_this_step[Actions.RANDOM_ACTION] = 1
+                            self.actions_last_step[Actions.RANDOM_ACTION] = 1
                         else:
                             if (
                                 self.interaction_agent is not None
@@ -407,12 +371,12 @@ class Trainer:
                                 )
                                 o = maze2d_umaze_start_state
 
-                    steps_since_model_training += 1
-                    actions_this_step[Actions.INTERACT_WITH_ENV] = 1
+                    self.steps_since_model_training += 1
+                    self.actions_last_step[Actions.INTERACT_WITH_ENV] = 1
 
                 # Update agent
                 if step_total >= self.init_steps or self.pretrain_epochs > 0:
-                    if self.use_model and self.rollouts_per_step > 0:
+                    if self.env_model is not None and self.rollouts_per_step > 0:
                         for _ in range(self.agent_updates_per_step):
                             rollouts, prev_obs = generate_virtual_rollouts(
                                 self.env_model,
@@ -439,10 +403,10 @@ class Trainer:
                                 1, self.virtual_replay_buffer, self.logger
                             )
 
-                        actions_this_step[Actions.GENERATE_ROLLOUTS] = 1
+                        self.actions_last_step[Actions.GENERATE_ROLLOUTS] = 1
 
                         if take_random_action:
-                            actions_this_step[Actions.RANDOM_ACTION] = 1
+                            self.actions_last_step[Actions.RANDOM_ACTION] = 1
 
                         if self.interaction_agent is not None:
                             for _ in range(self.agent_updates_per_step):
@@ -487,9 +451,9 @@ class Trainer:
 
                     if self.agent_updates_per_step > 0:
                         agent_update_performed = True
-                        actions_this_step[Actions.UPDATE_AGENT] = 1
+                        self.actions_last_step[Actions.UPDATE_AGENT] = 1
 
-                action_log.append(actions_this_step)
+                action_log.append(self.actions_last_step)
                 step_total += 1
 
             print("")
@@ -528,7 +492,7 @@ class Trainer:
                 step_total,
                 start_time,
                 agent_update_performed,
-                model_trained_this_epoch,
+                self.model_trained_last_epoch,
                 rollout_length,
                 episode_finished,
                 tested_agent,
@@ -537,6 +501,42 @@ class Trainer:
         return torch.as_tensor(test_performances, dtype=torch.float32), torch.as_tensor(
             action_log, dtype=torch.float32
         )
+
+    def train_model_if_necessary(
+        self, epoch: int, step: int, model: EnvironmentModel
+    ) -> None:
+        # Train environment model on real experience
+        if model_needs_training(
+            model,
+            step,
+            self.real_replay_buffer.size,
+            self.init_steps,
+            self.steps_since_model_training,
+            self.train_model_every,
+        ):
+
+            if self.train_model_from_scratch:
+                self.env_model = EnvironmentModel(
+                    self.env_model.obs_dim,
+                    self.env_model.act_dim,
+                    **self.model_kwargs,
+                )
+
+            model_val_error, _ = self.env_model.train_to_convergence(
+                self.real_replay_buffer,
+                max_n_train_batches=-1 if epoch < 1 else self.model_max_n_train_batches,
+                **self.model_kwargs,
+            )
+
+            if self.reset_buffer:
+                self.virtual_replay_buffer.clear()
+
+            model_val_error = model_val_error.mean()
+            self.model_trained_last_epoch = True
+            self.steps_since_model_training = 0
+            self.logger.store(LossEnvModel=model_val_error)
+            self.actions_last_step[Actions.TRAIN_MODEL] = 1
+            print("")
 
 
 def log_end_of_epoch(
