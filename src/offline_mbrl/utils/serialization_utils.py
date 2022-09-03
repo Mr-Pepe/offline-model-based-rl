@@ -3,7 +3,7 @@
 import json
 
 
-def convert_json(obj):
+def convert_json(obj: object):
     """Convert obj to a version which can be serialized with JSON."""
     if is_json_serializable(obj):
         return obj
@@ -27,9 +27,9 @@ def convert_json(obj):
     return str(obj)
 
 
-def is_json_serializable(v):
+def is_json_serializable(obj: object):
     try:
-        json.dumps(v)
+        json.dumps(obj)
         return True
     except:  # pylint: disable=bare-except
         return False

@@ -46,41 +46,6 @@ def test_takes_state_and_action_as_input_and_outputs_state_reward_done():
     np.testing.assert_array_equal(output.shape, (3, obs_dim + 2))
 
 
-@pytest.mark.fast
-def test_uncertainty_is_always_zero_for_deterministic_model():
-    obs_dim = 5
-    act_dim = 6
-
-    model = EnvironmentModel(obs_dim, act_dim, [2, 2])
-
-    tensor_size = (3, obs_dim + act_dim)
-    obs_act = torch.rand(tensor_size)
-    _, uncertainty = model.get_prediction(obs_act, with_uncertainty=True)
-
-    assert uncertainty.numel() == 3
-
-    for x in uncertainty:
-        assert x < 1e-10
-
-
-@pytest.mark.fast
-def test_uncertainty_is_between_one_and_zero_for_probabilistic_model():
-    obs_dim = 5
-    act_dim = 6
-
-    model = EnvironmentModel(obs_dim, act_dim, [2, 2], type="probabilistic")
-
-    tensor_size = (3, obs_dim + act_dim)
-    obs_act = torch.rand(tensor_size)
-    _, uncertainty = model.get_prediction(obs_act, with_uncertainty=True)
-
-    assert uncertainty.numel() == 3
-
-    for x in uncertainty:
-        assert x > 0
-        assert x < 1
-
-
 @pytest.mark.medium
 def test_single_deterministic_network_overfits_on_single_sample():
     torch.manual_seed(0)
@@ -97,7 +62,7 @@ def test_single_deterministic_network_overfits_on_single_sample():
 
     for _ in range(1000):
         optim.zero_grad()
-        y_pred, _, _, _, _, _ = model(torch.stack(3 * [x]))
+        y_pred, _, _, _, _ = model(torch.stack(3 * [x]))
         loss = criterion(y_pred, torch.stack(3 * [y]).unsqueeze(0))
         print(f"Loss: {loss}")
         loss.backward()
@@ -121,7 +86,7 @@ def test_single_deterministic_network_overfits_on_batch():
 
     for _ in range(1000):
         optim.zero_grad()
-        y_pred, _, _, _, _, _ = model(x)
+        y_pred, _, _, _, _ = model(x)
         loss = criterion(y_pred, y.unsqueeze(0))
         print(f"Loss: {loss}")
         loss.backward()
@@ -166,7 +131,7 @@ def test_deterministic_model_trains_on_offline_data():
         )
 
         obs_rew_optim.zero_grad()
-        y_pred, _, _, _, _, _ = model(x)
+        y_pred, _, _, _, _ = model(x)
         loss = obs_rew_criterion(y_pred, y.unsqueeze(0))
         print(f"Obs/Reward loss: {loss}")
         losses.append(loss.item())
@@ -185,8 +150,8 @@ def test_probabilistic_model_returns_different_results_for_same_input():
 
     tensor_size = (3, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
-    output1, _, _, _, _, _ = model(obs_act)
-    output2, _, _, _, _, _ = model(obs_act)
+    output1, _, _, _, _ = model(obs_act)
+    output2, _, _, _, _ = model(obs_act)
 
     np.testing.assert_raises(
         AssertionError,
@@ -237,7 +202,7 @@ def test_probabilistic_model_trains_on_toy_dataset(
     model = EnvironmentModel(
         1,
         1,
-        hidden=[4, 8, 4],
+        hidden_layer_sizes=[4, 8, 4],
         type="probabilistic",
         n_networks=n_networks,
         device=device,
@@ -353,7 +318,7 @@ def test_deterministic_ensemble_overfits_on_batch():
 
     for _ in range(500):
         optim.zero_grad()
-        y_pred, _, _, _, _, _ = model(x)
+        y_pred, _, _, _, _ = model(x)
         loss = criterion(y_pred, torch.stack(n_networks * [y]))
         loss.backward()
         optim.step()
@@ -595,7 +560,7 @@ def test_get_prediction_from_pessimistic_model():
     model = EnvironmentModel(
         obs_dim,
         act_dim,
-        hidden=[2, 2],
+        hidden_layer_sizes=[2, 2],
         type="probabilistic",
         n_networks=n_networks,
     )

@@ -16,9 +16,11 @@ from offline_mbrl.utils.termination_functions import get_termination_function
 
 
 def training_function(config, data, save_path=None, tuning=True):
-    model = EnvironmentModel(hidden=4 * [config["n_hidden"]], **config)
+    model = EnvironmentModel(hidden_layer_sizes=4 * [config["n_hidden"]], **config)
 
-    model.train_to_convergence(data=data, checkpoint_dir=None, tuning=tuning, **config)
+    model.train_to_convergence(
+        replay_buffer=data, checkpoint_dir=None, tuning=tuning, **config
+    )
 
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -62,8 +64,6 @@ if __name__ == "__main__":
         "pre_fn": pre_fn,
         "termination_function": termination_function,
         "debug": False,
-        "no_reward": False,
-        "use_batch_norm": False,
         "n_hidden": args.n_hidden,
         "lr": None,
         "batch_size": None,

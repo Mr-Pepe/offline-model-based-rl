@@ -46,7 +46,7 @@ class Trainer:
         pretrained_model_path="",
         model_pessimism=0,
         ood_threshold=-1,
-        mode=ALEATORIC_PENALTY,
+        mode=None,
         model_max_n_train_batches=-1,
         rollouts_per_step=10,
         rollout_schedule=None,
@@ -58,7 +58,6 @@ class Trainer:
         reset_buffer=False,
         train_model_from_scratch=False,
         pretrain_epochs=0,
-        setup_test_env=False,
         logger_kwargs=None,
         save_freq=1,
         device="cpu",
@@ -238,7 +237,6 @@ class Trainer:
         self.curriculum = curriculum
 
         self.num_test_episodes = num_test_episodes
-        self.setup_test_env = setup_test_env
         self.save_freq = save_freq
         self.render = render
 
@@ -397,7 +395,6 @@ class Trainer:
                     self.logger,
                     self.render and step_total > self.init_steps,
                     buffer=None,
-                    use_setup=self.setup_test_env,
                 )
 
                 tested_agent = True

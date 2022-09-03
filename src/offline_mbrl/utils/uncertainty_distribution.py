@@ -7,6 +7,7 @@ import d4rl  # pylint: disable=unused-import
 import gym
 import torch
 
+from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.user_config import MODELS_DIR
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.modes import (
@@ -21,7 +22,7 @@ def get_uncertainty_distribution(env_name, mode, all_stats=False):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    model = torch.load(
+    model: EnvironmentModel = torch.load(
         os.path.join(MODELS_DIR, env_name + "-model.pt"), map_location=device
     )
 
@@ -135,60 +136,3 @@ def get_uncertainty_distribution(env_name, mode, all_stats=False):
         explicit_uncertainties.mean().item(),
         explicit_uncertainties.std().item(),
     )
-
-
-def format_numbers(numbers):
-    out = []
-    for number in numbers:
-        if number < 0.01:
-            out.append(f"{number:.2e}")
-        else:
-            out.append(f"{number:.2f}")
-
-    return out
-
-
-def main():
-    prefix = "halfcheetah-"
-    version = "-v2"
-
-    dataset_names = [
-        "random",
-        # 'medium-replay',
-        # 'medium',
-        # 'medium-expert',
-    ]
-
-    latex = ""
-
-    for dataset_name in dataset_names:
-        env_name = prefix + dataset_name + version
-        print(env_name)
-        stats = get_uncertainty_distribution(env_name, "", all_stats=True)
-
-        numbers = format_numbers(
-            (
-                stats["aleatoric"][2],
-                stats["aleatoric"][3],
-                stats["aleatoric"][1],
-                stats["epistemic"][2],
-                stats["epistemic"][3],
-                stats["epistemic"][1],
-            )
-        )
-
-        latex += (
-            f"& {dataset_name} "
-            f"& {numbers[0]} "
-            f"& {numbers[1]} "
-            f"& {numbers[2]} "
-            f"& {numbers[3]} "
-            f"& {numbers[4]} "
-            f"& {numbers[5]} \\\\ "
-        ).replace("e+00", "")
-
-        print(latex)
-
-
-if __name__ == "__main__":
-    main()

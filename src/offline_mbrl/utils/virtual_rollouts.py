@@ -15,7 +15,7 @@ def generate_virtual_rollouts(
     random_action=False,
     prev_obs=None,
     max_rollout_length=-1,
-    mode=ALEATORIC_PENALTY,
+    mode=None,
 ):
 
     model_is_training = model.training

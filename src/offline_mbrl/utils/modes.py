@@ -21,6 +21,7 @@ ALL_MODES = [
     SAC,
     MBPO,
 ]
+""""""  # Required to show up in docs
 
 PENALTY_MODES = [ALEATORIC_PENALTY, EPISTEMIC_PENALTY]
 

@@ -74,7 +74,6 @@ def main(args):
         virtual_pretrain_epochs=0,
         train_model_from_scratch=False,
         pretrain_epochs=0,
-        setup_test_env=False,
         logger_kwargs={},
         save_freq=1,
         device=device,
