@@ -46,7 +46,7 @@ def test_hopper_postprocessing():
 
     np.testing.assert_array_equal(
         torch.stack(3 * [dones]),
-        hopper_termination_function(next_obs=torch.stack(3 * [next_observations])),
+        hopper_termination_function(observations=torch.stack(3 * [next_observations])),
     )
 
 
@@ -60,7 +60,7 @@ def test_half_cheetah_postprocessing():
     np.testing.assert_array_equal(
         torch.stack(3 * [dones]),
         half_cheetah_termination_function(
-            next_obs=torch.stack(3 * [next_observations])
+            observations=torch.stack(3 * [next_observations])
         ),
     )
 
@@ -74,7 +74,9 @@ def test_walker2d_postprocessing():
 
     np.testing.assert_array_equal(
         torch.stack(3 * [dones]),
-        walker2d_termination_function(next_obs=torch.stack(3 * [next_observations])),
+        walker2d_termination_function(
+            observations=torch.stack(3 * [next_observations])
+        ),
     )
 
 
