@@ -82,7 +82,9 @@ def load_pytorch_policy(fpath, itr):
     return get_action
 
 
-def run_policy(env, get_action, max_ep_len=None, num_episodes=100, render=True):
+def run_policy(
+    env: gym.Env, get_action, max_ep_len=None, num_episodes=100, render=True
+):
 
     assert (
         env is not None
@@ -96,7 +98,7 @@ def run_policy(env, get_action, max_ep_len=None, num_episodes=100, render=True):
     ep_ret = 0
     ep_len = 0
     n = 0
-    o = setup_test_env(env)
+    o = env.reset()
     while n < num_episodes:
         if render:
             env.render()
@@ -114,7 +116,7 @@ def run_policy(env, get_action, max_ep_len=None, num_episodes=100, render=True):
             d = False
             ep_ret = 0
             ep_len = 0
-            o = setup_test_env(env)
+            o = env.reset()
             n += 1
 
     logger.log_tabular("EpRet", with_min_and_max=True)
@@ -137,10 +139,7 @@ def test_agent(
         d = False
         ep_ret = 0
         ep_len = 0
-        if use_setup:
-            o = setup_test_env(test_env)
-        else:
-            o = test_env.reset()
+        o = test_env.reset()
 
         while not (d or (ep_len == max_ep_len)):
             # Take deterministic actions at test time
