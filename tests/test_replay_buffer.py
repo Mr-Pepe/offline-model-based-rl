@@ -74,7 +74,7 @@ def test_add_batches_to_buffer():
     )
 
     assert buffer.size == n_samples
-    assert buffer.ptr == n_samples
+    assert buffer.pointer == n_samples
 
     np.testing.assert_array_equal(buffer.obs_buf[0].cpu(), observations[0])
     np.testing.assert_array_equal(
@@ -139,27 +139,6 @@ def test_buffer_returns_whether_it_contains_a_done_state():
     assert buffer.has_terminal_state()
 
 
-@pytest.mark.fast
-def test_buffer_returns_batch_with_balanced_terminal_signal():
-    buffer = ReplayBuffer(1, 1, 1000)
-
-    # Next check that batch is balanced if buffer is unbalanced
-    for step in range(1001):
-        buffer.store(
-            torch.as_tensor(0),
-            torch.as_tensor(0),
-            torch.as_tensor(0),
-            torch.as_tensor(0),
-            step % 4 == 0,
-        )
-
-    assert buffer.get_terminal_ratio() < 0.5
-
-    batch = buffer.sample_balanced_terminal_batch()
-
-    assert sum(batch["done"]) == 0.5 * len(batch["done"])
-
-
 @pytest.mark.medium
 def test_store_batch_to_prefilled_buffer_that_is_too_small():
     n_samples = 137
@@ -192,30 +171,8 @@ def test_store_batch_to_prefilled_buffer_that_is_too_small():
         dones[prefill:],
     )
 
-    assert buffer.ptr == n_samples % buffer_size
-    np.testing.assert_array_equal(buffer.obs_buf[buffer.ptr - 1], observations[-1])
-
-
-@pytest.mark.medium
-def test_store_batch_throws_error_if_buffer_too_small():
-    env = gym.make(HOPPER_RANDOM_V2)
-    dataset = d4rl.qlearning_dataset(env)
-    observations = dataset["observations"]
-    next_observations = dataset["next_observations"]
-    actions = dataset["actions"]
-    rewards = dataset["rewards"]
-    dones = dataset["terminals"]
-
-    buffer = ReplayBuffer(len(observations[0]), len(actions[0]), 10)
-
-    with pytest.raises(ValueError):
-        buffer.store_batch(
-            torch.as_tensor(observations),
-            torch.as_tensor(actions),
-            torch.as_tensor(rewards),
-            torch.as_tensor(next_observations),
-            torch.as_tensor(dones),
-        )
+    assert buffer.pointer == n_samples % buffer_size
+    np.testing.assert_array_equal(buffer.obs_buf[buffer.pointer - 1], observations[-1])
 
 
 @pytest.mark.fast
@@ -235,7 +192,7 @@ def test_clear_buffer():
     assert buffer.device == "cpu"
     assert buffer.act_dim == 1
     assert buffer.obs_dim == 1
-    assert buffer.ptr == 100
+    assert buffer.pointer == 100
     assert buffer.size == 100
     assert buffer.obs_buf[80] == 1
 
@@ -245,7 +202,7 @@ def test_clear_buffer():
     assert buffer.device == "cpu"
     assert buffer.act_dim == 1
     assert buffer.obs_dim == 1
-    assert buffer.ptr == 0
+    assert buffer.pointer == 0
     assert buffer.size == 0
     assert buffer.obs_buf[80] == 0
 
@@ -270,7 +227,7 @@ def test_buffer_to_device(request):
     buffer.to("cuda")
 
     assert buffer.obs_buf.device == torch.device("cuda", index=0)
-    assert buffer.obs2_buf.device == torch.device("cuda", index=0)
+    assert buffer.next_obs_buf.device == torch.device("cuda", index=0)
     assert buffer.act_buf.device == torch.device("cuda", index=0)
     assert buffer.rew_buf.device == torch.device("cuda", index=0)
     assert buffer.done_buf.device == torch.device("cuda", index=0)

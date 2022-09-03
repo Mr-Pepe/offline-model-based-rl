@@ -8,7 +8,11 @@ import torch
 from offline_mbrl.utils.env_name_from_exp_name import get_env_name_from_experiment_name
 from offline_mbrl.utils.mode_from_exp_name import get_mode_from_experiment_name
 from offline_mbrl.utils.modes import PENALTY_MODES
-from offline_mbrl.utils.print_warning import print_warning
+
+
+def print_warning(text, print_args):
+    print(("{}" + text + "{}").format("\033[93m", *print_args, "\033[0m"))
+
 
 if __name__ == "__main__":
     import argparse

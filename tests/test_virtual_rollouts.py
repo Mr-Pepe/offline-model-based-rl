@@ -74,9 +74,7 @@ def test_generate_rollout_stops_on_terminal():
         obs_dim,
         act_dim,
         model_type="probabilistic",
-        termination_function=lambda next_obs, **_: {
-            "dones": torch.randint(2, (1, 1, 1))
-        },
+        termination_function=lambda next_obs, **_: torch.randint(2, (1, 1, 1)),
     )
     agent = SAC(observation_space, action_space)
 

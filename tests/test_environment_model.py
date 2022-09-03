@@ -230,7 +230,7 @@ def test_probabilistic_model_trains_on_toy_dataset(
 
     buffer = ReplayBuffer(1, 1, size=100000, device=device)
     buffer.obs_buf = x.unsqueeze(-1)
-    buffer.obs2_buf = y.unsqueeze(-1)
+    buffer.next_obs_buf = y.unsqueeze(-1)
     buffer.rew_buf = y
     buffer.size = x.numel()
 

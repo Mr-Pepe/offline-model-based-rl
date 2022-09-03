@@ -46,7 +46,7 @@ if __name__ == "__main__":
                 idxs = torch.randint(0, buffer.size, (n_samples,))
                 obs_buf = buffer.obs_buf[idxs].cuda()
                 act_buf = buffer.act_buf[idxs].cuda()
-                obs2_buf = buffer.obs2_buf[idxs].cuda()
+                next_obs_buf = buffer.next_obs_buf[idxs].cuda()
 
                 model_errors = []
                 aleatoric_uncertainties = []
@@ -58,7 +58,7 @@ if __name__ == "__main__":
                     obs_act = torch.cat(
                         (obs_buf[i_sample:i_to], act_buf[i_sample:i_to]), dim=1
                     )
-                    obs2 = obs2_buf[i_sample:i_to]
+                    next_obs = next_obs_buf[i_sample:i_to]
 
                     (
                         prediction,
@@ -71,7 +71,7 @@ if __name__ == "__main__":
                     ) = model.get_prediction(obs_act, debug=True)
 
                     model_errors.extend(
-                        (prediction[:, :-2] - obs2)
+                        (prediction[:, :-2] - next_obs)
                         .abs()
                         .mean(dim=1)
                         .cpu()
@@ -126,7 +126,7 @@ if __name__ == "__main__":
                         )
                         act = agent.act()
 
-                        obs2, _, _, _ = env.step(act.cpu().detach().numpy())
+                        next_obs, _, _, _ = env.step(act.cpu().detach().numpy())
 
                         obs_act = torch.cat((obs.unsqueeze(0), act), dim=1)
 
@@ -141,7 +141,7 @@ if __name__ == "__main__":
                         ) = model.get_prediction(obs_act, debug=True)
 
                         model_errors.extend(
-                            (prediction[:, :-2].cpu() - obs2)
+                            (prediction[:, :-2].cpu() - next_obs)
                             .abs()
                             .mean(dim=1)
                             .cpu()

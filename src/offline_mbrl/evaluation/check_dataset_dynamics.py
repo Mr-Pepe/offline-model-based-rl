@@ -42,7 +42,7 @@ if __name__ == "__main__":
                 print(f"{i}/{buffer.size}", end="\r")
 
             obs = buffer.obs_buf[i]
-            obs2 = buffer.obs2_buf[i]
+            next_obs = buffer.next_obs_buf[i]
             act = buffer.act_buf[i]
             done = buffer.done_buf[i]
             rew = buffer.rew_buf[i]
@@ -55,19 +55,19 @@ if __name__ == "__main__":
                 obs[env.model.nq - 1 :],
             )
 
-            real_obs2, real_rew, _, _ = env.step(act.numpy())
+            real_next_obs, real_rew, _, _ = env.step(act.numpy())
 
             if abs(real_rew - rew) > 0.01:
                 rew_errors += 1
 
-            obs_diff = abs(pre_fn(torch.as_tensor(real_obs2)) - pre_fn(obs2))
+            obs_diff = abs(pre_fn(torch.as_tensor(real_next_obs)) - pre_fn(next_obs))
 
             deviations = torch.nonzero(obs_diff > 0.01)
             if deviations.numel() > 0:
                 obs_errors += 1
 
         post_dones = termination_function(
-            torch.as_tensor(buffer.obs2_buf).unsqueeze(0)
+            torch.as_tensor(buffer.next_obs_buf).unsqueeze(0)
         )["dones"]
 
         done_errors = (buffer.done_buf ^ post_dones.view(-1)).sum()

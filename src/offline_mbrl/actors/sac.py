@@ -92,7 +92,7 @@ class SAC(nn.Module):
             data["obs"],
             data["act"],
             data["rew"],
-            data["obs2"],
+            data["next_obs"],
             data["done"],
         )
 

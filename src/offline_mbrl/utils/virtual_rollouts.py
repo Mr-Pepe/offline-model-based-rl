@@ -33,7 +33,7 @@ def generate_virtual_rollouts(
     out_dones = None
 
     if prev_obs is None:
-        observations = buffer.sample_batch(n_rollouts, True)["obs"]
+        observations = buffer.sample_batch(n_rollouts, non_terminals_only=True)["obs"]
         lengths = torch.zeros((n_rollouts)).to(observations.device)
     else:
         observations = prev_obs["obs"]

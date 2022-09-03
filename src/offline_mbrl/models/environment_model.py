@@ -180,9 +180,7 @@ class EnvironmentModel(nn.Module):
         dones = torch.zeros((self.n_networks, raw_obs_act.shape[0], 1), device=device)
 
         if self.termination_function:
-            dones = self.termination_function(
-                next_obs=pred_next_obs, means=means, logvars=logvars
-            ).to(device)
+            dones = self.termination_function(next_obs=pred_next_obs).to(device)
 
         if self.rew_fn:
             pred_rewards = self.rew_fn(
@@ -581,7 +579,7 @@ def get_model_input_and_ground_truth_from_batch(
             a batch.
     """
     model_input = torch.cat((batch["obs"], batch["act"]), dim=1)
-    ground_truth = torch.cat((batch["obs2"], batch["rew"].unsqueeze(1)), dim=1)
+    ground_truth = torch.cat((batch["next_obs"], batch["rew"].unsqueeze(1)), dim=1)
 
     model_input = model_input.to(device)
     ground_truth = ground_truth.to(device)

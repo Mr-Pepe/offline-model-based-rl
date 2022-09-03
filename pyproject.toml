@@ -78,3 +78,6 @@ disable = """
 
 [tool.pylint.typecheck]
 generated-members = "numpy.*,torch.*"
+
+[tool.pydocstyle]
+convention = "google"
