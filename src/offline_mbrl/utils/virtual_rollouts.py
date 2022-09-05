@@ -1,25 +1,69 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""This module contains a function to create simulated training data for RL agents."""
+
+
+from typing import Optional, Union, cast
+
 import torch
 
-from offline_mbrl.utils.modes import ALEATORIC_PENALTY
+from offline_mbrl.actors.behavioral_cloning import BC
+from offline_mbrl.actors.random_agent import RandomAgent
+from offline_mbrl.actors.sac import SAC
+from offline_mbrl.models.environment_model import EnvironmentModel
+from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
 
 def generate_virtual_rollouts(
-    model,
-    agent,
-    buffer,
-    steps,
-    n_rollouts=1,
-    stop_on_terminal=True,
-    pessimism=0,
-    ood_threshold=-1,
-    random_action=False,
-    prev_obs=None,
-    max_rollout_length=-1,
-    mode=None,
-):
+    model: EnvironmentModel,
+    agent: Union[BC, SAC],
+    buffer: ReplayBuffer,
+    steps: int,
+    n_rollouts: int = 1,
+    pessimism: float = 0,
+    ood_threshold: float = -1,
+    random_action: bool = False,
+    prev_obs: Optional[dict] = None,
+    max_rollout_length: int = -1,
+    mode: Optional[str] = None,
+) -> tuple[dict, dict]:
+    """Creates virtual rollouts, given an environment model and an agent.
 
-    model_is_training = model.training
-    agent_is_training = agent.training
+    Previously started rollouts can be continued by passing the :code:`prev_obs`
+    argument.
+
+    Args:
+        model (EnvironmentModel): The model to use for predicting interaction results.
+        agent (Union[RandomAgent, BC, SAC]): The agent to use for interacting with the
+            environment model.
+        buffer (ReplayBuffer): The replay buffer to sample starting states from.
+        steps (int): The number of steps to generate for each rollout.
+        n_rollouts (int, optional): The number of rollouts to generate in parallel.
+            Defaults to 1.
+        pessimism (float, optional): The pessimism coefficient to pass to the
+            environment model. Defaults to 0.
+        ood_threshold (float, optional): The out-of-distribution threshold to pass to
+            the environment model. Defaults to -1.
+        random_action (bool, optional): Whether or not to use random actions, in which
+            case the agent must provide an :code:`act_randomly` method. Defaults to
+            False.
+        prev_obs (Optional[dict], optional): A dictionary containing previous
+            observations and the length of their respective rollouts. Defaults to None.
+        max_rollout_length (int, optional): After how many steps rollouts should be
+            terminated if they did not encounter a terminal state earlier. Defaults to
+            -1.
+        mode (Optional[str], optional): The mode to pass to the environment model.
+            Defaults to None.
+
+    Returns:
+        tuple[dict, dict]: A dictionary containing the virtual rollouts and a
+            dictionary that can be passed as the :code:`prev_obs` argument to the next
+            call of this function to continue rollouts.
+    """
+    # Remember whether the model or agent was in training mode
+    model_was_training = model.training
+    agent_was_training = agent.training
 
     model.eval()
     agent.eval()
@@ -58,13 +102,16 @@ def generate_virtual_rollouts(
         else:
             actions = agent.act(observations)
 
-        pred = model.get_prediction(
-            torch.as_tensor(
-                torch.cat((observations, actions), dim=1), dtype=torch.float32
+        pred = cast(
+            torch.Tensor,
+            model.get_prediction(
+                torch.as_tensor(
+                    torch.cat((observations, actions), dim=1), dtype=torch.float32
+                ),
+                pessimism=pessimism,
+                ood_threshold=ood_threshold,
+                mode=mode,
             ),
-            pessimism=pessimism,
-            ood_threshold=ood_threshold,
-            mode=mode,
         )
 
         observations = observations.detach().clone()
@@ -90,19 +137,18 @@ def generate_virtual_rollouts(
 
         lengths += 1
 
-        if stop_on_terminal:
-            if max_rollout_length != -1:
-                dones = torch.logical_or(dones, lengths == max_rollout_length)
-            observations = next_observations[dones == 0]
-            lengths = lengths[dones == 0]
-        else:
-            observations = next_observations
+        if max_rollout_length != -1:
+            # Terminate rollouts that have reached the maximum length
+            dones = torch.logical_or(dones, lengths == max_rollout_length)
+
+        observations = next_observations[dones == 0]
+        lengths = lengths[dones == 0]
 
         step += 1
 
-    if model_is_training:
+    if model_was_training:
         model.train()
-    if agent_is_training:
+    if agent_was_training:
         agent.train()
 
     return {
@@ -112,53 +158,3 @@ def generate_virtual_rollouts(
         "next_obs": out_next_observations,
         "done": out_dones,
     }, {"obs": observations, "lengths": lengths}
-
-
-def generate_virtual_rollout(
-    model, agent, start_observation, steps, stop_on_terminal=True
-):
-
-    model_is_training = model.training
-    agent_is_training = agent.training
-
-    model.eval()
-    agent.eval()
-
-    # The rollout consists of steps, where each step holds
-    # [observation, action, reward, next_observation, done]
-    rollout = []
-
-    this_observation = start_observation
-
-    for _ in range(steps):
-        action = agent.act(this_observation)
-        pred = model.get_prediction(
-            torch.as_tensor(
-                torch.cat((this_observation, action), dim=1), dtype=torch.float32
-            )
-        )
-        next_observation = pred[:, :-2]
-        reward = pred[:, -2]
-        done = pred[:, -1]
-
-        rollout.append(
-            {
-                "obs": this_observation,
-                "act": action,
-                "rew": reward,
-                "next_obs": next_observation,
-                "done": done,
-            }
-        )
-
-        this_observation = next_observation
-
-        if done and stop_on_terminal:
-            break
-
-    if model_is_training:
-        model.train()
-    if agent_is_training:
-        agent.train()
-
-    return rollout

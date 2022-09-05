@@ -290,6 +290,7 @@ class ReplayBuffer:
     def clear(self) -> None:
         """Clears the replay buffer."""
         # pylint: disable=unnecessary-dunder-call
+        # pylint: disable-next=line-too-long
         self.__init__(self.obs_dim, self.act_dim, self.max_size, device=self.device)  # type: ignore
 
     def to(self, device: str) -> None:

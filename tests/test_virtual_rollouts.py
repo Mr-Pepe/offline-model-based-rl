@@ -1,5 +1,3 @@
-import time
-
 import gym
 import numpy as np
 import pytest
@@ -14,10 +12,7 @@ from offline_mbrl.utils.termination_functions import (
     get_termination_function,
     termination_functions,
 )
-from offline_mbrl.utils.virtual_rollouts import (
-    generate_virtual_rollout,
-    generate_virtual_rollouts,
-)
+from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
 
 
 @pytest.mark.fast
@@ -43,7 +38,7 @@ def test_generate_rollout_of_desired_length():
     agent = SAC(observation_space, action_space)
 
     virtual_rollout, _ = generate_virtual_rollouts(
-        model, agent, buffer, 10, n_rollouts=1, stop_on_terminal=False
+        model, agent, buffer, 10, n_rollouts=1
     )
 
     assert len(virtual_rollout["obs"]) == 10
@@ -83,89 +78,9 @@ def test_generate_rollout_stops_on_terminal():
         agent,
         buffer,
         10,
-        stop_on_terminal=True,
     )
 
     assert len(virtual_rollout["obs"]) < 10
-
-
-@pytest.mark.medium
-def test_generating_and_saving_rollouts_in_parallel_is_faster():
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    env = gym.make(HOPPER_RANDOM_V2)
-    observation_space = env.observation_space
-    action_space = env.action_space
-
-    obs_dim = observation_space.shape[0]
-    act_dim = action_space.shape[0]
-
-    start_observation = torch.as_tensor(
-        env.reset(), dtype=torch.float32, device=device
-    ).unsqueeze(0)
-
-    parallel_buffer = ReplayBuffer(
-        obs_dim=obs_dim, act_dim=act_dim, size=int(1e6), device=device
-    )
-    parallel_buffer.store(start_observation, 0, 0, 0, 0)
-
-    sequential_buffer = ReplayBuffer(
-        obs_dim=obs_dim, act_dim=act_dim, size=int(1e6), device=device
-    )
-    sequential_buffer.store(start_observation, 0, 0, 0, 0)
-
-    model = EnvironmentModel(
-        obs_dim,
-        act_dim,
-        model_type="probabilistic",
-        post_fn=get_termination_function(HOPPER_RANDOM_V2),
-    )
-    model.to(device)
-    agent = SAC(observation_space, action_space, device=device)
-
-    n_runs = 5
-    n_rollouts = 100
-    rollout_length = 3
-
-    start_time = time.time()
-    for _ in range(n_runs):
-        rollout, _ = generate_virtual_rollouts(
-            model,
-            agent,
-            parallel_buffer,
-            rollout_length,
-            n_rollouts=n_rollouts,
-            stop_on_terminal=False,
-        )
-
-        parallel_buffer.store_batch(
-            rollout["obs"],
-            rollout["act"],
-            rollout["rew"],
-            rollout["next_obs"],
-            rollout["done"],
-        )
-
-    time_parallel = time.time() - start_time
-
-    start_time = time.time()
-
-    for _ in range(n_runs * n_rollouts):
-        rollout = generate_virtual_rollout(
-            model, agent, start_observation, rollout_length, stop_on_terminal=False
-        )
-
-        for step in rollout:
-            sequential_buffer.store(
-                step["obs"], step["act"], step["rew"], step["next_obs"], step["done"]
-            )
-
-    time_sequential = time.time() - start_time
-
-    assert parallel_buffer.size == sequential_buffer.size
-
-    print(f"Parallel: {time_parallel:.3f}s Sequential: {time_sequential:.3f}s")
-
-    assert time_parallel < time_sequential
 
 
 @pytest.mark.medium
@@ -294,7 +209,6 @@ def test_continuously_grow_rollouts():
             n_rollouts=n_rollouts,
             random_action=True,
             prev_obs=last_observations,
-            stop_on_terminal=True,
             max_rollout_length=max_rollout_length,
         )
 

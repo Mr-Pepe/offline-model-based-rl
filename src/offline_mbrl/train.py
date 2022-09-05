@@ -14,11 +14,9 @@ from offline_mbrl.utils.actions import Actions
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.logx import EpochLogger
 from offline_mbrl.utils.model_needs_training import model_needs_training
-from offline_mbrl.utils.modes import ALEATORIC_PENALTY
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
 from offline_mbrl.utils.termination_functions import get_termination_function
-from offline_mbrl.utils.value_from_schedule import get_value_from_schedule
 from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
 
 
@@ -49,7 +47,6 @@ class Trainer:
         mode=None,
         model_max_n_train_batches=-1,
         rollouts_per_step=10,
-        rollout_schedule=None,
         max_rollout_length=999999,
         continuous_rollouts=False,
         train_model_every=250,
@@ -109,8 +106,6 @@ class Trainer:
         if logger_kwargs is None:
             logger_kwargs = {}
 
-        if rollout_schedule is None:
-            rollout_schedule = [1, 1, 20, 100]
         if curriculum is None:
             curriculum = [1, 1, 20, 100]
 
@@ -223,7 +218,6 @@ class Trainer:
 
         self.pretrained_model_path = pretrained_model_path
         self.rollouts_per_step = rollouts_per_step
-        self.rollout_schedule = rollout_schedule
         self.max_rollout_length = max_rollout_length
         self.train_model_every = train_model_every
         self.continuous_rollouts = continuous_rollouts
@@ -270,8 +264,6 @@ class Trainer:
             self.model_trained_last_epoch = False
             episode_finished = False
             tested_agent = False
-
-            rollout_length = get_value_from_schedule(self.rollout_schedule, epoch)
 
             if not silent:
                 print(f"Epoch {epoch}\tMax rollout length: {self.max_rollout_length}")
@@ -336,7 +328,7 @@ class Trainer:
                                 self.env_model,
                                 self.agent,
                                 self.real_replay_buffer,
-                                rollout_length,
+                                steps=1,
                                 n_rollouts=self.rollouts_per_step,
                                 pessimism=self.model_pessimism,
                                 ood_threshold=self.ood_threshold,
@@ -412,7 +404,6 @@ class Trainer:
                 start_time,
                 agent_update_performed,
                 self.model_trained_last_epoch,
-                rollout_length,
                 episode_finished,
                 tested_agent,
             )
@@ -465,14 +456,11 @@ def log_end_of_epoch(
     start_time,
     agent_update_performed,
     model_trained,
-    rollout_length,
     episode_finished,
     tested_agent,
 ):
 
     logger.log_tabular("Epoch", epoch, epoch)
-
-    logger.log_tabular("RolloutLength", epoch, rollout_length)
 
     if not episode_finished:
         logger.store(EpRet=0)
