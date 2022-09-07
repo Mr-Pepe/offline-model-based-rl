@@ -1,5 +1,7 @@
 import argparse
 import os
+from pathlib import Path
+from typing import Optional
 
 import d4rl  # noqa
 import gym
@@ -10,13 +12,20 @@ from ray.tune.schedulers.async_hyperband import ASHAScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
 
 from offline_mbrl.models.environment_model import EnvironmentModel
+from offline_mbrl.user_config import MODELS_DIR
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
+from offline_mbrl.utils.replay_buffer import ReplayBuffer
 from offline_mbrl.utils.termination_functions import get_termination_function
 
 
-def training_function(config, data, save_path=None, tuning=True):
-    model = EnvironmentModel(hidden_layer_sizes=4 * [config["n_hidden"]], **config)
+def training_function(
+    config: dict,
+    data: ReplayBuffer,
+    save_path: Optional[Path] = None,
+    tuning: bool = True,
+) -> None:
+    model = EnvironmentModel(hidden_layer_sizes=4 * config["n_hidden"], **config)
 
     model.train_to_convergence(
         replay_buffer=data, checkpoint_dir=None, tuning=tuning, **config
@@ -43,9 +52,9 @@ if __name__ == "__main__":
     if args.device != "":
         device = args.device
 
-    env = gym.make(args.env_name)
-
-    buffer, obs_dim, act_dim = load_dataset_from_env(env, buffer_device=device)
+    buffer, obs_dim, act_dim = load_dataset_from_env(
+        args.env_name, buffer_device=device
+    )
 
     pre_fn = get_preprocessing_function(args.env_name, device)
     termination_function = get_termination_function(args.env_name)
@@ -72,7 +81,7 @@ if __name__ == "__main__":
     if args.level == 0:
         # Perform training with tuned hyperparameters and save model
 
-        save_path = os.path.join(MODELS_DIR, args.env_name + "-model.pt")
+        save_path = MODELS_DIR / (args.env_name + "-model.pt")
 
         config.update(max_n_train_epochs=-1, debug=True)
 

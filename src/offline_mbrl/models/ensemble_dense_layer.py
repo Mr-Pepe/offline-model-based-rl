@@ -1,3 +1,5 @@
+from typing import Callable
+
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -5,7 +7,13 @@ from torch import nn
 
 # From: https://github.com/nnaisense/MAX/blob/master/models.py
 class EnsembleDenseLayer(nn.Module):
-    def __init__(self, n_in, n_out, ensemble_size, non_linearity="leaky_relu"):
+    def __init__(
+        self,
+        n_in: int,
+        n_out: int,
+        ensemble_size: int,
+        non_linearity: str = "leaky_relu",
+    ) -> None:
         """
         linear + activation Layer
         there are `ensemble_size` layers
@@ -38,6 +46,8 @@ class EnsembleDenseLayer(nn.Module):
         self.weights = nn.Parameter(weights)
         self.biases = nn.Parameter(biases)
 
+        self.non_linearity: Callable
+
         if non_linearity == "leaky_relu":
             self.non_linearity = F.leaky_relu
         elif non_linearity == "tanh":
@@ -45,15 +55,7 @@ class EnsembleDenseLayer(nn.Module):
         elif non_linearity == "linear":
             self.non_linearity = nn.Identity()
 
-    def forward(self, inp):
-        out = torch.baddbmm(self.biases, inp, self.weights)
+    def forward(self, model_input: torch.Tensor) -> torch.Tensor:
+        out = torch.baddbmm(self.biases, model_input, self.weights)
 
-        out = self.non_linearity(out)
-
-        # out = self.batch_norm(torch.flatten(out, 0, 1)).reshape(
-        #     inp.shape[0], inp.shape[1], -1)
-
-        # if out.shape[-1] == inp.shape[-1]:
-        #     out += inp
-
-        return out
+        return self.non_linearity(out)

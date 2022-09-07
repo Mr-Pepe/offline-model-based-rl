@@ -10,7 +10,6 @@
 import os
 
 import d4rl  # pylint: disable=unused-import
-import gym
 import torch
 
 from offline_mbrl.models.environment_model import EnvironmentModel

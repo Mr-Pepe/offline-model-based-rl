@@ -22,7 +22,7 @@ class MultiHeadMlp(nn.Module):
         act_dim: int,
         hidden_layer_sizes: tuple[int, ...],
         n_networks: int,
-    ):
+    ) -> None:
 
         super().__init__()
 

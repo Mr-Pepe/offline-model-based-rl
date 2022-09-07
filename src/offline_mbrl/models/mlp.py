@@ -1,7 +1,13 @@
+from typing import Type
+
 from torch import nn
 
 
-def mlp(sizes, activation, output_activation=nn.Identity):
+def mlp(
+    sizes: tuple[int, ...],
+    activation: Type[nn.Module],
+    output_activation: Type[nn.Module] = nn.Identity,
+) -> nn.Sequential:
     # Based on https://spinningup.openai.com
 
     layers = []

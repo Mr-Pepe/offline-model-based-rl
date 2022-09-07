@@ -12,7 +12,6 @@ class RandomAgent:
 
     def eval(self) -> None:
         """Dummy function."""
-        pass
 
     def act(self, unused_observation: Optional[torch.Tensor] = None) -> torch.Tensor:
         return torch.as_tensor(
