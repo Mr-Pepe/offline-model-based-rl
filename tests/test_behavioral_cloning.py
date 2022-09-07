@@ -40,7 +40,7 @@ def test_BC_agent_overfits_on_single_batch():
         env.action_space,
         batch_size=256,
         lr=1e-4,
-        pre_fn=get_preprocessing_function(env_name),
+        preprocessing_function=get_preprocessing_function(env_name),
     )
     batch = buffer.sample_batch(256)
 
