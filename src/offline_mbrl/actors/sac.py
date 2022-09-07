@@ -1,12 +1,16 @@
 import itertools
 from copy import deepcopy
+from typing import Callable, Optional, Type
 
 import torch
+from gym import Space
 from torch import nn
 from torch.optim.adamw import AdamW
 
 from offline_mbrl.models.mlp_q_function import MLPQFunction
 from offline_mbrl.models.squashed_gaussian_mlp_actor import SquashedGaussianMLPActor
+from offline_mbrl.utils.logx import EpochLogger
+from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
 
 class SAC(nn.Module):
@@ -14,20 +18,20 @@ class SAC(nn.Module):
     # pylint: disable=abstract-method
     def __init__(
         self,
-        observation_space,
-        action_space,
-        hidden=(256, 256),
-        activation=nn.ReLU,
-        pi_lr=3e-4,
-        q_lr=3e-4,
-        gamma=0.99,
-        alpha=0.2,
-        polyak=0.995,
-        batch_size=100,
-        pre_fn=None,
-        device="cpu",
-        **_
-    ):
+        observation_space: Space,
+        action_space: Space,
+        hidden: tuple[int, ...] = (256, 256),
+        activation: Type[nn.Module] = nn.ReLU,
+        pi_lr: float = 3e-4,
+        q_lr: float = 3e-4,
+        gamma: float = 0.99,
+        alpha: float = 0.2,
+        polyak: float = 0.995,
+        batch_size: int = 100,
+        preprocessing_function: Callable = None,
+        device: str = "cpu",
+        **_: dict
+    ) -> None:
         """
         gamma (float): Discount factor. (Always between 0 and 1.)
 
@@ -54,15 +58,18 @@ class SAC(nn.Module):
         self.alpha = alpha
         self.polyak = polyak
         self.batch_size = batch_size
-        self.pre_fn = pre_fn
+        self.pre_fn = preprocessing_function
         self.device = device
+
+        assert observation_space.shape is not None
+        assert action_space.shape is not None
 
         obs_dim = observation_space.shape[0]
         act_dim = action_space.shape[0]
         self.action_space = action_space
 
         # Assumes all dimensions share the same bound
-        act_limit = action_space.high[0]
+        act_limit = action_space.high[0]  # type: ignore
 
         # build policy and value functions
         self.pi = SquashedGaussianMLPActor(
@@ -87,7 +94,9 @@ class SAC(nn.Module):
         for p in self.target.parameters():
             p.requires_grad = False
 
-    def compute_loss_q(self, data):
+    def compute_loss_q(
+        self, data: dict[str, torch.Tensor]
+    ) -> tuple[torch.Tensor, dict]:
         o, a, r, o2, d = (
             data["obs"],
             data["act"],
@@ -126,7 +135,9 @@ class SAC(nn.Module):
 
         return loss_q, q_info
 
-    def compute_loss_pi(self, data):
+    def compute_loss_pi(
+        self, data: dict[str, torch.Tensor]
+    ) -> tuple[torch.Tensor, dict]:
         o = data["obs"]
 
         if self.pre_fn:
@@ -145,8 +156,10 @@ class SAC(nn.Module):
 
         return loss_pi, pi_info
 
-    def update(self, data):
-        self.device = next(self.parameters()).device
+    def update(
+        self, data: dict[str, torch.Tensor]
+    ) -> tuple[torch.Tensor, dict, torch.Tensor, dict]:
+        self.device = next(self.parameters()).device.type
 
         for key in data:
             data[key] = data[key].to(self.device)
@@ -183,7 +196,9 @@ class SAC(nn.Module):
 
         return loss_q, q_info, loss_pi, pi_info
 
-    def multi_update(self, n_updates, buffer, logger=None):
+    def multi_update(
+        self, n_updates: int, buffer: ReplayBuffer, logger: Optional[EpochLogger] = None
+    ) -> None:
         for _ in range(n_updates):
             batch = buffer.sample_batch(self.batch_size)
             loss_q, q_info, loss_pi, pi_info = self.update(data=batch)
@@ -192,20 +207,27 @@ class SAC(nn.Module):
                 logger.store(LossQ=loss_q.item(), **q_info)
                 logger.store(LossPi=loss_pi.item(), **pi_info)
 
-    def act(self, o, deterministic=False):
-        self.device = next(self.parameters()).device
+    def act(
+        self, observation: torch.Tensor, deterministic: bool = False
+    ) -> torch.Tensor:
+        self.device = next(self.parameters()).device.type
 
-        obs = torch.as_tensor(o, dtype=torch.float32, device=self.device)
+        obs = torch.as_tensor(
+            observation, dtype=torch.float32, device=torch.device(self.device)
+        )
 
         if self.pre_fn:
             obs = self.pre_fn(obs)
 
         with torch.no_grad():
-            a, _ = self.pi(obs, deterministic, False)
-            return a
+            action, _ = self.pi(obs, deterministic, False)
+            return action
 
-    def act_randomly(self, o, unused_deterministic=False):
-        a = torch.as_tensor(
-            [self.action_space.sample() for _ in range(len(o))], device=o.device
+    def act_randomly(
+        self, observation: torch.Tensor, unused_deterministic: bool = False
+    ) -> torch.Tensor:
+        action = torch.as_tensor(
+            [self.action_space.sample() for _ in range(len(observation))],
+            device=observation.device,
         )
-        return a
+        return action
