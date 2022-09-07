@@ -1,5 +1,6 @@
 # Based on https://spinningup.openai.com
 # pylint: disable=consider-using-f-string
+# type: ignore
 """
 
 Some simple logging functionality, inspired by rllab's logging.

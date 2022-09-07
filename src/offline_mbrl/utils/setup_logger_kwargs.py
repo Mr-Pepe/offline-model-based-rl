@@ -2,11 +2,18 @@
 
 import os.path as osp
 import time
+from pathlib import Path
+from typing import Optional, Union
 
 from offline_mbrl.user_config import DEFAULT_DATA_DIR, FORCE_DATESTAMP
 
 
-def setup_logger_kwargs(exp_name, seed=None, data_dir=None, datestamp=False):
+def setup_logger_kwargs(
+    exp_name: str,
+    seed: Optional[int] = None,
+    data_dir: Optional[Union[str, Path]] = None,
+    datestamp: bool = False,
+) -> dict:
     """
     Sets up the output_dir for a logger and returns a dict for logger kwargs.
 

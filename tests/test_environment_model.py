@@ -28,12 +28,12 @@ gym.logger.set_level(40)
 
 
 @pytest.mark.fast
-def test_is_nn_module():
+def test_is_nn_module() -> None:
     assert issubclass(EnvironmentModel, nn.Module)
 
 
 @pytest.mark.fast
-def test_takes_state_and_action_as_input_and_outputs_state_reward_done():
+def test_takes_state_and_action_as_input_and_outputs_state_reward_done() -> None:
     obs_dim = 5
     act_dim = 6
 
@@ -47,7 +47,7 @@ def test_takes_state_and_action_as_input_and_outputs_state_reward_done():
 
 
 @pytest.mark.medium
-def test_single_deterministic_network_overfits_on_single_sample():
+def test_single_deterministic_network_overfits_on_single_sample() -> None:
     torch.manual_seed(0)
     model = EnvironmentModel(1, 1)
 
@@ -72,7 +72,7 @@ def test_single_deterministic_network_overfits_on_single_sample():
 
 
 @pytest.mark.medium
-def test_single_deterministic_network_overfits_on_batch():
+def test_single_deterministic_network_overfits_on_batch() -> None:
     model = EnvironmentModel(obs_dim=3, act_dim=4)
 
     x = torch.rand((10, 7))
@@ -96,7 +96,7 @@ def test_single_deterministic_network_overfits_on_batch():
 
 
 @pytest.mark.medium
-def test_deterministic_model_trains_on_offline_data():
+def test_deterministic_model_trains_on_offline_data() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     env = gym.make(HALF_CHEETAH_RANDOM_V2)
@@ -142,7 +142,7 @@ def test_deterministic_model_trains_on_offline_data():
 
 
 @pytest.mark.fast
-def test_probabilistic_model_returns_different_results_for_same_input():
+def test_probabilistic_model_returns_different_results_for_same_input() -> None:
     obs_dim = 5
     act_dim = 6
 
@@ -162,7 +162,7 @@ def test_probabilistic_model_returns_different_results_for_same_input():
 
 
 @pytest.mark.fast
-def test_raises_error_if_type_unknown():
+def test_raises_error_if_type_unknown() -> None:
     with pytest.raises(ValueError):
         EnvironmentModel(1, 2, [2, 2], type="asdasd")
 
@@ -174,7 +174,7 @@ def test_probabilistic_model_trains_on_toy_dataset(
     augment_loss=False,
     steps_per_plot=100,
     add_points_between=False,
-):
+) -> None:
     device = "cpu"
 
     torch.manual_seed(0)
@@ -266,7 +266,7 @@ def test_probabilistic_model_trains_on_toy_dataset(
 
 
 @pytest.mark.fast
-def test_deterministic_ensemble_gives_different_predictions_per_model():
+def test_deterministic_ensemble_gives_different_predictions_per_model() -> None:
     obs_dim = 5
     act_dim = 6
 
@@ -301,7 +301,7 @@ def test_deterministic_ensemble_gives_different_predictions_per_model():
 
 
 @pytest.mark.medium
-def test_deterministic_ensemble_overfits_on_batch():
+def test_deterministic_ensemble_overfits_on_batch() -> None:
     n_networks = 5
     torch.manual_seed(0)
 
@@ -329,7 +329,7 @@ def test_deterministic_ensemble_overfits_on_batch():
 
 
 @pytest.mark.fast
-def test_model_returns_prediction_of_random_network_if_not_specified():
+def test_model_returns_prediction_of_random_network_if_not_specified() -> None:
     obs_dim = 5
     act_dim = 6
 
@@ -348,7 +348,7 @@ def test_model_returns_prediction_of_random_network_if_not_specified():
 
 
 @pytest.mark.fast
-def test_model_returns_same_output_if_network_specified():
+def test_model_returns_same_output_if_network_specified() -> None:
     obs_dim = 5
     act_dim = 6
 
@@ -363,7 +363,7 @@ def test_model_returns_same_output_if_network_specified():
 
 
 @pytest.mark.fast
-def test_deterministic_model_returns_binary_done_signal():
+def test_deterministic_model_returns_binary_done_signal() -> None:
     obs_dim = 5
     act_dim = 6
     torch.manual_seed(2)
@@ -379,7 +379,7 @@ def test_deterministic_model_returns_binary_done_signal():
 
 
 @pytest.mark.fast
-def test_probabilistic_model_returns_binary_done_signal():
+def test_probabilistic_model_returns_binary_done_signal() -> None:
     obs_dim = 5
     act_dim = 6
     torch.manual_seed(0)
@@ -395,7 +395,7 @@ def test_probabilistic_model_returns_binary_done_signal():
 
 
 @pytest.mark.fast
-def test_deterministic_model_returns_binary_done_signal_when_using_termination_fn():
+def test_deterministic_model_returns_binary_done_signal_when_using_termination_fn() -> None:
     obs_dim = 5
     act_dim = 6
     torch.manual_seed(2)
@@ -413,7 +413,7 @@ def test_deterministic_model_returns_binary_done_signal_when_using_termination_f
 
 
 @pytest.mark.medium
-def test_deterministic_model_does_not_always_output_terminal():
+def test_deterministic_model_does_not_always_output_terminal() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     torch.manual_seed(0)
     env = gym.make(HOPPER_RANDOM_V2)
@@ -468,7 +468,7 @@ def test_deterministic_model_does_not_always_output_terminal():
 
 
 @pytest.mark.medium
-def test_probabilistic_model_does_not_always_output_terminal():
+def test_probabilistic_model_does_not_always_output_terminal() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     torch.manual_seed(0)
     env = gym.make(HOPPER_RANDOM_V2)
@@ -523,7 +523,7 @@ def test_probabilistic_model_does_not_always_output_terminal():
 
 
 @pytest.mark.fast
-def test_aleatoric_pessimism_throws_error_if_model_not_probabilistic():
+def test_aleatoric_pessimism_throws_error_if_model_not_probabilistic() -> None:
     obs_dim = 5
     act_dim = 6
 
@@ -537,7 +537,7 @@ def test_aleatoric_pessimism_throws_error_if_model_not_probabilistic():
 
 
 @pytest.mark.fast
-def test_throws_error_if_mode_unknown():
+def test_throws_error_if_mode_unknown() -> None:
     obs_dim = 5
     act_dim = 6
 
@@ -551,7 +551,7 @@ def test_throws_error_if_mode_unknown():
 
 
 @pytest.mark.fast
-def test_get_prediction_from_pessimistic_model():
+def test_get_prediction_from_pessimistic_model() -> None:
     obs_dim = 5
     act_dim = 6
     n_samples = 100

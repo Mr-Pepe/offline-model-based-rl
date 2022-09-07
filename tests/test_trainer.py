@@ -14,13 +14,13 @@ from offline_mbrl.utils.termination_functions import termination_functions
 
 
 @pytest.mark.medium
-def test_replay_buffer_is_initially_empty_for_online_training():
+def test_replay_buffer_is_initially_empty_for_online_training() -> None:
     trainer = Trainer(HOPPER_MEDIUM_REPLAY_V2, pretrain_epochs=0)
     assert trainer.real_replay_buffer.size == 0
 
 
 @pytest.mark.medium
-def test_replay_buffer_is_filled_for_offline_training():
+def test_replay_buffer_is_filled_for_offline_training() -> None:
     trainer = Trainer(
         HOPPER_MEDIUM_REPLAY_V2, pretrain_epochs=1, n_samples_from_dataset=100
     )
@@ -29,7 +29,7 @@ def test_replay_buffer_is_filled_for_offline_training():
 
 
 @pytest.mark.medium
-def test_actions_for_online_model_free_training():
+def test_actions_for_online_model_free_training() -> None:
     epochs = 3
     steps_per_epoch = 50
     total_steps = epochs * steps_per_epoch
@@ -78,7 +78,7 @@ def test_actions_for_online_model_free_training():
 
 
 @pytest.mark.medium
-def test_actions_for_online_model_based_training():
+def test_actions_for_online_model_based_training() -> None:
     epochs = 5
     steps_per_epoch = 100
     total_steps = epochs * steps_per_epoch
@@ -192,7 +192,7 @@ def test_actions_for_offline_model_free_training_with_fine_tuning():
 
 
 @pytest.mark.slow
-def test_actions_for_offline_model_based_training_with_fine_tuning():
+def test_actions_for_offline_model_based_training_with_fine_tuning() -> None:
     epochs = 5
     pretrain_epochs = 3
     steps_per_epoch = 100
@@ -253,7 +253,7 @@ def test_actions_for_offline_model_based_training_with_fine_tuning():
 
 
 @pytest.mark.medium
-def test_trainer_picks_correct_postprocessing_functions():
+def test_trainer_picks_correct_postprocessing_functions() -> None:
     # pylint: disable=comparison-with-callable
 
     trainer = Trainer(HOPPER_MEDIUM_REPLAY_V2, use_model=True)
@@ -270,7 +270,7 @@ def test_trainer_picks_correct_postprocessing_functions():
 
 
 @pytest.mark.slow
-def test_results_are_reproducible():
+def test_results_are_reproducible() -> None:
     epochs = 5
     steps_per_epoch = 100
     init_steps = 300

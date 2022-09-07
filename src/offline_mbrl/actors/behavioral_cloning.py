@@ -11,7 +11,7 @@ from torch import nn
 from torch.optim.adamw import AdamW
 
 from offline_mbrl.models.mlp import mlp
-from offline_mbrl.utils.logx import EpochLogger
+from offline_mbrl.utils.logx import EpochLogger  # type: ignore
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
 
@@ -44,7 +44,7 @@ class BC(nn.Module):
         self.action_space = action_space
 
         # build policy and value functions
-        self.pi = mlp([obs_dim] + list(hidden_layer_sizes) + [act_dim], activation)
+        self.pi = mlp((obs_dim, *hidden_layer_sizes, act_dim), activation)
 
         # Set up optimizers for policy and q-function
         self.pi_optimizer = AdamW(self.pi.parameters(), lr=lr)

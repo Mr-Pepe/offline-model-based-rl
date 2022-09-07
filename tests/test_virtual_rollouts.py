@@ -16,7 +16,7 @@ from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
 
 
 @pytest.mark.fast
-def test_generate_rollout_of_desired_length():
+def test_generate_rollout_of_desired_length() -> None:
     env = gym.make("HalfCheetah-v2")
     observation_space = env.observation_space
     action_space = env.action_space
@@ -51,7 +51,7 @@ def test_generate_rollout_of_desired_length():
 
 
 @pytest.mark.fast
-def test_generate_rollout_stops_on_terminal():
+def test_generate_rollout_stops_on_terminal() -> None:
     torch.manual_seed(0)
     env = gym.make("HalfCheetah-v2")
     observation_space = env.observation_space
@@ -136,7 +136,7 @@ def test_use_random_actions_in_virtual_rollout():
 
 
 @pytest.mark.medium
-def test_continuously_grow_rollouts():
+def test_continuously_grow_rollouts() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     env = gym.make(HOPPER_RANDOM_V2)
     observation_space = env.observation_space

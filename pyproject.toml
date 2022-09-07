@@ -43,7 +43,7 @@ source = ["src/", ".tox/*/lib/python*/site-packages/"]
 [tool.mypy]
 ignore_missing_imports = true
 disallow_untyped_defs = true
-exclude = ["venv.*/",  "build/", "dist/", "data/"]
+exclude = ["venv.*/",  "build/", "dist/", "data/", "evaluation"]
 
 [tool.pylint.master]
 recursive = "yes"

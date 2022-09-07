@@ -7,7 +7,7 @@ from offline_mbrl.utils.setup_logger_kwargs import setup_logger_kwargs
 
 
 @pytest.mark.fast
-def test_total_steps_must_be_enough_to_perform_at_least_one_update():
+def test_total_steps_must_be_enough_to_perform_at_least_one_update() -> None:
     init_steps = 150
     n_steps_per_epoch = 100
     n_epochs = 1
@@ -26,7 +26,7 @@ def test_total_steps_must_be_enough_to_perform_at_least_one_update():
 
 
 @pytest.mark.slow
-def test_sac_converges():
+def test_sac_converges() -> None:
     logger_kwargs = setup_logger_kwargs("test_sac")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     env = "HalfCheetah-v2"
@@ -50,7 +50,7 @@ def test_sac_converges():
 
 
 @pytest.mark.slow
-def test_sac_offline():
+def test_sac_offline() -> None:
     logger_kwargs = setup_logger_kwargs("test_sac_offline")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     env = HALF_CHEETAH_RANDOM_V2

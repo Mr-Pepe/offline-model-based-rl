@@ -1,26 +1,18 @@
 # Based on https://spinningup.openai.com
+# type: ignore
 
 
 import numpy as np
 from mpi4py import MPI
 
 
-def proc_id():
+def proc_id() -> int:
     """Get rank of calling process."""
     return MPI.COMM_WORLD.Get_rank()
 
 
-def allreduce(*args, **kwargs):
+def allreduce(*args, **kwargs) -> None:
     return MPI.COMM_WORLD.Allreduce(*args, **kwargs)
-
-
-def num_procs():
-    """Count active MPI processes."""
-    return MPI.COMM_WORLD.Get_size()
-
-
-def broadcast(x, root=0):
-    MPI.COMM_WORLD.Bcast(x, root=root)
 
 
 def mpi_op(x, op):
@@ -33,11 +25,6 @@ def mpi_op(x, op):
 
 def mpi_sum(x):
     return mpi_op(x, MPI.SUM)
-
-
-def mpi_avg(x):
-    """Average a scalar or vector over MPI processes."""
-    return mpi_sum(x) / num_procs()
 
 
 def mpi_statistics_scalar(x, with_min_and_max=False):

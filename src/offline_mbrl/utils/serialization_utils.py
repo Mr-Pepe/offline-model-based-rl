@@ -1,9 +1,10 @@
 # Based on https://spinningup.openai.com
+# type: ignore
 
 import json
 
 
-def convert_json(obj: object):
+def convert_json(obj: object) -> str:
     """Convert obj to a version which can be serialized with JSON."""
     if is_json_serializable(obj):
         return obj
@@ -27,7 +28,7 @@ def convert_json(obj: object):
     return str(obj)
 
 
-def is_json_serializable(obj: object):
+def is_json_serializable(obj: object) -> bool:
     try:
         json.dumps(obj)
         return True

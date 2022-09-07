@@ -9,7 +9,7 @@ from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
 
 @pytest.mark.medium
-def test_buffer_returns_percentage_of_terminal_states():
+def test_buffer_returns_percentage_of_terminal_states() -> None:
     env = gym.make(HOPPER_RANDOM_V2)
     dataset = d4rl.qlearning_dataset(env)
     observations = dataset["observations"]
@@ -34,7 +34,7 @@ def test_buffer_returns_percentage_of_terminal_states():
 
 
 @pytest.mark.medium
-def test_add_batches_to_buffer():
+def test_add_batches_to_buffer() -> None:
     n_samples = 100000
     size_first_batch = 1234
 
@@ -84,7 +84,7 @@ def test_add_batches_to_buffer():
 
 
 @pytest.mark.medium
-def test_add_experience_to_buffer_online():
+def test_add_experience_to_buffer_online() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     env = gym.make("HalfCheetah-v2")
     buffer = ReplayBuffer(
@@ -111,7 +111,7 @@ def test_add_experience_to_buffer_online():
 
 
 @pytest.mark.fast
-def test_buffer_returns_whether_it_contains_a_done_state():
+def test_buffer_returns_whether_it_contains_a_done_state() -> None:
     buffer = ReplayBuffer(1, 1, 100)
 
     assert not buffer.has_terminal_state()
@@ -140,7 +140,7 @@ def test_buffer_returns_whether_it_contains_a_done_state():
 
 
 @pytest.mark.medium
-def test_store_batch_to_prefilled_buffer_that_is_too_small():
+def test_store_batch_to_prefilled_buffer_that_is_too_small() -> None:
     n_samples = 137
     buffer_size = 100
     prefill = 80
@@ -176,7 +176,7 @@ def test_store_batch_to_prefilled_buffer_that_is_too_small():
 
 
 @pytest.mark.fast
-def test_clear_buffer():
+def test_clear_buffer() -> None:
     buffer = ReplayBuffer(1, 1, 200)
 
     for _ in range(100):

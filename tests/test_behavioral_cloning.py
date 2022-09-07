@@ -12,14 +12,14 @@ from offline_mbrl.utils.preprocessing import get_preprocessing_function
 
 
 @pytest.mark.medium
-def test_default_agent_is_SAC():
+def test_default_agent_is_SAC() -> None:
     trainer = Trainer(HOPPER_MEDIUM_REPLAY_V2, pretrain_epochs=0)
 
     assert isinstance(trainer.agent, SAC)
 
 
 @pytest.mark.medium
-def test_trainer_loads_behavioral_cloning_agent():
+def test_trainer_loads_behavioral_cloning_agent() -> None:
     trainer = Trainer(
         HOPPER_MEDIUM_REPLAY_V2, pretrain_epochs=0, agent_kwargs=dict(type="bc")
     )
@@ -28,12 +28,12 @@ def test_trainer_loads_behavioral_cloning_agent():
 
 
 @pytest.mark.medium
-def test_BC_agent_overfits_on_single_batch():
+def test_BC_agent_overfits_on_single_batch() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     env_name = HALF_CHEETAH_EXPERT_V2
     env = gym.make(env_name)
 
-    buffer, _, _ = load_dataset_from_env(env, buffer_device=device)
+    buffer, _, _ = load_dataset_from_env(env_name, buffer_device=device)
 
     agent = BC(
         env.observation_space,
