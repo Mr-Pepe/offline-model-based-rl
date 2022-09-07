@@ -61,10 +61,8 @@ if __name__ == "__main__":
                 prediction,
                 means,
                 logvars,
-                explicit_uncertainty,
                 epistemic_uncertainty,
                 aleatoric_uncertainty,
-                underestimated_reward,
             ) = model.get_prediction(obs_act, debug=True)
 
             model_errors.extend(
@@ -107,10 +105,8 @@ if __name__ == "__main__":
                     prediction,
                     means,
                     logvars,
-                    explicit_uncertainty,
                     epistemic_uncertainty,
                     aleatoric_uncertainty,
-                    underestimated_reward,
                 ) = model.get_prediction(obs_act, debug=True)
 
                 model_errors.extend(

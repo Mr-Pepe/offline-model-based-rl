@@ -9,7 +9,6 @@ from typing import Optional, Union, cast
 import torch
 
 from offline_mbrl.actors.behavioral_cloning import BC
-from offline_mbrl.actors.random_agent import RandomAgent
 from offline_mbrl.actors.sac import SAC
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
