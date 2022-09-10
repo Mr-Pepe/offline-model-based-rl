@@ -1,38 +1,38 @@
+# Offline Model-Based Reinforcement Learning
+
+
+[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=555555)](https://pycqa.github.io/isort/)
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+
+This library provides a simple but high-quality baseline for playing around with model-free and model-based reinforcement learning approaches in both online and offline settings.
+
+The code in this repository is based on the code written as part of my master's thesis on uncertainty
+estimation in offline model-based reinforcement learning. You can find the thesis in
+[thesis.pdf](thesis.pdf). Please [cite](#citation) accordingly.
+
+
 # Setup
 
 Install [Mujoco](https://mujoco.org/).
 
-Create an environment and install the package into it:
+Clone and install the library:
 
 ```
+git clone git@github.com:Mr-Pepe/offline-model-based-rl.git
+cd offline-model-based-rl
 python3.9 -m venv venv
 source venv/bin/activate
-pip install --upgrade pip
-pip install -e .[dev]
+pip install -e .
 ```
 
-Install the environment from environment.yml using conda:
+Set default directories in the [user config](user_config.py).
 
-```
-conda env create -f environment.yml
-```
-
-Activate the environment:
-```
-conda activate offline-mbrl
-```
-
-Install [D4RL](https://github.com/Farama-Foundation/d4rl).
-
-Install this package:
-
-```
-pip install .
-```
-
-Set default directories in benchmark/benchmark/user_config.py.
 
 # Run experiments
+
+> **Note** </br>
+> I have recently been refactoring the code and it is probably not gonna run in its current state.
+
 
 All the following commands need to be run from the benchmark/benchmark folder.
 
@@ -86,3 +86,36 @@ python evaluation/train_mujoco_policies.py --env_name halfcheetah-medium-v2 --mo
 python evaluation/pessimism_sweep.py --env_name hopper-expert-v2 --mode epistemic-penalty --epochs 10 --n_trials 50 --bounds 80.2 100
 ```
 
+
+# Contribute
+
+Clone the repo and install the package and all required development dependencies
+
+```
+pip install -e .[dev]
+```
+
+After making changes to the code, make sure that static checks and unit tests pass by running `tox`.
+Tox only runs unit tests that are marked as `fast` or `medium`.
+For faster feedback from unit tests, run `pytest -m fast`.
+Please run the slow tests if you have a GPU available by executing `pytest -m slow`.
+
+# Citation
+
+Feel free to use the code but please cite the usage as:
+
+```
+@misc{peter2021ombrl,
+    title={Investigating Uncertainty Estimation Methods for Offline Reinforcement Learning},
+    author={Felipe Peter and Elie Aljalbout},
+    year={2021}
+}
+```
+
+# TODOs
+- TODO: Add code coverage badge (upload coverage results)
+- TODO: Add test results badge (from workflow results)
+- TODO: Add linting badge (from workflow results)
+- TODO: Add license badge
+- TODO: Remove mentions of "benchmark"
+- TODO: Remove mentions of "felipe"
