@@ -9,22 +9,23 @@ build-backend = "setuptools.build_meta"
 [tool.isort]
 profile = "black"
 line_length = 88
+extend_skip_glob = ["data/*"]
 
 [tool.black]
 line_length = 88
+extend-exclude = "data/*"
 
 [tool.pytest.ini_options]
 addopts = '''
     -vv
     --strict-markers
-    --durations 0
-    --durations-min=0.1
     --doctest-modules
     --junitxml=reports/pytest.xml
     --cov=offline_mbrl
     --cov-config=pyproject.toml
     --cov-report xml:reports/coverage.xml
     --cov-report html:reports/coverage_html
+    --ignore="data/"
     '''
 markers = '''
     fast: Fastest tests, a few hundred milliseconds
@@ -35,6 +36,7 @@ markers = '''
 [tool.coverage.run]
 branch = true
 data_file = "reports/.coverage"
+omit = ["*/evaluation/*"]
 
 [tool.coverage.paths]
 # Maps coverage measured in site-packages to source files in src

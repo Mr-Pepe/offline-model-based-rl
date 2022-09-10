@@ -395,7 +395,7 @@ def test_probabilistic_model_returns_binary_done_signal() -> None:
 
 
 @pytest.mark.fast
-def test_deterministic_model_returns_binary_done_signal_when_using_termination_fn() -> None:
+def test_deterministic_model_returns_binary_done_signal_when_using_term_fn() -> None:
     obs_dim = 5
     act_dim = 6
     torch.manual_seed(2)
@@ -415,10 +415,12 @@ def test_deterministic_model_returns_binary_done_signal_when_using_termination_f
 @pytest.mark.medium
 def test_deterministic_model_does_not_always_output_terminal() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    env_name = HOPPER_RANDOM_V2
     torch.manual_seed(0)
+
     env = gym.make(HOPPER_RANDOM_V2)
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
-        env, n_samples=10000, buffer_device=device
+        env_name, n_samples=10000, buffer_device=device
     )
     model = EnvironmentModel(
         obs_dim,
@@ -470,10 +472,12 @@ def test_deterministic_model_does_not_always_output_terminal() -> None:
 @pytest.mark.medium
 def test_probabilistic_model_does_not_always_output_terminal() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    env_name = HOPPER_RANDOM_V2
     torch.manual_seed(0)
-    env = gym.make(HOPPER_RANDOM_V2)
+
+    env = gym.make(env_name)
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
-        env, 10000, buffer_device=device
+        env_name, 10000, buffer_device=device
     )
     model = EnvironmentModel(
         obs_dim,

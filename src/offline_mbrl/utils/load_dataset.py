@@ -1,4 +1,5 @@
 import d4rl
+import gym
 import torch
 
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
@@ -25,7 +26,7 @@ def load_dataset_from_env(
         tuple[ReplayBuffer, int, int]: The replay buffer, the dimensionality of an
             observation, and the dimensionality of an action.
     """
-    dataset = d4rl.qlearning_dataset(env_name)
+    dataset = d4rl.qlearning_dataset(gym.make(env_name))
 
     if n_samples == -1:
         observations = torch.as_tensor(dataset["observations"])

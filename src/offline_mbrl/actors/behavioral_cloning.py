@@ -11,7 +11,7 @@ from torch import nn
 from torch.optim.adamw import AdamW
 
 from offline_mbrl.models.mlp import mlp
-from offline_mbrl.utils.logx import EpochLogger  # type: ignore
+from offline_mbrl.utils.logx import EpochLogger
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
 

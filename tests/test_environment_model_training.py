@@ -100,11 +100,12 @@ def test_train_probabilistic_ensemble():
 @pytest.mark.medium
 def test_training_stops_after_specified_number_of_batches():
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    env_name = HALF_CHEETAH_RANDOM_V2
     torch.manual_seed(0)
 
-    env = gym.make(HALF_CHEETAH_RANDOM_V2)
+    env = gym.make(env_name)
     buffer, obs_dim, act_dim = load_dataset_from_env(
-        env, buffer_device=device, n_samples=100000
+        env_name, buffer_device=device, n_samples=100000
     )
 
     model = EnvironmentModel(obs_dim, act_dim, n_networks=5)

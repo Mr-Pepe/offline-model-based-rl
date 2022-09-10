@@ -39,7 +39,7 @@ def test_actions_for_online_model_free_training() -> None:
     trainer = Trainer(
         HOPPER_MEDIUM_REPLAY_V2,
         epochs=epochs,
-        agent_kwargs=dict(type="sac", hidden=[32, 32, 32], batch_size=32),
+        agent_kwargs=dict(type="sac", hidden=(32, 32, 32), batch_size=32),
         steps_per_epoch=steps_per_epoch,
         max_ep_len=30,
         init_steps=init_steps,
@@ -89,8 +89,8 @@ def test_actions_for_online_model_based_training() -> None:
     trainer = Trainer(
         HOPPER_RANDOM_V2,
         epochs=epochs,
-        agent_kwargs=dict(type="sac", hidden=[32, 32, 32], batch_size=32),
-        model_kwargs=dict(hidden=[32, 32], batch_size=32, patience=1),
+        agent_kwargs=dict(type="sac", hidden=(32, 32, 32), batch_size=32),
+        model_kwargs=dict(hidden=(32, 32), batch_size=32, patience=1),
         use_model=True,
         train_model_every=train_model_every,
         steps_per_epoch=steps_per_epoch,
@@ -155,7 +155,7 @@ def test_actions_for_offline_model_free_training_with_fine_tuning():
         HOPPER_MEDIUM_REPLAY_V2,
         epochs=epochs,
         pretrain_epochs=pretrain_epochs,
-        agent_kwargs=dict(type="sac", hidden=[32, 32, 32], batch_size=32),
+        agent_kwargs=dict(type="sac", hidden=(32, 32, 32), batch_size=32),
         steps_per_epoch=steps_per_epoch,
         max_ep_len=30,
         init_steps=init_steps,

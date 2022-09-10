@@ -70,7 +70,7 @@ def plot_data(
 def get_datasets(logdir, condition=None):
     """
     Recursively look through logdir for output files produced by
-    spinup.logx.Logger.
+    spinup.logx.EpochLogger.
 
     Assumes that any file "progress.txt" is a valid hit.
     """

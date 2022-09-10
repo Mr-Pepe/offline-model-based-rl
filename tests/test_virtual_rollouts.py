@@ -138,7 +138,9 @@ def test_use_random_actions_in_virtual_rollout():
 @pytest.mark.medium
 def test_continuously_grow_rollouts() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    env = gym.make(HOPPER_RANDOM_V2)
+    env_name = HOPPER_RANDOM_V2
+
+    env = gym.make(env_name)
     observation_space = env.observation_space
     action_space = env.action_space
     seed = 1
@@ -150,7 +152,7 @@ def test_continuously_grow_rollouts() -> None:
     obs_dim = observation_space.shape[0]
     act_dim = action_space.shape[0]
 
-    buffer, _, _ = load_dataset_from_env(env, 10000, buffer_device=device)
+    buffer, _, _ = load_dataset_from_env(env_name, 10000, buffer_device=device)
 
     model = EnvironmentModel(
         obs_dim,

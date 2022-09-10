@@ -23,7 +23,7 @@ from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
 class Trainer:
     def __init__(
         self,
-        env_name,
+        env_name: str,
         agent_kwargs=None,
         model_kwargs=None,
         dataset_path="",
@@ -136,7 +136,7 @@ class Trainer:
 
         elif n_samples_from_dataset != 0:
             self.real_replay_buffer, _, _ = load_dataset_from_env(
-                self.env,
+                self.env_name,
                 n_samples=n_samples_from_dataset,
                 buffer_size=real_buffer_size,
                 buffer_device=device,
