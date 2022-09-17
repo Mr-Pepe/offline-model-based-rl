@@ -1,7 +1,7 @@
 import os.path as osp
 from pathlib import Path
 
-import d4rl  # pylint: disable=unused-import
+# pylint: disable=unused-import
 import gym
 import matplotlib.pyplot as plt
 

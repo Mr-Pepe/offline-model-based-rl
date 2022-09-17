@@ -7,7 +7,7 @@ from offline_mbrl.utils.envs import HOPPER_RANDOM_V2
 
 
 @pytest.mark.fast
-def test_returns_random_actions():
+def test_returns_random_actions() -> None:
     env = gym.make(HOPPER_RANDOM_V2)
     agent = RandomAgent(env)
 

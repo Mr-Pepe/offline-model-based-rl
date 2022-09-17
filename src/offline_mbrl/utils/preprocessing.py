@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Callable, Optional
 
-import d4rl  # pylint: disable=unused-import
+# pylint: disable=unused-import
 import gym
 import torch
 from d4rl.offline_env import OfflineEnv

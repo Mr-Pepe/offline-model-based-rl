@@ -21,7 +21,7 @@ def training_function(config, tuning=True):
         {"hidden": 4 * [config["agent_kwargs"]["agent_hidden"]]}
     )
     trainer = Trainer(**config)
-    return trainer.train(tuning=tuning, silent=True)
+    return trainer.train(tuning=tuning, quiet=True)
 
 
 def main(args):
@@ -47,7 +47,6 @@ def main(args):
         ood_threshold=None,
         rollouts_per_step=50,
         model_kwargs={},
-        dataset_path="",
         seed=0,
         epochs=args.epochs,
         steps_per_epoch=15000,
@@ -57,7 +56,6 @@ def main(args):
         n_samples_from_dataset=args.n_samples_from_dataset,
         agent_updates_per_step=1,
         num_test_episodes=20,
-        curriculum=[1, 1, 20, 100],
         max_ep_len=1000,
         use_model=True,
         pretrained_agent_path="",

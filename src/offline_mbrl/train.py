@@ -1,16 +1,26 @@
 import time
-from typing import Optional
+from enum import IntEnum
+from typing import Optional, Union, cast
 
 import gym
 import numpy as np
 import torch
 from ray import tune
 
-from offline_mbrl.actors.behavioral_cloning import BC
+from offline_mbrl.actors.behavioral_cloning import (
+    BehavioralCloningAgent,
+    BehavioralCloningConfiguration,
+)
 from offline_mbrl.actors.sac import SAC
-from offline_mbrl.evaluation.evaluate_policy import test_agent
 from offline_mbrl.models.environment_model import EnvironmentModel
-from offline_mbrl.utils.actions import Actions
+from offline_mbrl.schemas import (
+    AgentConfiguration,
+    EnvironmentModelConfiguration,
+    EpochLoggerConfiguration,
+    SACConfiguration,
+    TrainerConfiguration,
+)
+from offline_mbrl.utils.evaluate_agent_performance import evaluate_agent_performance
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.logx import EpochLogger
 from offline_mbrl.utils.model_needs_training import model_needs_training
@@ -23,347 +33,200 @@ from offline_mbrl.utils.virtual_rollouts import generate_virtual_rollouts
 class Trainer:
     def __init__(
         self,
-        env_name: str,
-        agent_kwargs=None,
-        model_kwargs=None,
-        dataset_path="",
-        seed=0,
-        epochs=100,
-        steps_per_epoch=4000,
-        random_steps=10000,
-        init_steps=1000,
-        env_steps_per_step=1,
-        n_samples_from_dataset=0,
-        agent_updates_per_step=1,
-        num_test_episodes=10,
-        curriculum=None,
-        max_ep_len=1000,
-        use_model=False,
-        pretrained_agent_path="",
-        exploration_chance=1,
-        pretrained_model_path="",
-        model_pessimism=0,
-        ood_threshold=-1,
-        mode=None,
-        model_max_n_train_batches=-1,
-        rollouts_per_step=10,
-        max_rollout_length=999999,
-        continuous_rollouts=False,
-        train_model_every=250,
-        real_buffer_size=int(1e6),
-        virtual_buffer_size=int(1e6),
-        reset_buffer=False,
-        train_model_from_scratch=False,
-        pretrain_epochs=0,
-        logger_kwargs=None,
-        save_freq=1,
-        device="cpu",
-        render=False,
+        config: TrainerConfiguration = TrainerConfiguration(),
+        agent_config: AgentConfiguration = SACConfiguration(),
+        env_model_config: EnvironmentModelConfiguration = EnvironmentModelConfiguration(),  # pylint: disable=line-too-long
+        logger_config: EpochLoggerConfiguration = EpochLoggerConfiguration(),
     ):
-        """
+        self.config = config
+        self.env_model_config = env_model_config
+        self.agent_config = agent_config
+        self.logger_config = logger_config
 
-        Args:
-            epochs (int): Number of epochs to run and train agent.
+        torch.manual_seed(config.seed)
+        np.random.seed(config.seed)
 
-            steps_per_epoch (int): Number of steps of interaction (state-action
-                pairs) for the agent and the environment in each epoch.
-
-            replay_size (int): Maximum length of replay buffer.
-
-            random_steps (int): Number of steps for uniform-random action
-            selection, before running real policy. Helps exploration.
-
-            init_steps (int): Number of env interactions to collect before
-                starting to do gradient descent updates or training an
-                environment model. Ensures replay buffer is full enough for
-                useful updates.
-
-            num_test_episodes (int): Number of episodes to test the
-            deterministic policy at the end of each epoch.
-
-            max_ep_len (int): Maximum length of trajectory / episode / rollout.
-
-            use_model (bool): Whether to augment data with virtual rollouts.
-
-            rollouts_per_step (int): The number of model rollouts to perform per
-                environment step.
-
-            train_model_every (int): After how many steps the model should be
-                retrained.
-
-            agent_updates_per_step (int): The number of agent updates to
-                perform per environment step.
-
-            save_freq (int): How often (in terms of gap between epochs) to save
-                the current policy and value function.
-
-        """
-
-        if agent_kwargs is None:
-            agent_kwargs = {}
-        if model_kwargs is None:
-            model_kwargs = {}
-        if logger_kwargs is None:
-            logger_kwargs = {}
-
-        if curriculum is None:
-            curriculum = [1, 1, 20, 100]
-
-        torch.manual_seed(seed)
-        np.random.seed(seed)
-
-        logger_kwargs.update({"env_name": env_name})
-        self.logger = EpochLogger(**logger_kwargs)
+        logger_config.env_name = config.env_name
+        self.logger = EpochLogger(logger_config)
         local_vars = locals()
         self.logger.save_config(
             {key: local_vars[key] for key in local_vars if key != "self"}
         )
 
-        self.env_name = env_name
-        self.env = gym.make(env_name)
-        self.test_env = gym.make(env_name)
-        self.obs_dim = self.env.observation_space.shape
-        self.act_dim = self.env.action_space.shape[0]
+        self.env_name = config.env_name
+        self.env = gym.make(config.env_name)
+        self.env.seed(config.seed)
+        self.env.action_space.seed(config.seed)
 
-        self.env.seed(seed)
-        self.env.action_space.seed(seed)
-        self.test_env.seed(seed)
-        self.test_env.action_space.seed(seed)
-
-        if dataset_path != "":
-            self.real_replay_buffer = torch.load(dataset_path)
-            self.real_replay_buffer.to(device)
-
-        elif n_samples_from_dataset != 0:
-            self.real_replay_buffer, _, _ = load_dataset_from_env(
-                self.env_name,
-                n_samples=n_samples_from_dataset,
-                buffer_size=real_buffer_size,
-                buffer_device=device,
-            )
-        else:
-            self.real_replay_buffer = ReplayBuffer(
-                obs_dim=self.obs_dim,
-                act_dim=self.act_dim,
-                size=real_buffer_size,
-                device=device,
-            )
-
-        self.virtual_replay_buffer = ReplayBuffer(
-            obs_dim=self.obs_dim,
-            act_dim=self.act_dim,
-            size=virtual_buffer_size,
-            device=device,
-        )
-
-        self.pre_fn = get_preprocessing_function(env_name, device)
-        self.termination_function = get_termination_function(env_name)
-
-        model_kwargs.update({"device": device})
-        model_kwargs.update({"pre_fn": self.pre_fn})
-        model_kwargs.update({"termination_function": self.termination_function})
-        self.model_kwargs = model_kwargs
-
-        self.env_model: Optional[EnvironmentModel] = None
-
-        if use_model:
-            if pretrained_model_path != "":
-                self.env_model = torch.load(pretrained_model_path, map_location=device)
-                self.env_model.pre_fn = self.pre_fn
-                self.env_model.termination_function = self.termination_function
-            else:
-                self.env_model = EnvironmentModel(
-                    self.obs_dim[0], self.act_dim, **model_kwargs
-                )
-
-        agent_kwargs.update({"device": device})
-        agent_kwargs.update({"pre_fn": self.pre_fn})
-        self.agent_kwargs = agent_kwargs
-
-        if pretrained_agent_path != "":
-            self.agent = torch.load(pretrained_agent_path, map_location=device)
-        else:
-            if "type" in agent_kwargs:
-                if agent_kwargs["type"] == "bc":
-                    self.agent = BC(
-                        self.env.observation_space,
-                        self.env.action_space,
-                        **agent_kwargs,
-                    )
-                elif agent_kwargs["type"] == "sac":
-                    self.agent = SAC(
-                        self.env.observation_space,
-                        self.env.action_space,
-                        **agent_kwargs,
-                    )
-                else:
-                    raise ValueError(f"Unknown agent type: {agent_kwargs['type']}")
-            else:
-                self.agent = SAC(
-                    self.env.observation_space, self.env.action_space, **agent_kwargs
-                )
+        self.real_replay_buffer, self.virtual_replay_buffer = self._initialize_buffers()
+        self.env_model = self._initialize_env_model()
+        self.agent = self._initialize_agent()
 
         self.logger.setup_pytorch_saver({"agent": self.agent})
 
-        self.epochs = epochs
-        self.steps_per_epoch = steps_per_epoch
-        self.init_steps = init_steps
-        self.random_steps = random_steps
-        self.total_steps = steps_per_epoch * epochs + steps_per_epoch * pretrain_epochs
-        self.max_ep_len = min(max_ep_len, self.total_steps)
-        self.pretrain_epochs = pretrain_epochs
-        self.env_steps_per_step = env_steps_per_step
+        self.total_steps = config.steps_per_epoch * (
+            config.online_epochs + config.offline_epochs
+        )
+        self.max_episode_length = min(config.max_episode_length, self.total_steps)
 
-        self.agent_updates_per_step = agent_updates_per_step
-
-        self.pretrained_model_path = pretrained_model_path
-        self.rollouts_per_step = rollouts_per_step
-        self.max_rollout_length = max_rollout_length
-        self.train_model_every = train_model_every
-        self.continuous_rollouts = continuous_rollouts
-        self.model_pessimism = model_pessimism
-        self.ood_threshold = ood_threshold
-        self.exploration_chance = exploration_chance
-        self.mode = mode
-        self.model_max_n_train_batches = model_max_n_train_batches
-        self.reset_buffer = reset_buffer
-        self.train_model_from_scratch = train_model_from_scratch
-        self.curriculum = curriculum
-
-        self.num_test_episodes = num_test_episodes
-        self.save_freq = save_freq
-        self.render = render
-
-        self.steps_since_model_training = 1e10
+        self.steps_since_model_training = int(1e10)
         self.model_trained_last_epoch = False
         self.actions_last_step = [0 for i in range(len(Actions))]
 
-    def train(self, tuning=False, silent=False):
+    def _initialize_buffers(self) -> tuple[ReplayBuffer, ReplayBuffer]:
+        real_replay_buffer, obs_dim, act_dim = load_dataset_from_env(
+            self.env_name,
+            n_samples=self.config.n_samples_from_dataset,
+            buffer_size=self.config.real_buffer_size,
+            buffer_device=self.config.device,
+        )
+        virtual_replay_buffer = ReplayBuffer(
+            obs_dim=obs_dim,
+            act_dim=act_dim,
+            size=self.config.virtual_buffer_size,
+            device=self.config.device,
+        )
+
+        return real_replay_buffer, virtual_replay_buffer
+
+    def _initialize_agent(self) -> Union[BehavioralCloningAgent, SAC]:
+        if self.config.pretrained_agent_path is not None:
+            agent = torch.load(
+                self.config.pretrained_agent_path, map_location=self.config.device
+            )
+        else:
+            self.agent_config.preprocessing_function = get_preprocessing_function(
+                self.config.env_name, self.config.device
+            )
+
+            if self.agent_config.type == "bc":
+                assert isinstance(self.agent_config, BehavioralCloningConfiguration)
+                agent = BehavioralCloningAgent(
+                    self.env.observation_space, self.env.action_space, self.agent_config
+                )
+            elif self.agent_config.type == "sac":
+                assert isinstance(self.agent_config, SACConfiguration)
+                agent = SAC(
+                    self.env.observation_space,
+                    self.env.action_space,
+                    self.agent_config,
+                )
+            else:
+                raise ValueError(f"Unknown agent type: {self.agent_config.type}")
+
+        return agent
+
+    def _initialize_env_model(self) -> Optional[EnvironmentModel]:
+        env_model: Optional[EnvironmentModel] = None
+
+        if self.config.use_env_model:
+            if self.config.pretrained_env_model_path is not None:
+                env_model = cast(
+                    EnvironmentModel,
+                    torch.load(
+                        self.config.pretrained_env_model_path,
+                        map_location=self.config.device,
+                    ),
+                )
+
+            else:
+                self.env_model_config.preprocessing_function = (
+                    get_preprocessing_function(self.config.env_name, self.config.device)
+                )
+                self.env_model_config.termination_function = get_termination_function(
+                    self.config.env_name
+                )
+
+                assert self.env.observation_space.shape is not None
+                assert self.env.action_space.shape is not None
+
+                env_model = EnvironmentModel(
+                    self.env.observation_space.shape[0],
+                    self.env.action_space.shape[0],
+                    self.env_model_config,
+                )
+
+        return env_model
+
+    def train(
+        self, tuning: bool = False, quiet: bool = False
+    ) -> tuple[torch.Tensor, torch.Tensor]:
 
         start_time = time.time()
-        o, ep_ret, ep_len = self.env.reset(), 0, 0
+        obs = self.env.reset()
+        episode_return = 0.0
+        episode_length = 0
 
-        if self.total_steps < self.init_steps:
+        if self.total_steps < self.config.init_steps:
             raise ValueError(
                 """Number of total steps lower than init steps.
                 Increase number of epochs or steps per epoch."""
             )
 
-        step_total = -self.pretrain_epochs * self.steps_per_epoch
+        step_total = -self.config.offline_epochs * self.config.steps_per_epoch
 
         test_performances = []
         action_log = []
 
-        prev_obs = None
+        running_avg = 0.0
 
-        running_avg = 0
+        next_obs = None
 
-        for epoch in range(-self.pretrain_epochs + 1, self.epochs + 1):
+        for epoch in range(
+            -self.config.offline_epochs + 1, self.config.online_epochs + 1
+        ):
 
-            agent_update_performed = False
             self.model_trained_last_epoch = False
-            episode_finished = False
+            agent_update_performed = False
+            at_least_one_real_episode_finished = False
             tested_agent = False
 
-            if not silent:
-                print(f"Epoch {epoch}\tMax rollout length: {self.max_rollout_length}")
+            if not quiet:
+                print(f"Epoch {epoch}")
 
-            for step_epoch in range(self.steps_per_epoch):
+            for step_this_epoch in range(self.config.steps_per_epoch):
                 self.actions_last_step = [0 for i in range(len(Actions))]
 
                 take_random_action = (
-                    step_total + self.pretrain_epochs * self.steps_per_epoch
-                    < self.random_steps
+                    step_total
+                    + self.config.offline_epochs * self.config.steps_per_epoch
+                    < self.config.random_steps
                 )
 
-                self.train_model_if_necessary(epoch, step_total, self.env_model)
+                self.train_model_if_necessary(step_total, self.env_model)
 
-                if (step_epoch + 1) % 10 == 0 and not tuning and not silent:
+                if (step_this_epoch + 1) % 10 == 0 and not tuning and not quiet:
                     print(
-                        f"Epoch {epoch}, step {step_epoch+1}/{self.steps_per_epoch}",
+                        f"Epoch {epoch}, step "
+                        f"{step_this_epoch+1}/{self.config.steps_per_epoch}",
                         end="\r",
                     )
 
                 if epoch > 0:
+                    (
+                        obs,
+                        episode_return,
+                        episode_length,
+                        episode_finished,
+                    ) = self._interact_with_real_environment(
+                        obs, episode_return, episode_length, take_random_action
+                    )
 
-                    for _ in range(self.env_steps_per_step):
-                        if take_random_action:
-                            a = self.env.action_space.sample()
-                            self.actions_last_step[Actions.RANDOM_ACTION] = 1
-                        else:
-                            a = self.agent.act(o).cpu().numpy()
+                    at_least_one_real_episode_finished = (
+                        episode_finished or at_least_one_real_episode_finished
+                    )
 
-                        o2, r, d, _ = self.env.step(a)
-                        ep_ret += r
-                        ep_len += 1
-
-                        # Ignore the "done" signal if it comes from hitting the time
-                        # horizon (that is, when it's an artificial terminal signal
-                        # that isn't based on the agent's state)
-                        d = False if ep_len == self.max_ep_len else d
-
-                        self.real_replay_buffer.store(
-                            torch.as_tensor(o),
-                            torch.as_tensor(a),
-                            torch.as_tensor(r),
-                            torch.as_tensor(o2),
-                            torch.as_tensor(d),
+                if (
+                    step_total >= self.config.init_steps
+                    or self.config.offline_epochs > 0
+                ):
+                    next_obs = (
+                        self._generate_virtual_rollouts_if_necessary_and_update_agent(
+                            next_obs, take_random_action
                         )
-                        o = o2
-
-                        # End of trajectory handling
-                        if d or (ep_len == self.max_ep_len):
-                            episode_finished = True
-                            self.logger.store(EpRet=ep_ret, EpLen=ep_len)
-                            o, ep_ret, ep_len = self.env.reset(), 0, 0
-
-                    self.steps_since_model_training += 1
-                    self.actions_last_step[Actions.INTERACT_WITH_ENV] = 1
-
-                # Update agent
-                if step_total >= self.init_steps or self.pretrain_epochs > 0:
-                    if self.env_model is not None and self.rollouts_per_step > 0:
-                        for _ in range(self.agent_updates_per_step):
-                            rollouts, prev_obs = generate_virtual_rollouts(
-                                self.env_model,
-                                self.agent,
-                                self.real_replay_buffer,
-                                steps=1,
-                                n_rollouts=self.rollouts_per_step,
-                                pessimism=self.model_pessimism,
-                                ood_threshold=self.ood_threshold,
-                                mode=self.mode,
-                                random_action=take_random_action,
-                                prev_obs=prev_obs if self.continuous_rollouts else None,
-                                max_rollout_length=self.max_rollout_length,
-                            )
-                            self.virtual_replay_buffer.store_batch(
-                                rollouts["obs"],
-                                rollouts["act"],
-                                rollouts["rew"],
-                                rollouts["next_obs"],
-                                rollouts["done"],
-                            )
-
-                            self.agent.multi_update(
-                                1, self.virtual_replay_buffer, self.logger
-                            )
-
-                        self.actions_last_step[Actions.GENERATE_ROLLOUTS] = 1
-
-                        if take_random_action:
-                            self.actions_last_step[Actions.RANDOM_ACTION] = 1
-
-                    else:
-                        self.agent.multi_update(
-                            self.agent_updates_per_step,
-                            self.real_replay_buffer,
-                            self.logger,
-                        )
-
-                    if self.agent_updates_per_step > 0:
-                        agent_update_performed = True
-                        self.actions_last_step[Actions.UPDATE_AGENT] = 1
+                    )
+                    agent_update_performed = True
+                    self.actions_last_step[Actions.UPDATE_AGENT] = 1
 
                 action_log.append(self.actions_last_step)
                 step_total += 1
@@ -371,22 +234,24 @@ class Trainer:
             print("")
 
             # Save model
-            if (epoch % self.save_freq == 0) or (epoch == self.epochs):
+            if (epoch % self.config.save_frequency == 0) or (
+                epoch == self.config.online_epochs
+            ):
                 self.logger.save_state({"env": self.env}, None)
 
-            test_return = 0
+            test_return = 0.0
 
-            if step_total > self.init_steps or self.pretrain_epochs > 0:
+            if step_total > self.config.init_steps or self.config.offline_epochs > 0:
 
                 # Test the performance of the deterministic version of the agent.
-                test_return = test_agent(
-                    self.test_env,
+                test_return = evaluate_agent_performance(
+                    self.env,
                     self.agent,
-                    self.max_ep_len,
-                    self.num_test_episodes,
+                    self.config.test_episodes,
+                    self.max_episode_length,
                     self.logger,
-                    self.render and step_total > self.init_steps,
-                    buffer=None,
+                    self.config.render_test_episodes
+                    and step_total > self.config.init_steps,
                 )
 
                 tested_agent = True
@@ -404,7 +269,7 @@ class Trainer:
                 start_time,
                 agent_update_performed,
                 self.model_trained_last_epoch,
-                episode_finished,
+                at_least_one_real_episode_finished,
                 tested_agent,
             )
 
@@ -412,56 +277,150 @@ class Trainer:
             action_log, dtype=torch.float32
         )
 
+    def _interact_with_real_environment(
+        self,
+        obs: torch.Tensor,
+        episode_return: float,
+        episode_length: int,
+        take_random_action: bool,
+    ) -> tuple[torch.Tensor, float, int, bool]:
+        episode_finished = False
+
+        for _ in range(self.config.env_interactions_per_step):
+            if take_random_action:
+                action = self.env.action_space.sample()
+                self.actions_last_step[Actions.RANDOM_ACTION] = 1
+            else:
+                action = self.agent.act(obs).cpu().numpy()
+
+            next_obs, reward, done, _ = self.env.step(action)
+            episode_return += reward
+            episode_length += 1
+
+            # Ignore the "done" signal if it comes from hitting the time
+            # horizon (that is, when it's an artificial terminal signal
+            # that isn't based on the agent's state)
+            done = False if episode_length == self.max_episode_length else done
+
+            self.real_replay_buffer.store(
+                torch.as_tensor(obs),
+                torch.as_tensor(action),
+                torch.as_tensor(reward),
+                torch.as_tensor(next_obs),
+                torch.as_tensor(done),
+            )
+            obs = next_obs
+
+            # End of trajectory handling
+            if done or (episode_length == self.max_episode_length):
+                episode_finished = True
+                self.logger.store(EpRet=episode_return, EpLen=episode_length)
+                obs = torch.as_tensor(self.env.reset())
+                episode_return = 0
+                episode_length = 0
+
+        self.steps_since_model_training += 1
+        self.actions_last_step[Actions.INTERACT_WITH_ENV] = 1
+
+        return obs, episode_return, episode_length, episode_finished
+
+    def _generate_virtual_rollouts_if_necessary_and_update_agent(
+        self, prev_obs: Optional[dict], take_random_action: bool
+    ) -> Optional[dict]:
+        if self.env_model is not None and self.config.n_parallel_virtual_rollouts > 0:
+            for _ in range(self.config.agent_updates_per_step):
+                prev_obs = prev_obs if self.config.continuous_rollouts else None
+
+                rollouts, prev_obs = generate_virtual_rollouts(
+                    self.env_model,
+                    self.agent,
+                    self.real_replay_buffer,
+                    steps=1,
+                    n_rollouts=self.config.n_parallel_virtual_rollouts,
+                    pessimism=self.env_model_config.pessimism,
+                    ood_threshold=self.env_model_config.ood_threshold,
+                    mode=self.env_model_config.mode,
+                    random_action=take_random_action,
+                    prev_obs=prev_obs,
+                    max_rollout_length=self.config.max_virtual_rollout_length,
+                )
+
+                self.virtual_replay_buffer.store_batch(
+                    rollouts["obs"],
+                    rollouts["act"],
+                    rollouts["rew"],
+                    rollouts["next_obs"],
+                    rollouts["done"],
+                )
+
+                self.agent.multi_update(1, self.virtual_replay_buffer, self.logger)
+
+            self.actions_last_step[Actions.GENERATE_ROLLOUTS] = 1
+
+            if take_random_action:
+                self.actions_last_step[Actions.RANDOM_ACTION] = 1
+
+        else:
+            self.agent.multi_update(
+                self.config.agent_updates_per_step,
+                self.real_replay_buffer,
+                self.logger,
+            )
+
+        return prev_obs
+
     def train_model_if_necessary(
-        self, epoch: int, step: int, model: EnvironmentModel
+        self, step: int, model: Optional[EnvironmentModel]
     ) -> None:
         # Train environment model on real experience
         if model_needs_training(
             model,
             step,
             self.real_replay_buffer.size,
-            self.init_steps,
+            self.config.init_steps,
             self.steps_since_model_training,
-            self.train_model_every,
+            self.config.train_env_model_every,
         ):
 
-            if self.train_model_from_scratch:
+            if self.config.train_env_model_from_scratch:
+                assert isinstance(self.env_model, EnvironmentModel)
                 self.env_model = EnvironmentModel(
                     self.env_model.obs_dim,
                     self.env_model.act_dim,
-                    **self.model_kwargs,
+                    self.env_model_config,
                 )
 
+            assert self.env_model is not None
+
             model_val_error, _ = self.env_model.train_to_convergence(
-                self.real_replay_buffer,
-                max_n_train_batches=-1 if epoch < 1 else self.model_max_n_train_batches,
-                **self.model_kwargs,
+                self.real_replay_buffer, self.env_model_config
             )
 
-            if self.reset_buffer:
+            if self.config.reset_virtual_buffer_after_env_model_training:
                 self.virtual_replay_buffer.clear()
 
             model_val_error = model_val_error.mean()
             self.model_trained_last_epoch = True
             self.steps_since_model_training = 0
-            self.logger.store(LossEnvModel=model_val_error)
+            self.logger.store(LossEnvModel=model_val_error.item())
             self.actions_last_step[Actions.TRAIN_MODEL] = 1
             print("")
 
 
 def log_end_of_epoch(
-    logger,
-    epoch,
-    step_total,
-    start_time,
-    agent_update_performed,
-    model_trained,
-    episode_finished,
-    tested_agent,
-):
+    logger: EpochLogger,
+    epoch: int,
+    step_total: int,
+    start_time: float,
+    agent_update_performed: bool,
+    model_trained: bool,
+    episode_finished: bool,
+    tested_agent: bool,
+) -> None:
 
     logger.log_tabular("Epoch", epoch, epoch)
 
+    # Use placeholder value if no interaction with the real environment has happened yet
     if not episode_finished:
         logger.store(EpRet=0)
         logger.store(EpLen=0)
@@ -469,6 +428,7 @@ def log_end_of_epoch(
     logger.log_tabular("EpRet", epoch, with_min_and_max=True)
     logger.log_tabular("EpLen", epoch, average_only=True)
 
+    # Use placeholder value if the agent has not been tested yet
     if not tested_agent:
         logger.store(TestEpRet=0)
         logger.store(TestEpLen=0)
@@ -496,3 +456,16 @@ def log_end_of_epoch(
 
     logger.log_tabular("Time", epoch, time.time() - start_time)
     logger.dump_tabular()
+
+
+class Actions(IntEnum):
+    """Actions that can be performed during an iteration of the training loop.
+
+    Used for logging what happened during training and testing the training loop.
+    """
+
+    TRAIN_MODEL = 0
+    UPDATE_AGENT = 1
+    RANDOM_ACTION = 2
+    GENERATE_ROLLOUTS = 3
+    INTERACT_WITH_ENV = 4

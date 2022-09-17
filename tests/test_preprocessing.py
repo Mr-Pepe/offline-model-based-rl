@@ -1,8 +1,9 @@
-import d4rl  # pylint: disable=unused-import
+# pylint: disable=unused-import
 import gym
 import numpy as np
 import pytest
 import torch
+from d4rl.offline_env import OfflineEnv
 
 from offline_mbrl.utils.envs import ALL_ENVS
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
@@ -17,7 +18,7 @@ def test_preprocessing() -> None:
         pre_fn = get_preprocessing_function(env_name)
         assert pre_fn is not None
 
-        env = gym.make(env_name)
+        env: OfflineEnv = gym.make(env_name)
         dataset = env.get_dataset()
 
         obs_act = torch.cat(

@@ -1,5 +1,5 @@
 # Based on https://spinningup.openai.com
-
+# type: ignore
 import os
 import os.path as osp
 import time
@@ -121,50 +121,6 @@ def run_policy(
     logger.log_tabular("EpRet", with_min_and_max=True)
     logger.log_tabular("EpLen", average_only=True)
     logger.dump_tabular()
-
-
-def test_agent(
-    test_env,
-    agent,
-    max_ep_len,
-    num_test_episodes,
-    logger,
-    render=False,
-    buffer=None,
-):
-    sum_ep_ret = 0
-    for _ in range(num_test_episodes):
-        d = False
-        ep_ret = 0
-        ep_len = 0
-        o = test_env.reset()
-
-        while not (d or (ep_len == max_ep_len)):
-            # Take deterministic actions at test time
-            a = agent.act(o, True).cpu().numpy()
-            o2, r, d, _ = test_env.step(a)
-            if render:
-                test_env.render()
-
-            if buffer is not None:
-                buffer.store(
-                    torch.as_tensor(o),
-                    torch.as_tensor(a),
-                    torch.as_tensor(r),
-                    torch.as_tensor(o2),
-                    torch.as_tensor(d),
-                )
-
-            o = o2
-
-            ep_ret += r
-            ep_len += 1
-        logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
-        sum_ep_ret += ep_ret
-
-        render = False
-
-    return sum_ep_ret / num_test_episodes
 
 
 def main(args):

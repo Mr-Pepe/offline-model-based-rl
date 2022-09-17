@@ -1,28 +1,41 @@
 import pytest
 import torch
 
+from offline_mbrl.schemas import (
+    EnvironmentModelConfiguration,
+    EpochLoggerConfiguration,
+    TrainerConfiguration,
+)
 from offline_mbrl.train import Trainer
 from offline_mbrl.utils.envs import HOPPER_RANDOM_V2
-from offline_mbrl.utils.setup_logger_kwargs import setup_logger_kwargs
 
 
 @pytest.mark.slow
-def test_mbpo_online():
-    logger_kwargs = setup_logger_kwargs("test_mbpo")
+def test_mbpo_online() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    trainer = Trainer(
-        HOPPER_RANDOM_V2,
+    trainer_config = TrainerConfiguration(
+        env_name=HOPPER_RANDOM_V2,
         steps_per_epoch=1000,
-        model_kwargs=dict(batch_size=256, type="probabilistic", n_networks=3),
         init_steps=1300,
         random_steps=1000,
-        epochs=20,
-        use_model=True,
-        rollouts_per_step=1,
-        logger_kwargs=logger_kwargs,
+        online_epochs=20,
+        use_env_model=True,
+        n_parallel_virtual_rollouts=1,
         device=device,
         seed=0,
+    )
+
+    model_config = EnvironmentModelConfiguration(
+        type="probabilistic", n_networks=3, training_batch_size=256
+    )
+
+    logger_config = EpochLoggerConfiguration(output_dir="test_mbpo")
+
+    trainer = Trainer(
+        config=trainer_config,
+        env_model_config=model_config,
+        logger_config=logger_config,
     )
 
     final_return, _ = trainer.train()

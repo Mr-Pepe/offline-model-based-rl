@@ -1,6 +1,12 @@
+"""Contains an SAC implementation.
+
+Based on https://spinningup.openai.com
+"""
+
+
 import itertools
 from copy import deepcopy
-from typing import Callable, Optional, Type
+from typing import Optional
 
 import torch
 from gym import Space
@@ -9,28 +15,29 @@ from torch.optim.adamw import AdamW
 
 from offline_mbrl.models.mlp_q_function import MLPQFunction
 from offline_mbrl.models.squashed_gaussian_mlp_actor import SquashedGaussianMLPActor
+from offline_mbrl.schemas import SACConfiguration
 from offline_mbrl.utils.logx import EpochLogger
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
 
 class SAC(nn.Module):
-    # Based on https://spinningup.openai.com
     # pylint: disable=abstract-method
     def __init__(
         self,
         observation_space: Space,
         action_space: Space,
-        hidden: tuple[int, ...] = (256, 256),
-        activation: Type[nn.Module] = nn.ReLU,
-        pi_lr: float = 3e-4,
-        q_lr: float = 3e-4,
-        gamma: float = 0.99,
-        alpha: float = 0.2,
-        polyak: float = 0.995,
-        batch_size: int = 100,
-        preprocessing_function: Callable = None,
-        device: str = "cpu",
-        **_: dict
+        config: SACConfiguration = SACConfiguration(),
+        # hidden: tuple[int, ...] = (256, 256),
+        # activation: Type[nn.Module] = nn.ReLU,
+        # pi_lr: float = 3e-4,
+        # q_lr: float = 3e-4,
+        # gamma: float = 0.99,
+        # alpha: float = 0.2,
+        # polyak: float = 0.995,
+        # batch_size: int = 100,
+        # preprocessing_function: Callable = None,
+        # device: str = "cpu",
+        # **_: dict
     ) -> None:
         """
         gamma (float): Discount factor. (Always between 0 and 1.)
@@ -54,12 +61,7 @@ class SAC(nn.Module):
 
         super().__init__()
 
-        self.gamma = gamma
-        self.alpha = alpha
-        self.polyak = polyak
-        self.batch_size = batch_size
-        self.pre_fn = preprocessing_function
-        self.device = device
+        self.config = config
 
         assert observation_space.shape is not None
         assert action_space.shape is not None
@@ -73,19 +75,23 @@ class SAC(nn.Module):
 
         # build policy and value functions
         self.pi = SquashedGaussianMLPActor(
-            obs_dim, act_dim, hidden, activation, act_limit
+            obs_dim, act_dim, config.hidden_layer_sizes, config.activation, act_limit
         )
-        self.q1 = MLPQFunction(obs_dim, act_dim, hidden, activation)
-        self.q2 = MLPQFunction(obs_dim, act_dim, hidden, activation)
+        self.q1 = MLPQFunction(
+            obs_dim, act_dim, config.hidden_layer_sizes, config.activation
+        )
+        self.q2 = MLPQFunction(
+            obs_dim, act_dim, config.hidden_layer_sizes, config.activation
+        )
 
         # List of parameters for both Q-networks (save this for convenience)
         self.q_params = itertools.chain(self.q1.parameters(), self.q2.parameters())
 
         # Set up optimizers for policy and q-function
-        self.pi_optimizer = AdamW(self.pi.parameters(), lr=pi_lr)
-        self.q_optimizer = AdamW(self.q_params, lr=q_lr)
+        self.pi_optimizer = AdamW(self.pi.parameters(), lr=config.pi_lr)
+        self.q_optimizer = AdamW(self.q_params, lr=config.q_lr)
 
-        self.to(device)
+        self.to(config.device)
 
         self.target = deepcopy(self)
 
@@ -97,7 +103,7 @@ class SAC(nn.Module):
     def compute_loss_q(
         self, data: dict[str, torch.Tensor]
     ) -> tuple[torch.Tensor, dict]:
-        o, a, r, o2, d = (
+        obs, action, reward, next_obs, done = (
             data["obs"],
             data["act"],
             data["rew"],
@@ -105,23 +111,25 @@ class SAC(nn.Module):
             data["done"],
         )
 
-        if self.pre_fn:
-            o = self.pre_fn(o)
-            o2 = self.pre_fn(o2)
+        if self.config.preprocessing_function:
+            obs = self.config.preprocessing_function(obs)
+            next_obs = self.config.preprocessing_function(next_obs)
 
-        q1 = self.q1(o, a)
-        q2 = self.q2(o, a)
+        q1 = self.q1(obs, action)
+        q2 = self.q2(obs, action)
 
         # Bellman backup for Q functions
         with torch.no_grad():
             # Target actions come from *current* policy
-            a2, logp_a2 = self.pi(o2)
+            next_action, logp_next_action = self.pi(next_obs)
 
             # Target Q-values
-            q1_pi_targ = self.target.q1(o2, a2)
-            q2_pi_targ = self.target.q2(o2, a2)
+            q1_pi_targ = self.target.q1(next_obs, next_action)
+            q2_pi_targ = self.target.q2(next_obs, next_action)
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
-            backup = r + self.gamma * ~d * (q_pi_targ - self.alpha * logp_a2)
+            backup = reward + self.config.gamma * ~done * (
+                q_pi_targ - self.config.alpha * logp_next_action
+            )
 
         # MSE loss against Bellman backup
         loss_q1 = ((q1 - backup) ** 2).mean()
@@ -138,18 +146,18 @@ class SAC(nn.Module):
     def compute_loss_pi(
         self, data: dict[str, torch.Tensor]
     ) -> tuple[torch.Tensor, dict]:
-        o = data["obs"]
+        obs = data["obs"]
 
-        if self.pre_fn:
-            o = self.pre_fn(o)
+        if self.config.preprocessing_function:
+            obs = self.config.preprocessing_function(obs)
 
-        pi, logp_pi = self.pi(o)
-        q1_pi = self.q1(o, pi)
-        q2_pi = self.q2(o, pi)
+        pi, logp_pi = self.pi(obs)
+        q1_pi = self.q1(obs, pi)
+        q2_pi = self.q2(obs, pi)
         q_pi = torch.min(q1_pi, q2_pi)
 
         # Entropy-regularized policy loss
-        loss_pi = (self.alpha * logp_pi - q_pi).mean()
+        loss_pi = (self.config.alpha * logp_pi - q_pi).mean()
 
         # Useful info for logging
         pi_info = dict(LogPi=logp_pi.cpu().detach().numpy())
@@ -159,10 +167,10 @@ class SAC(nn.Module):
     def update(
         self, data: dict[str, torch.Tensor]
     ) -> tuple[torch.Tensor, dict, torch.Tensor, dict]:
-        self.device = next(self.parameters()).device.type
+        self.config.device = next(self.parameters()).device.type
 
         for key in data:
-            data[key] = data[key].to(self.device)
+            data[key] = data[key].to(self.config.device)
 
         # First run one gradient descent step for Q1 and Q2
         self.q_optimizer.zero_grad()
@@ -191,8 +199,8 @@ class SAC(nn.Module):
                 # NB: We use an in-place operations "mul_", "add_" to
                 # update target params, as opposed to "mul" and "add", which
                 # would make new tensors.
-                p_targ.data.mul_(self.polyak)
-                p_targ.data.add_((1 - self.polyak) * p.data)
+                p_targ.data.mul_(self.config.polyak)
+                p_targ.data.add_((1 - self.config.polyak) * p.data)
 
         return loss_q, q_info, loss_pi, pi_info
 
@@ -200,24 +208,24 @@ class SAC(nn.Module):
         self, n_updates: int, buffer: ReplayBuffer, logger: Optional[EpochLogger] = None
     ) -> None:
         for _ in range(n_updates):
-            batch = buffer.sample_batch(self.batch_size)
+            batch = buffer.sample_batch(self.config.training_batch_size)
             loss_q, q_info, loss_pi, pi_info = self.update(data=batch)
 
             if logger is not None:
-                logger.store(LossQ=loss_q.item(), **q_info)
-                logger.store(LossPi=loss_pi.item(), **pi_info)
+                logger.store(LossQ=loss_q.item(), **q_info)  # type: ignore
+                logger.store(LossPi=loss_pi.item(), **pi_info)  # type: ignore
 
     def act(
         self, observation: torch.Tensor, deterministic: bool = False
     ) -> torch.Tensor:
-        self.device = next(self.parameters()).device.type
+        self.config.device = next(self.parameters()).device.type
 
         obs = torch.as_tensor(
-            observation, dtype=torch.float32, device=torch.device(self.device)
+            observation, dtype=torch.float32, device=torch.device(self.config.device)
         )
 
-        if self.pre_fn:
-            obs = self.pre_fn(obs)
+        if self.config.preprocessing_function:
+            obs = self.config.preprocessing_function(obs)
 
         with torch.no_grad():
             action, _ = self.pi(obs, deterministic, False)

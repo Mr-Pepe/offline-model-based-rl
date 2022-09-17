@@ -1,7 +1,7 @@
 import os
 import pickle
 
-import d4rl  # pylint: disable=unused-import
+# pylint: disable=unused-import
 import gym
 import torch
 

@@ -3,8 +3,6 @@ import os
 from pathlib import Path
 from typing import Optional
 
-import d4rl  # noqa
-import gym
 import ray
 import torch
 from ray import tune
@@ -20,21 +18,23 @@ from offline_mbrl.utils.termination_functions import get_termination_function
 
 
 def training_function(
-    config: dict,
+    model_config: dict,
     data: ReplayBuffer,
-    save_path: Optional[Path] = None,
+    model_save_path: Optional[Path] = None,
     tuning: bool = True,
 ) -> None:
-    model = EnvironmentModel(hidden_layer_sizes=4 * config["n_hidden"], **config)
-
-    model.train_to_convergence(
-        replay_buffer=data, checkpoint_dir=None, tuning=tuning, **config
+    model = EnvironmentModel(
+        hidden_layer_sizes=4 * model_config["n_hidden"], **model_config
     )
 
-    if save_path:
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        torch.save(model, save_path)
-        print("Saved model to: {}".format(save_path))
+    model.train_to_convergence(
+        replay_buffer=data, checkpoint_dir=None, tuning=tuning, **model_config
+    )
+
+    if model_save_path:
+        os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
+        torch.save(model, model_save_path)
+        print(f"Saved model to: {model_save_path}")
 
 
 if __name__ == "__main__":
@@ -90,7 +90,9 @@ if __name__ == "__main__":
         assert config["lr"] is not None
         assert config["batch_size"] is not None
 
-        training_function(config=config, data=buffer, save_path=save_path, tuning=False)
+        training_function(
+            model_config=config, data=buffer, model_save_path=save_path, tuning=False
+        )
     else:
         if args.level == 1:
             config.update(

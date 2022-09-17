@@ -6,7 +6,7 @@
 
 import os
 from pathlib import Path
-from typing import Callable, Literal, Optional, Union
+from typing import Callable, Optional, Union
 
 import torch
 from ray import tune
@@ -16,6 +16,7 @@ from torch.nn.parameter import Parameter
 from torch.optim.adamw import AdamW
 
 from offline_mbrl.models.multi_head_mlp import MultiHeadMlp
+from offline_mbrl.schemas import EnvironmentModelConfiguration
 from offline_mbrl.utils.modes import (
     ALEATORIC_PARTITIONING,
     ALEATORIC_PENALTY,
@@ -38,18 +39,7 @@ class EnvironmentModel(nn.Module):
         self,
         obs_dim: int,
         act_dim: int,
-        hidden_layer_sizes: tuple[int, ...] = (128, 128),
-        type: Literal[  # pylint: disable=redefined-builtin
-            "deterministic", "probabilistic"
-        ] = "deterministic",
-        n_networks: int = 1,
-        device: str = "cpu",
-        preprocessing_function: Optional[Callable] = None,
-        termination_function: Optional[Callable] = None,
-        reward_function: Optional[Callable] = None,
-        obs_bounds_trainable: bool = True,
-        reward_bounds_trainable: bool = True,
-        **unused_kwargs: dict,
+        config: EnvironmentModelConfiguration = EnvironmentModelConfiguration(),
     ):
         """Initializes the environment model.
 
@@ -85,41 +75,38 @@ class EnvironmentModel(nn.Module):
             ValueError: If the provided type is not valid.
         """
         super().__init__()
+        self.config = config
 
-        self.model_type = type
-
-        if type not in ("deterministic", "probabilistic"):
-            raise ValueError(f"Unknown model type '{type}'")
+        if config.type not in ("deterministic", "probabilistic"):
+            raise ValueError(f"Unknown model type '{config.type}'")
 
         self.obs_dim = obs_dim
         self.act_dim = act_dim
         # Append reward signal
         self.out_dim = obs_dim + 1
 
-        self.n_networks = n_networks
-        self.preprocessing_function = preprocessing_function
-        self.termination_function = termination_function
-        self.reward_function = reward_function
-
-        self.layers = MultiHeadMlp(obs_dim, act_dim, hidden_layer_sizes, n_networks)
+        self.layers = MultiHeadMlp(
+            obs_dim, act_dim, config.hidden_layer_sizes, config.n_networks
+        )
 
         # Taken from https://github.com/kchua/handful-of-trials/blob/master/
         # dmbrl/modeling/models/BNN.py
         self.obs_max_logvar = Parameter(
-            torch.ones(n_networks, (self.obs_dim)) * 0.5,
-            requires_grad=obs_bounds_trainable,
+            torch.ones(config.n_networks, (self.obs_dim)) * 0.5,
+            requires_grad=config.obs_bounds_trainable,
         )
 
         self.rew_max_logvar = Parameter(
-            torch.ones(n_networks, (1)) * 1, requires_grad=reward_bounds_trainable
+            torch.ones(config.n_networks, (1)) * 1,
+            requires_grad=config.reward_bounds_trainable,
         )
 
         self.min_logvar = Parameter(
-            torch.ones(n_networks, (self.out_dim)) * -10,
-            requires_grad=obs_bounds_trainable,
+            torch.ones(config.n_networks, (self.out_dim)) * -10,
+            requires_grad=config.obs_bounds_trainable,
         )
 
-        self.to(device)
+        self.to(config.device)
 
         self.max_logvar = torch.cat((self.obs_max_logvar, self.rew_max_logvar), dim=1)
 
@@ -156,8 +143,8 @@ class EnvironmentModel(nn.Module):
         device = next(self.layers.parameters()).device
         raw_obs_act = self._adjust_device_and_shape_if_necessary(raw_obs_act, device)
 
-        if self.preprocessing_function:
-            obs_act = self.preprocessing_function(raw_obs_act)
+        if self.config.preprocessing_function:
+            obs_act = self.config.preprocessing_function(raw_obs_act)
         else:
             obs_act = raw_obs_act.detach().clone()
 
@@ -170,23 +157,23 @@ class EnvironmentModel(nn.Module):
         means = torch.cat(
             (
                 predicted_next_obs,
-                predicted_rewards[:, :, 0].view((self.n_networks, -1, 1)),
+                predicted_rewards[:, :, 0].view((self.config.n_networks, -1, 1)),
             ),
             dim=2,
         )
 
-        if self.model_type == "deterministic":
+        if self.config.type == "deterministic":
 
             predictions = means
             logvars = torch.zeros(
-                (self.n_networks, obs_act.shape[0], obs_act.shape[1] + 1)
+                (self.config.n_networks, obs_act.shape[0], obs_act.shape[1] + 1)
             )
 
         else:
             logvars = torch.cat(
                 (
                     predicted_obs_deltas[:, :, self.obs_dim :],
-                    predicted_rewards[:, :, 1].view((self.n_networks, -1, 1)),
+                    predicted_rewards[:, :, 1].view((self.config.n_networks, -1, 1)),
                 ),
                 dim=2,
             )
@@ -243,7 +230,7 @@ class EnvironmentModel(nn.Module):
         device = next(self.layers.parameters()).device
 
         if i_network == -1:
-            i_network = int(torch.randint(self.n_networks, (1,)).item())
+            i_network = int(torch.randint(self.config.n_networks, (1,)).item())
 
         self.eval()
 
@@ -252,15 +239,15 @@ class EnvironmentModel(nn.Module):
 
         predicted_next_obs = predictions[:, :, :-1]
 
-        if self.termination_function:
-            dones = self.termination_function(predicted_next_obs).to(device)
+        if self.config.termination_function:
+            dones = self.config.termination_function(predicted_next_obs).to(device)
         else:
             dones = torch.zeros(
-                (self.n_networks, raw_obs_act.shape[0], 1), device=device
+                (self.config.n_networks, raw_obs_act.shape[0], 1), device=device
             )
 
-        if self.reward_function:
-            predicted_rewards = self.reward_function(
+        if self.config.reward_function:
+            predicted_rewards = self.config.reward_function(
                 obs=raw_obs_act[:, : self.obs_dim],
                 act=raw_obs_act[:, self.obs_dim :],
                 next_obs=predicted_next_obs,
@@ -271,8 +258,8 @@ class EnvironmentModel(nn.Module):
         predictions = torch.cat((predicted_next_obs, predicted_rewards, dones), dim=2)
         prediction = predictions[i_network]
 
-        if self.preprocessing_function is not None:
-            preprocessed_means = self.preprocessing_function(
+        if self.config.preprocessing_function is not None:
+            preprocessed_means = self.config.preprocessing_function(
                 means[:, :, :-1], detach=False
             )
         else:
@@ -343,16 +330,10 @@ class EnvironmentModel(nn.Module):
     def train_to_convergence(
         self,
         replay_buffer: ReplayBuffer,
-        lr: float = 1e-3,
-        batch_size: int = 1024,
-        val_split: float = 0.2,
-        patience: int = 20,
-        debug: bool = False,
-        max_n_train_batches: int = -1,
-        max_n_train_epochs: int = -1,
+        config: EnvironmentModelConfiguration,
         checkpoint_dir: Optional[Path] = None,
         tuning: bool = False,
-        **unused_kwargs: dict,
+        debug: bool = False,
     ) -> tuple[torch.Tensor, int]:
         """Trains the environment model to convergence.
 
@@ -367,9 +348,9 @@ class EnvironmentModel(nn.Module):
             debug (bool, optional): Whether to print debug information during training.
                 Defaults to False.
             max_n_train_batches (int, optional): Training stops after training on this
-                many batches. Defaults to -1.
+                many batches. Defaults to None.
             max_n_train_epochs (int, optional): Training stops after training for this
-                many epochs. Defaults to -1.
+                many epochs. Defaults to None.
             checkpoint_dir (Optional[Path], optional): A path to save checkpoints of the
                 model to during a Ray Tune run. Defaults to None.
             tuning (bool, optional): Whether the model is trained as part of a Ray Tune
@@ -383,14 +364,18 @@ class EnvironmentModel(nn.Module):
             tuple[torch.Tensor, int]: The final validation loss for each network in the
                 ensemble and the number of batches that the model for trained on.
         """
-        n_train_batches = int((replay_buffer.size * (1 - val_split)) // batch_size)
-        n_val_batches = int((replay_buffer.size * val_split) // batch_size)
+        n_train_batches = int(
+            (replay_buffer.size * (1 - config.val_split)) // config.training_batch_size
+        )
+        n_val_batches = int(
+            (replay_buffer.size * config.val_split) // config.training_batch_size
+        )
 
         if n_train_batches == 0 or n_val_batches == 0:
             raise ValueError(
                 f"Dataset of size {replay_buffer.size} not big enough to "
-                f"generate a {val_split*100} % "
-                f"validation split with batch size {batch_size}."
+                f"generate a {config.val_split*100} % "
+                f"validation split with batch size {config.training_batch_size}."
             )
 
         print("")
@@ -398,7 +383,7 @@ class EnvironmentModel(nn.Module):
         print(
             f"Buffer size: {replay_buffer.size} "
             f"Train batches per epoch: {n_train_batches} "
-            f"Stopping after {max_n_train_batches} batches"
+            f"Stopping after {config.max_number_of_training_batches} batches"
         )
 
         device = next(self.parameters()).device
@@ -408,7 +393,7 @@ class EnvironmentModel(nn.Module):
         )
 
         if self.optim is None:
-            self.optim = AdamW(self.parameters(), lr=lr)
+            self.optim = AdamW(self.parameters(), lr=config.lr)
 
         assert self.optim is not None
 
@@ -427,13 +412,16 @@ class EnvironmentModel(nn.Module):
 
         stop_training = False
 
-        val_loss_per_network = torch.zeros((self.n_networks))
+        val_loss_per_network = torch.zeros((self.config.n_networks))
 
         epoch = 0
 
         while (
-            epochs_since_last_performance_improvement < patience
-            and (max_n_train_epochs == -1 or epoch < max_n_train_epochs)
+            epochs_since_last_performance_improvement < config.training_patience
+            and (
+                config.max_number_of_training_epochs is None
+                or epoch < config.max_number_of_training_epochs
+            )
             and not stop_training
         ):
 
@@ -441,12 +429,20 @@ class EnvironmentModel(nn.Module):
 
             for _ in range(n_train_batches):
                 train_loss = self.train_one_batch(
-                    replay_buffer, val_split, batch_size, scaler, use_amp, debug
+                    replay_buffer,
+                    config.val_split,
+                    config.training_batch_size,
+                    scaler,
+                    use_amp,
+                    debug,
                 )
 
                 total_train_loss += train_loss
 
-                if max_n_train_batches != -1 and max_n_train_batches <= batches_trained:
+                if (
+                    config.max_number_of_training_batches is not None
+                    and config.max_number_of_training_batches <= batches_trained
+                ):
                     stop_training = True
                     break
 
@@ -457,7 +453,10 @@ class EnvironmentModel(nn.Module):
                 print(f"Average training loss: {total_train_loss / n_train_batches}")
 
             avg_val_loss, val_loss_per_network = self.compute_validation_losses(
-                replay_buffer, val_split, n_val_batches, batch_size
+                replay_buffer,
+                config.val_split,
+                n_val_batches,
+                config.training_batch_size,
             )
 
             if avg_val_loss < min_val_loss:
@@ -473,7 +472,8 @@ class EnvironmentModel(nn.Module):
 
             print(
                 f"Train batches: {batches_trained} "
-                f"Patience: {epochs_since_last_performance_improvement}/{patience} "
+                f"Patience: {epochs_since_last_performance_improvement}/"
+                f"{config.training_patience} "
                 f"Val losses: {val_loss_per_network.tolist()}",
                 end="\r",
             )
@@ -507,7 +507,7 @@ class EnvironmentModel(nn.Module):
         Returns:
             float: The training loss on the single batch.
         """
-        device = next(self.parameters()).device
+        device = next(self.parameters()).device.type
 
         model_input, ground_truth = get_model_input_and_ground_truth_from_batch(
             replay_buffer.sample_train_batch(batch_size, val_split), device
@@ -522,13 +522,13 @@ class EnvironmentModel(nn.Module):
         self.optim.zero_grad()
 
         with torch.cuda.amp.autocast(enabled=use_amp):
-            if self.model_type == "deterministic":
+            if self.config.type == "deterministic":
                 loss = self.deterministic_loss(model_input, ground_truth)
             else:
                 loss = self.probabilistic_loss(
                     model_input,
                     ground_truth,
-                    preprocessing_function=self.preprocessing_function,
+                    preprocessing_function=self.config.preprocessing_function,
                     debug=debug,
                 )
 
@@ -572,10 +572,10 @@ class EnvironmentModel(nn.Module):
             tuple[float, torch.Tensor]: The average validation loss across all networks
                 and the validation loss per network.
         """
-        device = next(self.parameters()).device
-        validation_losses_per_network = torch.zeros((self.n_networks))
+        device = next(self.parameters()).device.type
+        validation_losses_per_network = torch.zeros((self.config.n_networks))
 
-        for i_network in range(self.n_networks):
+        for i_network in range(self.config.n_networks):
             for _ in range(n_val_batches):
                 (
                     model_input,
@@ -584,7 +584,7 @@ class EnvironmentModel(nn.Module):
                     replay_buffer.sample_val_batch(batch_size, val_split), device
                 )
 
-                if self.model_type == "deterministic":
+                if self.config.type == "deterministic":
                     validation_losses_per_network[i_network] += self.deterministic_loss(
                         model_input, ground_truth, i_network
                     ).item()
@@ -594,7 +594,7 @@ class EnvironmentModel(nn.Module):
                         ground_truth,
                         i_network,
                         only_mse=True,
-                        preprocessing_function=self.preprocessing_function,
+                        preprocessing_function=self.config.preprocessing_function,
                     ).item()
 
             validation_losses_per_network[i_network] /= n_val_batches
@@ -627,7 +627,7 @@ class EnvironmentModel(nn.Module):
 
         if (
             mode in (ALEATORIC_PENALTY, ALEATORIC_PARTITIONING)
-            and self.model_type == "deterministic"
+            and self.config.type == "deterministic"
         ):
             raise ValueError(
                 "Can not use aleatoric methods with deterministic ensemble."
@@ -732,14 +732,14 @@ class EnvironmentModel(nn.Module):
 
 
 def get_model_input_and_ground_truth_from_batch(
-    batch: dict[str, torch.Tensor], device: torch.device
+    batch: dict[str, torch.Tensor], device: str
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Returns the model inputs and ground truth outputs from a batch.
 
     Args:
         batch (dict[str, torch.Tensor]): A batch sampled from a
             :py:class:`.ReplayBuffer`.
-        device (torch.device): The device to push the tensors to.
+        device (str): The device to push the tensors to.
 
     Returns:
         tuple[torch.Tensor, torch.Tensor]: The model input and ground truth output from

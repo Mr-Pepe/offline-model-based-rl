@@ -1,4 +1,4 @@
-import d4rl  # pylint: disable=unused-import
+# pylint: disable=unused-import
 import gym
 import numpy as np
 import pytest
@@ -17,7 +17,7 @@ from offline_mbrl.utils.termination_functions import (
 )
 
 
-def run_env(env: gym.Env, n_steps: int):
+def run_env(env: gym.Env, n_steps: int) -> tuple[torch.Tensor, torch.Tensor]:
     env.reset()
 
     next_obss = []
@@ -32,14 +32,11 @@ def run_env(env: gym.Env, n_steps: int):
         if done:
             env.reset()
 
-    next_obss = torch.as_tensor(next_obss)
-    dones = torch.as_tensor(dones).reshape(-1, 1)
-
-    return next_obss, dones
+    return torch.as_tensor(next_obss), torch.as_tensor(dones).reshape(-1, 1)
 
 
 @pytest.mark.fast
-def test_hopper_postprocessing():
+def test_hopper_postprocessing() -> None:
     next_observations, dones = run_env(gym.make(HOPPER_RANDOM_V2), 100)
 
     assert dones.sum() > 0
@@ -51,7 +48,7 @@ def test_hopper_postprocessing():
 
 
 @pytest.mark.fast
-def test_half_cheetah_postprocessing():
+def test_half_cheetah_postprocessing() -> None:
     next_observations, dones = run_env(gym.make(HALF_CHEETAH_RANDOM_V2), 100)
 
     # Halg cheetah does not generate terminal states
@@ -66,7 +63,7 @@ def test_half_cheetah_postprocessing():
 
 
 @pytest.mark.fast
-def test_walker2d_postprocessing():
+def test_walker2d_postprocessing() -> None:
 
     next_observations, dones = run_env(gym.make(WALKER_RANDOM_V2), 100)
 
@@ -81,7 +78,7 @@ def test_walker2d_postprocessing():
 
 
 @pytest.mark.fast
-def test_raises_error_if_no_post_processing_function_found():
+def test_raises_error_if_no_post_processing_function_found() -> None:
     with pytest.raises(
         ValueError, match="No postprocessing function found for environment 'abc'."
     ):

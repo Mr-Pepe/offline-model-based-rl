@@ -9,7 +9,7 @@
 
 import os
 
-import d4rl  # pylint: disable=unused-import
+# pylint: disable=unused-import
 import torch
 
 from offline_mbrl.models.environment_model import EnvironmentModel

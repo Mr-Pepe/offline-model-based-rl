@@ -1,8 +1,10 @@
-import d4rl  # pylint: disable=unused-import
+# pylint: disable=unused-import
+import d4rl
 import gym
 import numpy as np
 import pytest
 import torch
+from pytest import FixtureRequest
 
 from offline_mbrl.utils.envs import HOPPER_RANDOM_V2
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
@@ -87,8 +89,12 @@ def test_add_batches_to_buffer() -> None:
 def test_add_experience_to_buffer_online() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     env = gym.make("HalfCheetah-v2")
+
+    assert env.observation_space.shape is not None
+    assert env.action_space.shape is not None
+
     buffer = ReplayBuffer(
-        env.observation_space.shape, env.action_space.shape[0], 150, device=device
+        env.observation_space.shape[0], env.action_space.shape[0], 150, device=device
     )
 
     o = env.reset()
@@ -122,7 +128,7 @@ def test_buffer_returns_whether_it_contains_a_done_state() -> None:
             torch.as_tensor(0),
             torch.as_tensor(0),
             torch.as_tensor(0),
-            False,
+            torch.as_tensor(False),
         )
 
     assert not buffer.has_terminal_state()
@@ -133,7 +139,7 @@ def test_buffer_returns_whether_it_contains_a_done_state() -> None:
             torch.as_tensor(0),
             torch.as_tensor(0),
             torch.as_tensor(0),
-            True,
+            torch.as_tensor(True),
         )
 
     assert buffer.has_terminal_state()
@@ -185,7 +191,7 @@ def test_clear_buffer() -> None:
             torch.as_tensor(1),
             torch.as_tensor(1),
             torch.as_tensor(1),
-            False,
+            torch.as_tensor(False),
         )
 
     assert buffer.max_size == 200
@@ -208,7 +214,7 @@ def test_clear_buffer() -> None:
 
 
 @pytest.mark.fast
-def test_buffer_to_device(request):
+def test_buffer_to_device(request: FixtureRequest) -> None:
     if not torch.cuda.is_available():
         mark = pytest.mark.xfail(reason="CUDA not available")
         request.node.add_marker(mark)
@@ -221,7 +227,7 @@ def test_buffer_to_device(request):
             torch.as_tensor(0),
             torch.as_tensor(0),
             torch.as_tensor(0),
-            False,
+            torch.as_tensor(False),
         )
 
     buffer.to("cuda")

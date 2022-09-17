@@ -1,6 +1,6 @@
 import os
 
-import d4rl  # pylint: disable=unused-import
+# pylint: disable=unused-import
 import gym
 import matplotlib.pyplot as plt
 import torch

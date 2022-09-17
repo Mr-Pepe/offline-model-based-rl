@@ -1,4 +1,4 @@
-import d4rl  # pylint: disable=unused-import
+# pylint: disable=unused-import
 import gym
 
 from offline_mbrl.utils.load_dataset import load_dataset_from_env

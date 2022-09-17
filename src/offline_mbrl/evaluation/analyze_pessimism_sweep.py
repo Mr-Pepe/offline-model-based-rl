@@ -3,7 +3,7 @@ import json
 import os
 import os.path as osp
 
-import d4rl  # noqa
+import d4rl
 import numpy as np
 from matplotlib import pyplot as plt
 

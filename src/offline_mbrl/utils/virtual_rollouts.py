@@ -8,7 +8,8 @@ from typing import Optional, Union, cast
 
 import torch
 
-from offline_mbrl.actors.behavioral_cloning import BC
+from offline_mbrl.actors.behavioral_cloning import BehavioralCloningAgent
+from offline_mbrl.actors.random_agent import RandomAgent
 from offline_mbrl.actors.sac import SAC
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
@@ -16,7 +17,7 @@ from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
 def generate_virtual_rollouts(
     model: EnvironmentModel,
-    agent: Union[BC, SAC],
+    agent: Union[BehavioralCloningAgent, SAC, RandomAgent],
     buffer: ReplayBuffer,
     steps: int,
     n_rollouts: int = 1,
@@ -24,7 +25,7 @@ def generate_virtual_rollouts(
     ood_threshold: float = -1,
     random_action: bool = False,
     prev_obs: Optional[dict] = None,
-    max_rollout_length: int = -1,
+    max_rollout_length: Optional[int] = None,
     mode: Optional[str] = None,
 ) -> tuple[dict, dict]:
     """Creates virtual rollouts, given an environment model and an agent.
@@ -51,7 +52,7 @@ def generate_virtual_rollouts(
             observations and the length of their respective rollouts. Defaults to None.
         max_rollout_length (int, optional): After how many steps rollouts should be
             terminated if they did not encounter a terminal state earlier. Defaults to
-            -1.
+            None.
         mode (Optional[str], optional): The mode to pass to the environment model.
             Defaults to None.
 
@@ -136,7 +137,7 @@ def generate_virtual_rollouts(
 
         lengths += 1
 
-        if max_rollout_length != -1:
+        if max_rollout_length is not None:
             # Terminate rollouts that have reached the maximum length
             dones = torch.logical_or(dones, lengths == max_rollout_length)
 

@@ -14,14 +14,16 @@ import os.path as osp
 import shutil
 import time
 import warnings
-from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Optional, Union
 
 import joblib
 import numpy as np
 import torch
+from pydantic import BaseModel
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
+
+from offline_mbrl.schemas import EpochLoggerConfiguration
 
 color2num = dict(
     gray=30,
@@ -81,29 +83,14 @@ class EpochLogger:
     """
 
     def __init__(
-        self,
-        output_dir: Optional[Path] = None,
-        output_filename: str = "progress.txt",
-        experiment_name: str = None,
-        env_name: str = "",
+        self, config: EpochLoggerConfiguration = EpochLoggerConfiguration()
     ) -> None:
-        """Initializes a Logger.
+        """Initializes an epoch logger.
 
         Args:
-            output_dir (string): A directory for saving results to. If ``None``,
-                defaults to a temp directory of the form
-                ``/tmp/experiments/somerandomnumber``.
-            output_filename (string): Name for the tab-separated-value file
-                containing metrics logged throughout a training run.
-                Defaults to ``progress.txt``.
-            experiment_name (string): Experiment name. If you run multiple training
-                runs and give them all the same ``experiment_name``, the plotter
-                will know to group them. (Use case: if you run the same
-                hyperparameter configuration with multiple random seeds, you
-                should give them all the same ``experiment_name``.)
-            env_Name (str): The environment name used in the experiment.
+            config (EpochLoggerConfiguration): The logger configuration.
         """
-        self.output_dir = output_dir or f"/tmp/experiments/{time.time()}"
+        self.output_dir = config.output_dir or f"/tmp/experiments/{time.time()}"
         if osp.exists(self.output_dir):
             print(
                 "Warning: Log dir %s already exists! \
@@ -113,7 +100,7 @@ class EpochLogger:
         else:
             os.makedirs(self.output_dir)
         self.output_file = open(  # pylint: disable=consider-using-with
-            osp.join(self.output_dir, output_filename), "w", encoding="utf-8"
+            osp.join(self.output_dir, config.output_filename), "w", encoding="utf-8"
         )
         atexit.register(self.output_file.close)
         print(
@@ -122,8 +109,8 @@ class EpochLogger:
         self.first_row = True
         self.log_headers: list[str] = []
         self.log_current_row: dict = {}
-        self.exp_name = experiment_name
-        self.env_name = env_name
+        self.exp_name = config.experiment_name
+        self.env_name = config.env_name
 
         self.pytorch_saver_elements: dict[str, nn.Module] = {}
 
@@ -133,13 +120,8 @@ class EpochLogger:
 
         self.epoch_dict: dict[str, Any] = {}
 
-    def store(self, **kwargs: dict) -> None:
-        """
-        Save something into the epoch_logger's current state.
-
-        Provide an arbitrary number of keyword arguments with numerical
-        values.
-        """
+    def store(self, **kwargs: Union[int, float]) -> None:
+        """Save something into the epoch_logger's current state."""
         for k, v in kwargs.items():
             if k not in self.epoch_dict:
                 self.epoch_dict[k] = []
@@ -261,8 +243,7 @@ class EpochLogger:
         print(colorize(msg, color, bold=True))
 
     def save_config(self, config: dict) -> None:
-        """
-        Log an experiment configuration.
+        """Log an experiment configuration.
 
         Call this once at the top of your experiment, passing in all important
         config vars as a dict. This will serialize the config to JSON, while
@@ -278,7 +259,18 @@ class EpochLogger:
         """
         if self.exp_name is not None:
             config["exp_name"] = self.exp_name
-        output = json.dumps(config, separators=(",", ":\t"), indent=4, sort_keys=True)
+
+        for key, value in config.items():
+            if isinstance(value, BaseModel):
+                config[key] = value.dict()
+
+        output = json.dumps(
+            config,
+            separators=(",", ":\t"),
+            indent=4,
+            sort_keys=True,
+            default=str,
+        )
         print(colorize("Saving config:\n", color="cyan", bold=True))
         print(output)
         with open(

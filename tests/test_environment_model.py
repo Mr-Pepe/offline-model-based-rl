@@ -1,12 +1,13 @@
 import argparse
 from math import pi as PI
 
-import d4rl  # pylint: disable=unused-import
+# pylint: disable=unused-import
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import torch
+from d4rl.offline_env import OfflineEnv
 from matplotlib.pyplot import cm
 from torch import nn
 from torch.optim.adam import Adam
@@ -16,6 +17,7 @@ from offline_mbrl.models.environment_model import (
     EnvironmentModel,
     get_model_input_and_ground_truth_from_batch,
 )
+from offline_mbrl.schemas import EnvironmentModelConfiguration
 from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM_V2, HOPPER_RANDOM_V2
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.modes import ALEATORIC_PENALTY
@@ -37,11 +39,15 @@ def test_takes_state_and_action_as_input_and_outputs_state_reward_done() -> None
     obs_dim = 5
     act_dim = 6
 
-    model = EnvironmentModel(obs_dim, act_dim, [2, 2])
+    model = EnvironmentModel(
+        obs_dim, act_dim, EnvironmentModelConfiguration(hidden_layer_sizes=(2, 2))
+    )
 
     tensor_size = (3, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
     output = model.get_prediction(obs_act)
+
+    assert isinstance(output, torch.Tensor)
 
     np.testing.assert_array_equal(output.shape, (3, obs_dim + 2))
 
@@ -99,7 +105,7 @@ def test_single_deterministic_network_overfits_on_batch() -> None:
 def test_deterministic_model_trains_on_offline_data() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    env = gym.make(HALF_CHEETAH_RANDOM_V2)
+    env: OfflineEnv = gym.make(HALF_CHEETAH_RANDOM_V2)
     dataset = env.get_dataset()
     observations = dataset["observations"]
     actions = dataset["actions"]
@@ -122,12 +128,12 @@ def test_deterministic_model_trains_on_offline_data() -> None:
         x = torch.as_tensor(
             np.concatenate((observations[idxs], actions[idxs]), axis=1),
             dtype=torch.float32,
-            device=device,
+            device=torch.device(device),
         )
         y = torch.as_tensor(
             np.concatenate((observations[idxs + 1], rewards[idxs]), axis=1),
             dtype=torch.float32,
-            device=device,
+            device=torch.device(device),
         )
 
         obs_rew_optim.zero_grad()
@@ -146,7 +152,11 @@ def test_probabilistic_model_returns_different_results_for_same_input() -> None:
     obs_dim = 5
     act_dim = 6
 
-    model = EnvironmentModel(obs_dim, act_dim, [2, 2], type="probabilistic")
+    model = EnvironmentModel(
+        obs_dim,
+        act_dim,
+        EnvironmentModelConfiguration(type="probabilistic", hidden_layer_sizes=(2, 2)),
+    )
 
     tensor_size = (3, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
@@ -164,16 +174,15 @@ def test_probabilistic_model_returns_different_results_for_same_input() -> None:
 @pytest.mark.fast
 def test_raises_error_if_type_unknown() -> None:
     with pytest.raises(ValueError):
-        EnvironmentModel(1, 2, [2, 2], type="asdasd")
+        EnvironmentModel(1, 2, EnvironmentModelConfiguration(type="asdasd"))
 
 
 @pytest.mark.slow
 def test_probabilistic_model_trains_on_toy_dataset(
-    steps=3000,
-    plot=False,
-    augment_loss=False,
-    steps_per_plot=100,
-    add_points_between=False,
+    steps: int = 3000,
+    plot: bool = False,
+    steps_per_plot: int = 100,
+    add_points_between: bool = False,
 ) -> None:
     device = "cpu"
 
@@ -199,31 +208,27 @@ def test_probabilistic_model_trains_on_toy_dataset(
     buffer.rew_buf = y
     buffer.size = x.numel()
 
-    model = EnvironmentModel(
-        1,
-        1,
-        hidden_layer_sizes=[4, 8, 4],
+    model_config = EnvironmentModelConfiguration(
         type="probabilistic",
+        hidden_layer_sizes=[4, 8, 4],
         n_networks=n_networks,
         device=device,
+        lr=1e-4,
+        max_number_of_training_batches=steps_per_plot,
+        training_batch_size=128,
     )
+
+    model = EnvironmentModel(1, 1, model_config)
 
     x_true = torch.arange(-3 * PI, 3 * PI, 0.01)
     y_true = torch.sin(x_true)
     plt.figure()
 
     for _ in range(steps):
-        model.train_to_convergence(
-            buffer,
-            lr=1e-4,
-            debug=False,
-            max_n_train_batches=steps_per_plot,
-            batch_size=128,
-            augment_loss=augment_loss,
-        )
+        model.train_to_convergence(buffer, config=model_config)
 
         if plot:
-            _, mean_plt, logvar_plt, max_logvar_plt, _, _ = model(
+            _, mean_plt, logvar_plt, max_logvar_plt, _, = model(
                 torch.cat(
                     (x_true.unsqueeze(-1), torch.zeros_like(x_true.unsqueeze(-1))),
                     dim=1,
@@ -238,7 +243,7 @@ def test_probabilistic_model_trains_on_toy_dataset(
 
             x_plt = x.cpu()
             y_plt = y.cpu()
-            idx = range(0, len(x_plt), 10)
+            idx = list(range(0, len(x_plt), 10))
 
             plt.gca().clear()
             # axes[1].clear()
@@ -270,13 +275,19 @@ def test_deterministic_ensemble_gives_different_predictions_per_model() -> None:
     obs_dim = 5
     act_dim = 6
 
-    model = EnvironmentModel(obs_dim, act_dim, n_networks=3)
+    model = EnvironmentModel(
+        obs_dim, act_dim, EnvironmentModelConfiguration(n_networks=3)
+    )
 
     tensor_size = (3, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
     output1 = model.get_prediction(obs_act, 0)
     output2 = model.get_prediction(obs_act, 1)
     output3 = model.get_prediction(obs_act, 2)
+
+    assert isinstance(output1, torch.Tensor)
+    assert isinstance(output2, torch.Tensor)
+    assert isinstance(output3, torch.Tensor)
 
     np.testing.assert_raises(
         AssertionError,
@@ -305,7 +316,7 @@ def test_deterministic_ensemble_overfits_on_batch() -> None:
     n_networks = 5
     torch.manual_seed(0)
 
-    model = EnvironmentModel(obs_dim=3, act_dim=4, n_networks=n_networks)
+    model = EnvironmentModel(3, 4, EnvironmentModelConfiguration(n_networks=n_networks))
 
     x = torch.rand((10, 7))
     y = torch.rand((10, 4))
@@ -335,12 +346,14 @@ def test_model_returns_prediction_of_random_network_if_not_specified() -> None:
 
     torch.manual_seed(0)
 
-    model = EnvironmentModel(obs_dim, act_dim, n_networks=40)
+    model = EnvironmentModel(
+        obs_dim, act_dim, EnvironmentModelConfiguration(n_networks=40)
+    )
 
     tensor_size = (3, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
-    output1 = model.get_prediction(obs_act).detach().numpy()
-    output2 = model.get_prediction(obs_act).detach().numpy()
+    output1 = model.get_prediction(obs_act).detach().numpy()  # type: ignore
+    output2 = model.get_prediction(obs_act).detach().numpy()  # type: ignore
 
     np.testing.assert_raises(
         AssertionError, np.testing.assert_array_equal, output1, output2
@@ -352,12 +365,14 @@ def test_model_returns_same_output_if_network_specified() -> None:
     obs_dim = 5
     act_dim = 6
 
-    model = EnvironmentModel(obs_dim, act_dim, n_networks=10)
+    model = EnvironmentModel(
+        obs_dim, act_dim, EnvironmentModelConfiguration(n_networks=10)
+    )
 
     tensor_size = (3, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
-    output1 = model.get_prediction(obs_act, i_network=5).detach().numpy()
-    output2 = model.get_prediction(obs_act, i_network=5).detach().numpy()
+    output1 = model.get_prediction(obs_act, 5).detach().numpy()  # type: ignore
+    output2 = model.get_prediction(obs_act, 5).detach().numpy()  # type: ignore
 
     np.testing.assert_array_equal(output1, output2)
 
@@ -374,6 +389,8 @@ def test_deterministic_model_returns_binary_done_signal() -> None:
     obs_act = torch.rand(tensor_size)
     output = model.get_prediction(obs_act, 0)
 
+    assert isinstance(output, torch.Tensor)
+
     for value in output[:, -1]:
         assert value in (0, 1)
 
@@ -384,11 +401,15 @@ def test_probabilistic_model_returns_binary_done_signal() -> None:
     act_dim = 6
     torch.manual_seed(0)
 
-    model = EnvironmentModel(obs_dim, act_dim, type="probabilistic")
+    model = EnvironmentModel(
+        obs_dim, act_dim, EnvironmentModelConfiguration(type="probabilistic")
+    )
 
     tensor_size = (100, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
-    output = model.get_prediction(obs_act, 0).detach().numpy()
+    output = model.get_prediction(obs_act, 0).detach().numpy()  # type: ignore
+
+    assert isinstance(output, np.ndarray)
 
     for value in output[:, -1]:
         assert value in (0, 1)
@@ -401,12 +422,18 @@ def test_deterministic_model_returns_binary_done_signal_when_using_term_fn() -> 
     torch.manual_seed(2)
 
     model = EnvironmentModel(
-        obs_dim, act_dim, termination_function=termination_functions["hopper"]
+        obs_dim,
+        act_dim,
+        EnvironmentModelConfiguration(
+            termination_function=termination_functions["hopper"]
+        ),
     )
 
     tensor_size = (100, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
     output = model.get_prediction(obs_act, 0)
+
+    assert isinstance(output, torch.Tensor)
 
     for value in output[:, -1]:
         assert value in (0, 1)
@@ -425,9 +452,11 @@ def test_deterministic_model_does_not_always_output_terminal() -> None:
     model = EnvironmentModel(
         obs_dim,
         act_dim,
-        type="deterministic",
-        termination_function=termination_functions["hopper"],
-        device=device,
+        EnvironmentModelConfiguration(
+            type="deterministic",
+            termination_function=termination_functions["hopper"],
+            device=device,
+        ),
     )
     optim = Adam(model.parameters(), lr=1e-2)
 
@@ -482,9 +511,11 @@ def test_probabilistic_model_does_not_always_output_terminal() -> None:
     model = EnvironmentModel(
         obs_dim,
         act_dim,
-        type="probabilistic",
-        termination_function=termination_functions["hopper"],
-        device=device,
+        EnvironmentModelConfiguration(
+            type="probabilistic",
+            termination_function=termination_functions["hopper"],
+            device=device,
+        ),
     )
     optim = Adam(model.parameters(), lr=1e-3)
 
@@ -531,7 +562,9 @@ def test_aleatoric_pessimism_throws_error_if_model_not_probabilistic() -> None:
     obs_dim = 5
     act_dim = 6
 
-    model = EnvironmentModel(obs_dim, act_dim, [2, 2])
+    model = EnvironmentModel(
+        obs_dim, act_dim, EnvironmentModelConfiguration(hidden_layer_sizes=(2, 2))
+    )
 
     tensor_size = (3, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
@@ -545,7 +578,9 @@ def test_throws_error_if_mode_unknown() -> None:
     obs_dim = 5
     act_dim = 6
 
-    model = EnvironmentModel(obs_dim, act_dim, [2, 2])
+    model = EnvironmentModel(
+        obs_dim, act_dim, EnvironmentModelConfiguration(hidden_layer_sizes=(2, 2))
+    )
 
     tensor_size = (3, obs_dim + act_dim)
     obs_act = torch.rand(tensor_size)
@@ -564,9 +599,11 @@ def test_get_prediction_from_pessimistic_model() -> None:
     model = EnvironmentModel(
         obs_dim,
         act_dim,
-        hidden_layer_sizes=[2, 2],
-        type="probabilistic",
-        n_networks=n_networks,
+        EnvironmentModelConfiguration(
+            hidden_layer_sizes=[2, 2],
+            type="probabilistic",
+            n_networks=n_networks,
+        ),
     )
 
     tensor_size = (n_samples, obs_dim + act_dim)
@@ -588,6 +625,9 @@ def test_get_prediction_from_pessimistic_model() -> None:
 
     np.testing.assert_array_equal(optimistic_output1, optimistic_output2)
 
+    assert isinstance(pessimistic_output, torch.Tensor)
+    assert isinstance(optimistic_output1, torch.Tensor)
+
     np.testing.assert_array_equal(pessimistic_output.shape, optimistic_output1.shape)
 
     np.testing.assert_raises(
@@ -600,7 +640,6 @@ def test_get_prediction_from_pessimistic_model() -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--augment_loss", type=str2bool, default=True)
     parser.add_argument("--add_points_between", type=str2bool, default=False)
     parser.add_argument("--steps_per_plot", type=int, default=100)
     args = parser.parse_args()
@@ -608,7 +647,6 @@ if __name__ == "__main__":
     test_probabilistic_model_trains_on_toy_dataset(
         steps=50000,
         plot=True,
-        augment_loss=args.augment_loss,
         steps_per_plot=args.steps_per_plot,
         add_points_between=args.add_points_between,
     )

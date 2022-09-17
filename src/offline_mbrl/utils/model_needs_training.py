@@ -1,8 +1,10 @@
+from typing import Optional
+
 from offline_mbrl.models.environment_model import EnvironmentModel
 
 
 def model_needs_training(
-    model: EnvironmentModel,
+    model: Optional[EnvironmentModel],
     step: int,
     buffer_size: int,
     init_steps: int,

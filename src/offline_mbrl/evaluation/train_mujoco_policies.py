@@ -31,7 +31,7 @@ def training_function(config, tuning=True):
         {"hidden": 4 * [config["agent_kwargs"]["agent_hidden"]]}
     )
     trainer = Trainer(**config)
-    return trainer.train(tuning=tuning, silent=True)
+    return trainer.train(tuning=tuning, quiet=True)
 
 
 def get_exp_name(config):
@@ -126,7 +126,6 @@ def main(args):
             pre_fn=get_preprocessing_function(args.env_name),
             termination_function=get_termination_function(args.env_name),
         ),
-        dataset_path="",
         seed=0,
         epochs=args.epochs,
         steps_per_epoch=args.steps_per_epoch,
@@ -136,7 +135,6 @@ def main(args):
         n_samples_from_dataset=args.n_samples_from_dataset,
         agent_updates_per_step=args.agent_updates_per_step,
         num_test_episodes=args.num_test_episodes,
-        curriculum=[1, 1, 20, 100],
         max_ep_len=1000,
         use_model=use_model,
         pretrained_agent_path="",
