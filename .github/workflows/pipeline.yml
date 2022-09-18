@@ -25,6 +25,7 @@ jobs:
 
     - name: Install MuJoCo
       run: |
+        sudo apt-get install libosmesa6-dev
         cd /tmp
         wget https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz
         tar -xf mujoco210*.tar.gz
