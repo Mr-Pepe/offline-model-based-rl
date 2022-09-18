@@ -6,6 +6,7 @@
 from typing import Union
 
 import gym
+import torch
 
 from offline_mbrl.actors.behavioral_cloning import BehavioralCloningAgent
 from offline_mbrl.actors.random_agent import RandomAgent
@@ -41,7 +42,7 @@ def evaluate_agent_performance(
         done = False
         episode_return = 0.0
         episode_length = 0
-        obs = test_env.reset()
+        obs = torch.as_tensor(test_env.reset())
 
         while not (done or (episode_length == max_episode_length)):
             # Take deterministic actions at test time

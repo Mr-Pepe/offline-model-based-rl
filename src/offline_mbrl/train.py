@@ -153,7 +153,7 @@ class Trainer:
     ) -> tuple[torch.Tensor, torch.Tensor]:
 
         start_time = time.time()
-        obs = self.env.reset()
+        obs = torch.as_tensor(self.env.reset())
         episode_return = 0.0
         episode_length = 0
 
