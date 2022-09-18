@@ -20,6 +20,14 @@ jobs:
       with:
         python-version: 3.9
 
+    - name: Install MuJoCo
+    - run: >
+        cd /tmp
+        wget https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz
+        tar -xf mujoco210*.tar.gz
+        mv mujoco210 $HOME
+        echo "$HOME/mujoco210" >> $GITHUB_PATH
+
     - name: Install tox
       run: pip install --upgrade tox
 
