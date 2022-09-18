@@ -1,4 +1,4 @@
-name: Run static checks and tests and build the docs
+name: CI Pipeline
 
 on:
   pull_request:
@@ -25,8 +25,8 @@ jobs:
         cd /tmp
         wget https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz
         tar -xf mujoco210*.tar.gz
-        mv mujoco210 $HOME
-        echo "$HOME/mujoco210" >> $GITHUB_PATH
+        mkdir $HOME/.mujoco
+        mv mujoco210 $HOME/.mujoco
 
     - name: Install tox
       run: pip install --upgrade tox
