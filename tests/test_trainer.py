@@ -225,7 +225,7 @@ def test_actions_for_offline_model_free_training_with_fine_tuning() -> None:
     )
 
 
-@pytest.mark.slow
+@pytest.mark.medium
 def test_actions_for_offline_model_based_training_with_fine_tuning() -> None:
     trainer_config = TrainerConfiguration(
         env_name=HOPPER_RANDOM_V2,
@@ -242,7 +242,7 @@ def test_actions_for_offline_model_based_training_with_fine_tuning() -> None:
     )
 
     agent_config = SACConfiguration(
-        hidden_layer_sizes=(32, 32, 32, 32), training_batch_size=32
+        hidden_layer_sizes=(32, 32, 32), training_batch_size=32
     )
 
     env_model_config = EnvironmentModelConfiguration(
@@ -335,7 +335,7 @@ def test_trainer_picks_correct_termination_functions() -> None:
     )
 
 
-@pytest.mark.slow
+@pytest.mark.medium
 def test_results_are_reproducible() -> None:
     trainer_config = TrainerConfiguration(
         env_name=HOPPER_RANDOM_V2,
@@ -350,7 +350,7 @@ def test_results_are_reproducible() -> None:
     )
 
     agent_config = SACConfiguration(
-        hidden_layer_sizes=(32, 32, 32, 32), training_batch_size=32
+        hidden_layer_sizes=(32, 32, 32), training_batch_size=32
     )
 
     env_model_config = EnvironmentModelConfiguration(
