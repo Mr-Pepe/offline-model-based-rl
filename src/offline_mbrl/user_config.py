@@ -1,10 +1,24 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""This module contains general configuration settings.
+
+The default values can be overwritten by setting the corresponding environment
+variables.
+"""
+
+
+import os
 from pathlib import Path
 
-# Where experiment outputs are saved by default:
-DEFAULT_DATA_DIR = Path.home() / "benchmark" / "data" / "experiments"
+from offline_mbrl.utils.str2bool import str2bool
 
-MODELS_DIR = Path.home() / "benchmark" / "data" / "models"
+DATA_DIR = os.environ.get("OMBRL_DATA_DIR", Path.cwd() / "data" / "experiments")
+"""Where experiment outputs are saved by default."""
 
-# Whether to automatically insert a date and time stamp into the names of
-# save directories:
-FORCE_DATESTAMP = False
+MODELS_DIR = os.environ.get("OMBRL_MODELS_DIR", Path.cwd() / "data" / "models")
+"""Where models are saved by default."""
+
+FORCE_DATESTAMP = str2bool(os.environ.get("OMBRL_FORCE_DATESTAMP", "False"))
+"""Whether to automatically insert a date and time stamp into the names of
+save directories."""
