@@ -4,6 +4,7 @@ import torch
 from offline_mbrl.schemas import (
     EnvironmentModelConfiguration,
     EpochLoggerConfiguration,
+    SACConfiguration,
     TrainerConfiguration,
 )
 from offline_mbrl.train import Trainer
@@ -16,10 +17,10 @@ def test_mbpo_online() -> None:
 
     trainer_config = TrainerConfiguration(
         env_name=HOPPER_RANDOM_V2,
-        steps_per_epoch=1000,
-        init_steps=1300,
-        random_steps=1000,
-        online_epochs=20,
+        steps_per_epoch=4000,
+        init_steps=3000,
+        random_steps=3000,
+        online_epochs=10,
         use_env_model=True,
         n_parallel_virtual_rollouts=1,
         device=device,
@@ -40,4 +41,4 @@ def test_mbpo_online() -> None:
 
     final_return, _ = trainer.train()
 
-    assert final_return[-1, -1] > 170
+    assert final_return[-1, -1] > 150
