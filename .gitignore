@@ -143,3 +143,5 @@ cython_debug/
 .vscode
 data/**
 MUJOCO_LOG.TXT
+test_sac/**
+test_sac_offline/**

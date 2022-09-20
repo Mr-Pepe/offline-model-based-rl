@@ -44,7 +44,7 @@ def test_sac_converges() -> None:
     )
 
     agent_config = SACConfiguration(
-        hidden_layer_sizes=(256, 256, 256, 256),
+        hidden_layer_sizes=(32, 32, 32),
         training_batch_size=256,
         preprocessing_function=get_preprocessing_function(HALF_CHEETAH_RANDOM_V2),
     )
@@ -73,16 +73,16 @@ def test_sac_offline() -> None:
         agent_updates_per_step=1,
         render_test_episodes=True,
         init_steps=0,
-        steps_per_epoch=1_000,
+        steps_per_epoch=4_000,
         test_episodes=10,
         online_epochs=0,
-        offline_epochs=20,
+        offline_epochs=4,
         device=device,
         seed=0,
     )
 
     agent_config = SACConfiguration(
-        hidden_layer_sizes=(200, 200, 200, 200),
+        hidden_layer_sizes=(32, 32, 32),
         training_batch_size=256,
         preprocessing_function=get_preprocessing_function(HALF_CHEETAH_RANDOM_V2),
     )
@@ -97,4 +97,4 @@ def test_sac_offline() -> None:
 
     final_return, _ = trainer.train()
 
-    assert final_return[-1, -1] > 400
+    assert final_return[-1, -1] > 1000
