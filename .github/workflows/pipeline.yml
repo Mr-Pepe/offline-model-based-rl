@@ -38,6 +38,10 @@ jobs:
     - name: Run tests
       run: tox -e py39-test
 
+    - uses: codecov/codecov-action@v3
+      with:
+        files: reports/coverage.xml
+
   lint:
     runs-on: ubuntu-latest
 
