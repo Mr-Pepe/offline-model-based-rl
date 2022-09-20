@@ -1,20 +1,23 @@
 # Offline Model-Based Reinforcement Learning
 
-
-[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=555555)](https://pycqa.github.io/isort/)
-<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+[![Pipeline: passing](https://github.com/Mr-Pepe/offline-model-based-rl/actions/workflows/pipeline.yml/badge.svg)](https://app.codecov.io/github/Mr-Pepe/offline-model-based-rl)
+[![codecov](https://codecov.io/github/Mr-Pepe/offline-model-based-rl/branch/main/graph/badge.svg?token=E7JIWU9FS9)](https://codecov.io/github/Mr-Pepe/offline-model-based-rl)
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/PyCQA/pylint)
 [![Type checks: mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
+[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=555555)](https://pycqa.github.io/isort/)
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
 This library provides a simple but high-quality baseline for playing around with model-free and model-based reinforcement learning approaches in both online and offline settings.
+It is mostly tested, type-hinted, and documented. Read the detailed documentation [here](https://offline-model-based-rl.readthedocs.io/en/latest/#).
 
 The code in this repository is based on the code written as part of my master's thesis on uncertainty
 estimation in offline model-based reinforcement learning. You can find the thesis in
 [thesis.pdf](thesis.pdf). Please [cite](#citation) accordingly.
 
 
-# Setup
+# Quickstart
 
 Install [Mujoco](https://mujoco.org/).
 
@@ -28,7 +31,8 @@ source venv/bin/activate
 pip install -e .
 ```
 
-Set default directories in the [user config](user_config.py).
+Configure default directories in the [user config](user_config.py) or by setting the
+`OMBRL_DATA_DIR` and `OMBRL_MODELS_DIR` environment variables.
 
 
 # Run experiments
@@ -36,8 +40,6 @@ Set default directories in the [user config](user_config.py).
 > **Note** </br>
 > I have recently been refactoring the code and it is probably not gonna run in its current state.
 
-
-All the following commands need to be run from the benchmark/benchmark folder.
 
 ## Train the models
 
@@ -116,9 +118,4 @@ Feel free to use the code but please cite the usage as:
 ```
 
 # TODOs
-- TODO: Add code coverage badge (upload coverage results)
-- TODO: Add test results badge (from workflow results)
-- TODO: Add linting badge (from workflow results)
-- TODO: Add license badge
-- TODO: Remove mentions of "benchmark"
-- TODO: Remove mentions of "felipe"
+- Upload package to PyPI

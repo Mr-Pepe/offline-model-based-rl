@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""This module contains a replay buffer ased on https://spinningup.openai.com."""
+"""This module contains a replay buffer based on https://spinningup.openai.com."""
 
 
 from typing import Optional, Union

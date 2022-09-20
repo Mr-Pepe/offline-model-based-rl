@@ -17,7 +17,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--logdir",
         type=str,
-        default="/home/felipe/Projects/thesis-code/data/offline_exploration",
     )
     args = parser.parse_args()
 
