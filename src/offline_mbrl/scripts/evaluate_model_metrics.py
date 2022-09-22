@@ -6,7 +6,7 @@ import gym
 import torch
 
 from offline_mbrl.actors.random_agent import RandomAgent
-from offline_mbrl.evaluation.metrics import estimation_quality, pessimism
+from offline_mbrl.scripts.metrics import estimation_quality, pessimism
 from offline_mbrl.user_config import MODELS_DIR
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 

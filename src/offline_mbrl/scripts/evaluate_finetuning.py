@@ -2,7 +2,7 @@ import d4rl
 import matplotlib.pyplot as plt
 import numpy as np
 
-from offline_mbrl.evaluation.plot import get_all_datasets, plot_data
+from offline_mbrl.scripts.plot import get_all_datasets, plot_data
 
 if __name__ == "__main__":
     # A list of lists
