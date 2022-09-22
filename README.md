@@ -41,6 +41,7 @@ Configure default directories in the [user config](user_config.py) or by setting
 > I have recently been refactoring the code and it is probably not gonna run in its current state.
 
 
+
 ## Train the models
 
 ```
@@ -101,7 +102,7 @@ pip install -e .[dev]
 ```
 
 After making changes to the code, make sure that static checks and unit tests pass by running `tox`.
-Tox only runs unit tests that are marked as `fast` or `medium`.
+Tox only runs unit tests that are marked as `slow`.
 For faster feedback from unit tests, run `pytest -m fast`.
 Please run the slow tests if you have a GPU available by executing `pytest -m slow`.
 
