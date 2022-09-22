@@ -3,7 +3,7 @@ import torch
 
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.schemas import EnvironmentModelConfiguration
-from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM_V2
+from offline_mbrl.utils.envs import HALF_CHEETAH_MEDIUM_REPLAY_V2
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 
 
@@ -13,7 +13,7 @@ def test_train_deterministic_environment_model() -> None:
     torch.manual_seed(0)
 
     buffer, obs_dim, act_dim = load_dataset_from_env(
-        HALF_CHEETAH_RANDOM_V2, buffer_device=device, n_samples=100000
+        HALF_CHEETAH_MEDIUM_REPLAY_V2, buffer_device=device, n_samples=100000
     )
 
     model_config = EnvironmentModelConfiguration(val_split=0.2, training_patience=3)
@@ -33,7 +33,7 @@ def test_train_probabilistic_model() -> None:
     torch.manual_seed(0)
 
     buffer, obs_dim, act_dim = load_dataset_from_env(
-        HALF_CHEETAH_RANDOM_V2, buffer_device=device, n_samples=100000
+        HALF_CHEETAH_MEDIUM_REPLAY_V2, buffer_device=device, n_samples=100000
     )
 
     model_config = EnvironmentModelConfiguration(
@@ -58,7 +58,7 @@ def test_train_deterministic_ensemble() -> None:
     torch.manual_seed(0)
 
     buffer, obs_dim, act_dim = load_dataset_from_env(
-        HALF_CHEETAH_RANDOM_V2, buffer_device=device, n_samples=100000
+        HALF_CHEETAH_MEDIUM_REPLAY_V2, buffer_device=device, n_samples=100000
     )
 
     model_config = EnvironmentModelConfiguration(
@@ -84,7 +84,7 @@ def test_train_probabilistic_ensemble() -> None:
     torch.manual_seed(0)
 
     buffer, obs_dim, act_dim = load_dataset_from_env(
-        HALF_CHEETAH_RANDOM_V2, buffer_device=device, n_samples=100000
+        HALF_CHEETAH_MEDIUM_REPLAY_V2, buffer_device=device, n_samples=100000
     )
 
     model_config = EnvironmentModelConfiguration(
@@ -109,7 +109,7 @@ def test_train_probabilistic_ensemble() -> None:
 @pytest.mark.medium
 def test_training_stops_after_specified_number_of_batches() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    env_name = HALF_CHEETAH_RANDOM_V2
+    env_name = HALF_CHEETAH_MEDIUM_REPLAY_V2
     torch.manual_seed(0)
 
     buffer, obs_dim, act_dim = load_dataset_from_env(

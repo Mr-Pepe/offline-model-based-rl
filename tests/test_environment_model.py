@@ -13,7 +13,7 @@ from offline_mbrl.models.environment_model import (
     get_model_input_and_ground_truth_from_batch,
 )
 from offline_mbrl.schemas import EnvironmentModelConfiguration
-from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM_V2, HOPPER_RANDOM_V2
+from offline_mbrl.utils.envs import HOPPER_MEDIUM_REPLAY_V2
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.modes import ALEATORIC_PENALTY
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
@@ -99,7 +99,7 @@ def test_single_deterministic_network_overfits_on_batch() -> None:
 def test_deterministic_model_trains_on_offline_data() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    env: OfflineEnv = gym.make(HALF_CHEETAH_RANDOM_V2)
+    env: OfflineEnv = gym.make(HOPPER_MEDIUM_REPLAY_V2)
     dataset = env.get_dataset()
     observations = dataset["observations"]
     actions = dataset["actions"]
@@ -343,10 +343,10 @@ def test_deterministic_model_returns_binary_done_signal_when_using_term_fn() -> 
 @pytest.mark.medium
 def test_deterministic_model_does_not_always_output_terminal() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    env_name = HOPPER_RANDOM_V2
+    env_name = HOPPER_MEDIUM_REPLAY_V2
     torch.manual_seed(0)
 
-    env = gym.make(HOPPER_RANDOM_V2)
+    env = gym.make(HOPPER_MEDIUM_REPLAY_V2)
     real_buffer, obs_dim, act_dim = load_dataset_from_env(
         env_name, n_samples=10000, buffer_device=device
     )
@@ -402,7 +402,7 @@ def test_deterministic_model_does_not_always_output_terminal() -> None:
 @pytest.mark.medium
 def test_probabilistic_model_does_not_always_output_terminal() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    env_name = HOPPER_RANDOM_V2
+    env_name = HOPPER_MEDIUM_REPLAY_V2
     torch.manual_seed(0)
 
     env = gym.make(env_name)

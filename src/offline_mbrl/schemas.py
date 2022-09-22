@@ -4,7 +4,7 @@ from typing import Callable, Literal, Optional, Type
 from pydantic import BaseModel, PositiveInt
 from torch import nn
 
-from offline_mbrl.utils.envs import HOPPER_RANDOM_V2
+from offline_mbrl.utils.envs import HOPPER_MEDIUM_REPLAY_V2
 
 
 class TrainerConfiguration(BaseModel):
@@ -47,7 +47,7 @@ class TrainerConfiguration(BaseModel):
 
     """
 
-    env_name: str = HOPPER_RANDOM_V2
+    env_name: str = HOPPER_MEDIUM_REPLAY_V2
     seed: int = 0
     online_epochs: int = 100
     offline_epochs: int = 0

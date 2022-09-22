@@ -5,9 +5,9 @@ import pytest
 import torch
 
 from offline_mbrl.utils.envs import (
-    HALF_CHEETAH_RANDOM_V2,
-    HOPPER_RANDOM_V2,
-    WALKER_RANDOM_V2,
+    HALF_CHEETAH_MEDIUM_REPLAY_V2,
+    HOPPER_MEDIUM_REPLAY_V2,
+    WALKER_MEDIUM_REPLAY_V2,
 )
 from offline_mbrl.utils.termination_functions import (
     get_termination_function,
@@ -37,7 +37,7 @@ def run_env(env: gym.Env, n_steps: int) -> tuple[torch.Tensor, torch.Tensor]:
 
 @pytest.mark.fast
 def test_hopper_postprocessing() -> None:
-    next_observations, dones = run_env(gym.make(HOPPER_RANDOM_V2), 100)
+    next_observations, dones = run_env(gym.make(HOPPER_MEDIUM_REPLAY_V2), 100)
 
     assert dones.sum() > 0
 
@@ -49,7 +49,7 @@ def test_hopper_postprocessing() -> None:
 
 @pytest.mark.fast
 def test_half_cheetah_postprocessing() -> None:
-    next_observations, dones = run_env(gym.make(HALF_CHEETAH_RANDOM_V2), 100)
+    next_observations, dones = run_env(gym.make(HALF_CHEETAH_MEDIUM_REPLAY_V2), 100)
 
     # Halg cheetah does not generate terminal states
     assert dones.sum() == 0
@@ -65,7 +65,7 @@ def test_half_cheetah_postprocessing() -> None:
 @pytest.mark.fast
 def test_walker2d_postprocessing() -> None:
 
-    next_observations, dones = run_env(gym.make(WALKER_RANDOM_V2), 100)
+    next_observations, dones = run_env(gym.make(WALKER_MEDIUM_REPLAY_V2), 100)
 
     assert dones.sum() > 0
 

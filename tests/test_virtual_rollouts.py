@@ -6,7 +6,10 @@ import torch
 from offline_mbrl.actors.sac import SAC
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.schemas import EnvironmentModelConfiguration, SACConfiguration
-from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM_V2, HOPPER_RANDOM_V2
+from offline_mbrl.utils.envs import (
+    HALF_CHEETAH_MEDIUM_REPLAY_V2,
+    HOPPER_MEDIUM_REPLAY_V2,
+)
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
 from offline_mbrl.utils.termination_functions import get_termination_function
@@ -38,7 +41,7 @@ def test_generate_rollout_of_desired_length() -> None:
 
     model_config = EnvironmentModelConfiguration(
         type="probabilistic",
-        termination_function=get_termination_function(HALF_CHEETAH_RANDOM_V2),
+        termination_function=get_termination_function(HALF_CHEETAH_MEDIUM_REPLAY_V2),
     )
 
     model = EnvironmentModel(obs_dim, act_dim, config=model_config)
@@ -102,7 +105,7 @@ def test_generate_rollout_stops_on_terminal() -> None:
 @pytest.mark.medium
 def test_use_random_actions_in_virtual_rollout() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    env = gym.make(HOPPER_RANDOM_V2)
+    env = gym.make(HOPPER_MEDIUM_REPLAY_V2)
     observation_space = env.observation_space
     action_space = env.action_space
 
@@ -129,7 +132,7 @@ def test_use_random_actions_in_virtual_rollout() -> None:
 
     model_config = EnvironmentModelConfiguration(
         type="probabilistic",
-        termination_function=get_termination_function(HOPPER_RANDOM_V2),
+        termination_function=get_termination_function(HOPPER_MEDIUM_REPLAY_V2),
     )
 
     model = EnvironmentModel(obs_dim, act_dim, config=model_config)
@@ -163,7 +166,7 @@ def test_use_random_actions_in_virtual_rollout() -> None:
 @pytest.mark.medium
 def test_continuously_grow_rollouts() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    env_name = HOPPER_RANDOM_V2
+    env_name = HOPPER_MEDIUM_REPLAY_V2
 
     env = gym.make(env_name)
     observation_space = env.observation_space
@@ -187,7 +190,7 @@ def test_continuously_grow_rollouts() -> None:
         type="probabilistic",
         n_networks=3,
         device=device,
-        termination_function=get_termination_function(HOPPER_RANDOM_V2),
+        termination_function=get_termination_function(HOPPER_MEDIUM_REPLAY_V2),
         training_patience=1,
     )
 

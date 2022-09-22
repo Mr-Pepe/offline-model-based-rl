@@ -10,7 +10,6 @@ from offline_mbrl.train import Actions, Trainer
 from offline_mbrl.utils.envs import (
     HALF_CHEETAH_MEDIUM_REPLAY_V2,
     HOPPER_MEDIUM_REPLAY_V2,
-    HOPPER_RANDOM_V2,
     WALKER_MEDIUM_REPLAY_V2,
 )
 from offline_mbrl.utils.termination_functions import termination_functions
@@ -92,7 +91,7 @@ def test_actions_for_online_model_free_training() -> None:
 @pytest.mark.medium
 def test_actions_for_online_model_based_training() -> None:
     trainer_config = TrainerConfiguration(
-        env_name=HOPPER_RANDOM_V2,
+        env_name=HOPPER_MEDIUM_REPLAY_V2,
         online_epochs=5,
         steps_per_epoch=100,
         init_steps=300,
@@ -228,7 +227,7 @@ def test_actions_for_offline_model_free_training_with_fine_tuning() -> None:
 @pytest.mark.medium
 def test_actions_for_offline_model_based_training_with_fine_tuning() -> None:
     trainer_config = TrainerConfiguration(
-        env_name=HOPPER_RANDOM_V2,
+        env_name=HOPPER_MEDIUM_REPLAY_V2,
         online_epochs=5,
         offline_epochs=3,
         steps_per_epoch=100,
@@ -338,7 +337,7 @@ def test_trainer_picks_correct_termination_functions() -> None:
 @pytest.mark.medium
 def test_results_are_reproducible() -> None:
     trainer_config = TrainerConfiguration(
-        env_name=HOPPER_RANDOM_V2,
+        env_name=HOPPER_MEDIUM_REPLAY_V2,
         online_epochs=5,
         steps_per_epoch=100,
         init_steps=300,

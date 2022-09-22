@@ -6,17 +6,17 @@ import gym
 import matplotlib.pyplot as plt
 
 from offline_mbrl.utils.envs import (
-    HALF_CHEETAH_RANDOM_V2,
-    HOPPER_RANDOM_V2,
-    WALKER_RANDOM_V2,
+    HALF_CHEETAH_MEDIUM_REPLAY_V2,
+    HOPPER_MEDIUM_REPLAY_V2,
+    WALKER_MEDIUM_REPLAY_V2,
 )
 
 if __name__ == "__main__":
     seeds = [53, 71, 123]
     envs = [
-        gym.make(HALF_CHEETAH_RANDOM_V2),
-        gym.make(HOPPER_RANDOM_V2),
-        gym.make(WALKER_RANDOM_V2),
+        gym.make(HALF_CHEETAH_MEDIUM_REPLAY_V2),
+        gym.make(HOPPER_MEDIUM_REPLAY_V2),
+        gym.make(WALKER_MEDIUM_REPLAY_V2),
     ]
     images = []
 

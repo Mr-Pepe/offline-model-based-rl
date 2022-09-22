@@ -7,14 +7,14 @@ from offline_mbrl.schemas import (
     TrainerConfiguration,
 )
 from offline_mbrl.train import Trainer
-from offline_mbrl.utils.envs import HALF_CHEETAH_RANDOM_V2
+from offline_mbrl.utils.envs import HALF_CHEETAH_MEDIUM_REPLAY_V2
 from offline_mbrl.utils.preprocessing import get_preprocessing_function
 
 
 @pytest.mark.fast
 def test_total_steps_must_be_enough_to_perform_at_least_one_update() -> None:
     trainer_config = TrainerConfiguration(
-        env_name=HALF_CHEETAH_RANDOM_V2,
+        env_name=HALF_CHEETAH_MEDIUM_REPLAY_V2,
         init_steps=150,
         steps_per_epoch=100,
         online_epochs=1,
@@ -33,7 +33,7 @@ def test_sac_converges() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     trainer_config = TrainerConfiguration(
-        env_name=HALF_CHEETAH_RANDOM_V2,
+        env_name=HALF_CHEETAH_MEDIUM_REPLAY_V2,
         random_steps=10_000,
         init_steps=1_000,
         steps_per_epoch=4_000,
@@ -46,7 +46,9 @@ def test_sac_converges() -> None:
     agent_config = SACConfiguration(
         hidden_layer_sizes=(32, 32, 32),
         training_batch_size=256,
-        preprocessing_function=get_preprocessing_function(HALF_CHEETAH_RANDOM_V2),
+        preprocessing_function=get_preprocessing_function(
+            HALF_CHEETAH_MEDIUM_REPLAY_V2
+        ),
     )
 
     logger_config = EpochLoggerConfiguration(output_dir="test_sac")
@@ -67,7 +69,7 @@ def test_sac_offline() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     trainer_config = TrainerConfiguration(
-        env_name=HALF_CHEETAH_RANDOM_V2,
+        env_name=HALF_CHEETAH_MEDIUM_REPLAY_V2,
         n_samples_from_dataset=900_000,
         random_steps=0,
         agent_updates_per_step=1,
@@ -84,7 +86,9 @@ def test_sac_offline() -> None:
     agent_config = SACConfiguration(
         hidden_layer_sizes=(32, 32, 32),
         training_batch_size=256,
-        preprocessing_function=get_preprocessing_function(HALF_CHEETAH_RANDOM_V2),
+        preprocessing_function=get_preprocessing_function(
+            HALF_CHEETAH_MEDIUM_REPLAY_V2
+        ),
     )
 
     logger_config = EpochLoggerConfiguration(output_dir="test_sac_offline")

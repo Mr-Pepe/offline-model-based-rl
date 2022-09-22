@@ -6,13 +6,13 @@ import pytest
 import torch
 from pytest import FixtureRequest
 
-from offline_mbrl.utils.envs import HOPPER_RANDOM_V2
+from offline_mbrl.utils.envs import HOPPER_MEDIUM_REPLAY_V2
 from offline_mbrl.utils.replay_buffer import ReplayBuffer
 
 
 @pytest.mark.medium
 def test_buffer_returns_percentage_of_terminal_states() -> None:
-    env = gym.make(HOPPER_RANDOM_V2)
+    env = gym.make(HOPPER_MEDIUM_REPLAY_V2)
     dataset = d4rl.qlearning_dataset(env)
     observations = dataset["observations"]
     next_observations = dataset["next_observations"]
@@ -41,7 +41,7 @@ def test_add_batches_to_buffer() -> None:
     size_first_batch = 1234
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    env = gym.make(HOPPER_RANDOM_V2)
+    env = gym.make(HOPPER_MEDIUM_REPLAY_V2)
     dataset = d4rl.qlearning_dataset(env)
     observations = dataset["observations"][:n_samples]
     next_observations = dataset["next_observations"][:n_samples]
@@ -151,7 +151,7 @@ def test_store_batch_to_prefilled_buffer_that_is_too_small() -> None:
     buffer_size = 100
     prefill = 80
 
-    env = gym.make(HOPPER_RANDOM_V2)
+    env = gym.make(HOPPER_MEDIUM_REPLAY_V2)
     dataset = d4rl.qlearning_dataset(env)
     observations = torch.as_tensor(dataset["observations"][:n_samples])
     next_observations = torch.as_tensor(dataset["next_observations"][:n_samples])
