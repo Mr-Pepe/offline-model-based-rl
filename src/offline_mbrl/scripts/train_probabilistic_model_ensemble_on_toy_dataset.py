@@ -81,7 +81,6 @@ if __name__ == "__main__":
             idx = list(range(0, len(x_plt), 10))
 
             plt.gca().clear()
-            # axes[1].clear()
             plt.scatter(x_plt[idx], y_plt[idx], color="green", marker="x", s=20)
             plt.plot(x_true, y_true, color="black")
 

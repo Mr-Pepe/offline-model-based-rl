@@ -17,6 +17,7 @@ HOPPER_ENVS = [
     HOPPER_MEDIUM_REPLAY_V2,
     HOPPER_MEDIUM_EXPERT_V2,
 ]
+"""Hopper environments."""
 
 
 HALF_CHEETAH_RANDOM_V2 = "halfcheetah-random-v2"
@@ -32,6 +33,7 @@ HALF_CHEETAH_ENVS = [
     HALF_CHEETAH_MEDIUM_REPLAY_V2,
     HALF_CHEETAH_MEDIUM_EXPERT_V2,
 ]
+"""Halfcheetah environments."""
 
 
 WALKER_RANDOM_V2 = "walker2d-random-v2"
@@ -48,6 +50,7 @@ WALKER_ENVS = [
     WALKER_MEDIUM_REPLAY_V2,
     WALKER_MEDIUM_EXPERT_V2,
 ]
+"""Walker2D environments."""
 
 ENV_CATEGORIES = {
     "hopper": HOPPER_ENVS,

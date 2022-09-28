@@ -6,9 +6,9 @@ import gym
 import torch
 
 from offline_mbrl.actors.random_agent import RandomAgent
-from offline_mbrl.scripts.metrics import estimation_quality, pessimism
 from offline_mbrl.user_config import MODELS_DIR
 from offline_mbrl.utils.load_dataset import load_dataset_from_env
+from offline_mbrl.utils.metrics import estimation_quality, pessimism
 
 if __name__ == "__main__":
     env_names = ["halfcheetah", "hopper", "walker2d"]

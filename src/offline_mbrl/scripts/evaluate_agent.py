@@ -12,7 +12,7 @@ from offline_mbrl.utils.logx import EpochLogger
 from offline_mbrl.utils.str2bool import str2bool
 
 
-def load_policy_and_env(fpath, itr="last", deterministic=False, test_env=True):
+def load_policy_and_env(experiment_path, itr="last", test_env=True):
     """
     Load a policy from save, whether it's TF or PyTorch, along with RL env.
 
@@ -28,7 +28,7 @@ def load_policy_and_env(fpath, itr="last", deterministic=False, test_env=True):
     if itr == "last":
         # check filenames for epoch (AKA iteration) numbers, find maximum value
 
-        pytsave_path = osp.join(fpath, "pyt_save")
+        pytsave_path = osp.join(experiment_path, "pyt_save")
         # Each file in this folder has naming convention 'modelXX.pt', where
         # 'XX' is either an integer or empty string. Empty string case
         # corresponds to len(x)==8, hence that case is excluded.
@@ -46,12 +46,12 @@ def load_policy_and_env(fpath, itr="last", deterministic=False, test_env=True):
         ), f"Bad value provided for {itr} (needs to be int or 'last')."
 
     # load the get_action function
-    get_action = load_pytorch_policy(fpath, itr, deterministic)
+    get_action = load_pytorch_policy(experiment_path, itr)
 
     # try to load environment from save
     # (sometimes this will fail because the environment could not be pickled)
     try:
-        state = joblib.load(osp.join(fpath, "vars" + itr + ".pkl"))
+        state = joblib.load(osp.join(experiment_path, "vars" + itr + ".pkl"))
         env = state["env"]
 
         if test_env:
@@ -81,9 +81,7 @@ def load_pytorch_policy(fpath, itr):
     return get_action
 
 
-def run_policy(
-    env: gym.Env, get_action, max_ep_len=None, num_episodes=100, render=True
-):
+def run_policy(env: gym.Env, get_action, max_ep_len=-1, render=True):
 
     assert (
         env is not None
@@ -98,25 +96,30 @@ def run_policy(
     ep_len = 0
     n = 0
     o = env.reset()
-    while n < num_episodes:
-        if render:
-            env.render()
-            time.sleep(1e-3)
 
-        a = get_action(o).cpu().numpy()
-        o, r, d, _ = env.step(a)
-        ep_ret += r
-        ep_len += 1
+    try:
+        while True:
+            if render:
+                env.render()
+                time.sleep(1e-3)
 
-        if d or (ep_len == max_ep_len):
-            logger.store(EpRet=ep_ret, EpLen=ep_len)
-            print(f"Episode {n} \t EpRet {ep_ret:.3f} \t EpLen {ep_len}")
-            r = 0
-            d = False
-            ep_ret = 0
-            ep_len = 0
-            o = env.reset()
-            n += 1
+            a = get_action(o).cpu().numpy()
+            o, r, d, _ = env.step(a)
+            ep_ret += r
+            ep_len += 1
+
+            if d or (ep_len == max_ep_len):
+                logger.store(EpRet=ep_ret, EpLen=ep_len)
+                print(f"Episode {n} \t EpRet {ep_ret:.3f} \t EpLen {ep_len}")
+                r = 0
+                d = False
+                ep_ret = 0
+                ep_len = 0
+                o = env.reset()
+                n += 1
+
+    except KeyboardInterrupt:
+        pass
 
     logger.log_tabular("EpRet", with_min_and_max=True)
     logger.log_tabular("EpLen", average_only=True)
@@ -124,24 +127,15 @@ def run_policy(
 
 
 def main(args):
-    env, get_action = load_policy_and_env(
-        args.fpath,
-        args.itr if args.itr >= 0 else "last",
-        args.deterministic,
-        args.test_env,
-    )
-    run_policy(env, get_action, args.len, args.episodes, not args.norender)
+    env, get_action = load_policy_and_env(args.exp_path)
+    run_policy(env, get_action, -1, args.render)
 
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fpath", type=str, default="")
-    parser.add_argument("--len", "-l", type=int, default=0)
-    parser.add_argument("--episodes", "-n", type=int, default=100)
-    parser.add_argument("--norender", "-nr", action="store_true")
-    parser.add_argument("--itr", "-i", type=int, default=-1)
-    parser.add_argument("--deterministic", "-d", action="store_true")
-    parser.add_argument("--test_env", type=str2bool, default=True)
+    parser.add_argument("--env_name", type=str, required=True)
+    parser.add_argument("--exp_path", type=str, required=True)
+    parser.add_argument("--render", action="store_false")
     main(parser.parse_args())

@@ -4,7 +4,6 @@ import torch
 from offline_mbrl.schemas import (
     EnvironmentModelConfiguration,
     EpochLoggerConfiguration,
-    SACConfiguration,
     TrainerConfiguration,
 )
 from offline_mbrl.train import Trainer

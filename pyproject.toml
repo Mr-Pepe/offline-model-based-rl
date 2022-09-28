@@ -54,7 +54,8 @@ ignore = [
     "build",
     "dist",
     "data",
-    "conf.py"
+    "conf.py",
+    "unmaintained_scripts"
 ]
 ignore-patterns = ["venv.*"]
 
@@ -83,3 +84,4 @@ generated-members = "numpy.*,torch.*"
 
 [tool.pydocstyle]
 convention = "google"
+match-dir = "(?!venv|\\.|build|log|dist|unmaintained_scripts).*"

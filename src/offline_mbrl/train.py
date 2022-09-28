@@ -55,7 +55,7 @@ class Trainer:
 
         self.env_name = config.env_name
         self.env = gym.make(config.env_name)
-        self.env.seed(config.seed)
+        self.env.reset(seed=config.seed)
         self.env.action_space.seed(config.seed)
 
         self.real_replay_buffer, self.virtual_replay_buffer = self._initialize_buffers()
@@ -329,8 +329,6 @@ class Trainer:
     ) -> Optional[dict]:
         if self.env_model is not None and self.config.n_parallel_virtual_rollouts > 0:
             for _ in range(self.config.agent_updates_per_step):
-                prev_obs = prev_obs if self.config.continuous_rollouts else None
-
                 rollouts, prev_obs = generate_virtual_rollouts(
                     self.env_model,
                     self.agent,

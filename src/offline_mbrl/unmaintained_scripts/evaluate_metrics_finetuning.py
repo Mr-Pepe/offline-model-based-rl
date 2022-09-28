@@ -4,9 +4,9 @@ import os.path as osp
 import numpy as np
 from d4rl import get_normalized_score
 
-from offline_mbrl.scripts.metrics import efficiency, final_performance, stability
 from offline_mbrl.scripts.plot import get_all_datasets
 from offline_mbrl.utils.envs import HALF_CHEETAH_ENVS, HOPPER_ENVS, WALKER_ENVS
+from offline_mbrl.utils.metrics import efficiency, final_performance, stability
 from offline_mbrl.utils.mode_from_exp_name import get_mode_from_experiment_name
 from offline_mbrl.utils.modes import (
     ALEATORIC_PARTITIONING,
