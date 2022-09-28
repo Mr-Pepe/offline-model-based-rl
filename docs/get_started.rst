@@ -80,12 +80,19 @@ Evaluate the agent performance by running::
     python src/offline_mbrl/scripts/evaluate_agent.py --env_name hopper-v2 --exp_path data/experiments/hopper-medium-replay-v2-sac/hopper-medium-replay-v2-sac-s0/
 
 
-Environment model training
-==========================
+Model-based training
+====================
 
 You can visualize the training of an environment model consisting of an ensemble of probabilistic networks by running::
 
-    python -m offline_mbrl.scripts.train_env_model_on_toy_dataset
+    python -m offline_mbrl.scripts.train_probabilistic_model_ensemble_on_toy_dataset
+
+Make sure to install a graphical backend for matplotlib.
+
+
+You can directly
+
+
 
 
 

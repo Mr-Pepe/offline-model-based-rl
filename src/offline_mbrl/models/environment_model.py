@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Callable, Optional, Union
 
 import torch
-from ray import tune
 from torch import nn
 from torch.nn.functional import softplus
 from torch.nn.parameter import Parameter
@@ -331,8 +330,7 @@ class EnvironmentModel(nn.Module):
         self,
         replay_buffer: ReplayBuffer,
         config: EnvironmentModelConfiguration,
-        checkpoint_dir: Optional[Path] = None,
-        tuning: bool = False,
+        model_save_path: Optional[Path] = None,
         debug: bool = False,
     ) -> tuple[torch.Tensor, int]:
         """Trains the environment model to convergence.
@@ -351,10 +349,8 @@ class EnvironmentModel(nn.Module):
                 many batches. Defaults to None.
             max_n_train_epochs (int, optional): Training stops after training for this
                 many epochs. Defaults to None.
-            checkpoint_dir (Optional[Path], optional): A path to save checkpoints of the
-                model to during a Ray Tune run. Defaults to None.
-            tuning (bool, optional): Whether the model is trained as part of a Ray Tune
-                run. Defaults to False.
+            model_save_path (Optional[Path], optional): Where to save the model after
+                training. Defaults to None.
 
         Raises:
             ValueError: If the replay buffer is not big enough to provide a
@@ -396,13 +392,6 @@ class EnvironmentModel(nn.Module):
             self.optim = AdamW(self.parameters(), lr=config.lr)
 
         assert self.optim is not None
-
-        if checkpoint_dir:
-            print(f"Loading environment model from checkpoint '{checkpoint_dir}'.")
-            checkpoint = torch.load(checkpoint_dir / "checkpoint")
-            self.load_state_dict(checkpoint["model_state_dict"])
-            epoch = checkpoint["step"]
-            self.optim.load_state_dict(checkpoint["optim_state_dict"])
 
         self.train()
 
@@ -465,8 +454,8 @@ class EnvironmentModel(nn.Module):
             else:
                 epochs_since_last_performance_improvement += 1
 
-            if tuning:
-                self._save_model_checkpoint(epoch, avg_val_loss)
+            if model_save_path is not None:
+                torch.save(self, model_save_path)
 
             epoch += 1
 
@@ -602,24 +591,6 @@ class EnvironmentModel(nn.Module):
         average_validation_loss = validation_losses_per_network.mean()
 
         return average_validation_loss.item(), validation_losses_per_network
-
-    def _save_model_checkpoint(self, epoch: int, avg_val_loss: float) -> None:
-        tune.report(val_loss=avg_val_loss)
-
-        with tune.checkpoint_dir(step=epoch) as tune_checkpoint_dir:
-            path = os.path.join(tune_checkpoint_dir, "checkpoint")
-
-            assert self.optim is not None
-
-            torch.save(
-                {
-                    "step": epoch,
-                    "model_state_dict": self.state_dict(),
-                    "optim_state_dict": self.optim.state_dict(),
-                    "val_loss": avg_val_loss,
-                },
-                path,
-            )
 
     def _check_mode_is_valid(self, mode: str) -> None:
         if mode not in ALL_MODES:

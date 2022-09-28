@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 import torch
 
@@ -133,3 +135,28 @@ def test_training_stops_after_specified_number_of_batches() -> None:
     )
 
     assert n_train_batches == 50
+
+
+@pytest.mark.medium
+def test_model_saving(tmp_path: Path) -> None:
+    env_name = HALF_CHEETAH_MEDIUM_REPLAY_V2
+    torch.manual_seed(0)
+
+    buffer, obs_dim, act_dim = load_dataset_from_env(env_name, n_samples=10000)
+
+    model_config = EnvironmentModelConfiguration(
+        n_networks=1,
+        val_split=0.2,
+        training_patience=1,
+        max_number_of_training_batches=50,
+    )
+
+    model = EnvironmentModel(obs_dim, act_dim, model_config)
+
+    save_path = tmp_path / "my_model.pt"
+
+    _, _ = model.train_to_convergence(buffer, model_config, model_save_path=save_path)
+
+    assert save_path.is_file
+
+    assert isinstance(torch.load(save_path), EnvironmentModel)

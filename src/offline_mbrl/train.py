@@ -5,7 +5,6 @@ from typing import Optional, Union, cast
 import gym
 import numpy as np
 import torch
-from ray import tune
 
 from offline_mbrl.actors.behavioral_cloning import (
     BehavioralCloningAgent,
@@ -255,10 +254,6 @@ class Trainer:
                 )
 
                 tested_agent = True
-
-            if tuning:
-                running_avg += (test_return - running_avg) * 0.2
-                tune.report(avg_test_return=running_avg, test_return=test_return)
 
             test_performances.append([epoch, test_return])
 

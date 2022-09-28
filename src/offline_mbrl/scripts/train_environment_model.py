@@ -5,9 +5,6 @@ from typing import Optional
 
 import ray
 import torch
-from ray import tune
-from ray.tune.schedulers.async_hyperband import ASHAScheduler
-from ray.tune.search.hyperopt import HyperOptSearch
 
 from offline_mbrl.models.environment_model import EnvironmentModel
 from offline_mbrl.user_config import MODELS_DIR
@@ -78,54 +75,17 @@ if __name__ == "__main__":
         "batch_size": None,
     }
 
-    if args.level == 0:
-        # Perform training with tuned hyperparameters and save model
+    # Perform training with tuned hyperparameters and save model
 
-        save_path = MODELS_DIR / (args.env_name + "-model.pt")
+    save_path = MODELS_DIR / (args.env_name + "-model.pt")
 
-        config.update(max_n_train_epochs=-1, debug=True)
+    config.update(max_n_train_epochs=-1, debug=True)
 
-        config.update(lr=args.lr, batch_size=256)
+    config.update(lr=args.lr, batch_size=256)
 
-        assert config["lr"] is not None
-        assert config["batch_size"] is not None
+    assert config["lr"] is not None
+    assert config["batch_size"] is not None
 
-        training_function(
-            model_config=config, data=buffer, model_save_path=save_path, tuning=False
-        )
-    else:
-        if args.level == 1:
-            config.update(
-                lr=tune.loguniform(1e-5, 1e-2),
-                batch_size=tune.choice([256, 512, 1024, 2048]),
-            )
-
-        assert config["lr"] is not None
-        assert config["batch_size"] is not None
-
-        ray.init()
-        scheduler = ASHAScheduler(
-            metric="val_loss", mode="min", time_attr="time_since_restore", max_t=1000
-        )
-
-        search_alg = HyperOptSearch(metric="val_loss", mode="min")
-
-        save_name = args.env_name
-
-        if args.augment_loss:
-            save_name += "-aug-loss"
-
-        save_name += "-model-tuning-lvl-" + str(args.level)
-
-        analysis = tune.run(
-            tune.with_parameters(training_function, data=buffer),
-            name=save_name,
-            config=config,
-            scheduler=scheduler,
-            search_alg=search_alg,
-            num_samples=200,
-            resources_per_trial={"gpu": 0.5},
-            fail_fast=True,
-        )
-
-        print("Best config: ", analysis.get_best_config(metric="val_loss", mode="min"))
+    training_function(
+        model_config=config, data=buffer, model_save_path=save_path, tuning=False
+    )
