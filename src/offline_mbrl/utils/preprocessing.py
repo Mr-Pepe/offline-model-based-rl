@@ -9,9 +9,7 @@ from d4rl.offline_env import OfflineEnv
 from offline_mbrl.utils.envs import ALL_ENVS
 
 
-def get_preprocessing_function(
-    env_name: str, device: str = "cpu"
-) -> Optional[Callable]:
+def get_preprocessing_function(env_name: str, device: str = "cpu") -> Callable:
     """Retrieves a preprocessing function for a given environment.
 
     The preprocessing function performs normalization based on the mean and standard
@@ -24,7 +22,7 @@ def get_preprocessing_function(
         device (str, optional): The PyTorch device. Defaults to "cpu".
 
     Returns:
-        Optional[Callable]: The preprocessing function for that environment.
+        Callable: The preprocessing function for that environment.
     """
     if env_name not in ALL_ENVS:
         return partial(_preprocess, None, None)

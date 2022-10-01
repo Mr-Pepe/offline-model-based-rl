@@ -190,7 +190,7 @@ class Trainer:
                     < self.config.random_steps
                 )
 
-                self.train_model_if_necessary(step_total, self.env_model)
+                self._train_model_if_necessary(step_total, self.env_model)
 
                 if (step_this_epoch + 1) % 10 == 0 and not tuning and not quiet:
                     print(
@@ -360,7 +360,7 @@ class Trainer:
 
         return prev_obs
 
-    def train_model_if_necessary(
+    def _train_model_if_necessary(
         self, step: int, model: Optional[EnvironmentModel]
     ) -> None:
         # Train environment model on real experience
