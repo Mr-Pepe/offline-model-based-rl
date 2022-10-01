@@ -42,8 +42,8 @@ def test_preprocessing() -> None:
 
 
 @pytest.mark.fast
-def test_retrieving_preprocessing_function_for_unknown_env_raises_error() -> None:
-    with pytest.raises(
-        ValueError, match="No preprocessing function found for environment 'abc'"
-    ):
-        get_preprocessing_function("abc")
+def test_retrieving_preprocessing_function_for_unknown_env_does_not_normalize() -> None:
+
+    pre_fn = get_preprocessing_function("abc")
+
+    assert torch.ones(5).equal(pre_fn(torch.ones(5)))

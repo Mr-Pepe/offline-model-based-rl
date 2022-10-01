@@ -17,6 +17,8 @@ def get_preprocessing_function(
     The preprocessing function performs normalization based on the mean and standard
     deviation of the offline dataset for an environment.
 
+    The input does not get normalized if no preprocessing function could be found.
+
     Args:
         env_name (str): The environment name.
         device (str, optional): The PyTorch device. Defaults to "cpu".
@@ -25,10 +27,7 @@ def get_preprocessing_function(
         Optional[Callable]: The preprocessing function for that environment.
     """
     if env_name not in ALL_ENVS:
-        raise ValueError(
-            f"No preprocessing function found for environment '{env_name}'. "
-            f"Allowed environments: {ALL_ENVS}"
-        )
+        return partial(_preprocess, None, None)
 
     env: OfflineEnv = gym.make(env_name)
     dataset = env.get_dataset()
@@ -45,7 +44,10 @@ def get_preprocessing_function(
 
 
 def _preprocess(
-    mean: torch.Tensor, std: torch.Tensor, obs_act: torch.Tensor, detach: bool = True
+    mean: Optional[torch.Tensor],
+    std: Optional[torch.Tensor],
+    obs_act: torch.Tensor,
+    detach: bool = True,
 ) -> torch.Tensor:
     """Preprocess a batch of concatenated observations and actions.
 
@@ -66,10 +68,11 @@ def _preprocess(
     if detach:
         obs_act = obs_act.detach().clone()
 
-    # This allows to preprocess an observation without action
-    length = obs_act.shape[-1]
+    if mean is not None and std is not None:
+        # This allows to preprocess an observation without action
+        length = obs_act.shape[-1]
 
-    obs_act -= mean[:length]
-    obs_act /= std[:length]
+        obs_act -= mean[:length]
+        obs_act /= std[:length]
 
     return obs_act

@@ -77,11 +77,10 @@ termination_functions = {
 def get_termination_function(env_name: str) -> Callable[[torch.Tensor], torch.Tensor]:
     """Retrieves the termination function for an environment.
 
+    The identity function is used if no termination function could be found.
+
     Args:
         env_name (str): The environment name.
-
-    Raises:
-        ValueError: If no termination function was found for that environment.
 
     Returns:
         Callable: The termination function, mapping observations to a terminal signal.
@@ -90,4 +89,4 @@ def get_termination_function(env_name: str) -> Callable[[torch.Tensor], torch.Te
         if env_name in envs:
             return termination_functions[category]
 
-    raise ValueError(f"No postprocessing function found for environment '{env_name}'.")
+    return lambda x: x

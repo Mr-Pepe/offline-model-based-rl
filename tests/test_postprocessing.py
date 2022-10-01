@@ -78,8 +78,7 @@ def test_walker2d_postprocessing() -> None:
 
 
 @pytest.mark.fast
-def test_raises_error_if_no_post_processing_function_found() -> None:
-    with pytest.raises(
-        ValueError, match="No postprocessing function found for environment 'abc'."
-    ):
-        get_termination_function("abc")
+def test_no_postprocessing_if_no_post_processing_function_found() -> None:
+    post_fn = get_termination_function("abc")
+
+    assert torch.ones(5).equal(post_fn(torch.ones(5)))
