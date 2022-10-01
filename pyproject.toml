@@ -26,6 +26,7 @@ addopts = '''
     --cov-report xml:reports/coverage.xml
     --cov-report html:reports/coverage_html
     --ignore="data/"
+    --ignore="src/offline_mbrl/unmaintained_scripts/"
     '''
 markers = '''
     fast: Fastest tests, a few hundred milliseconds
