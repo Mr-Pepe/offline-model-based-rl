@@ -1,18 +1,9 @@
-===========
-Get started
-===========
-
-This library provides a simple but high-quality baseline for playing around with
-model-free and model-based reinforcement learning approaches in both online and offline
-settings.
-
-
 Installation
 ============
 
 Install `Mujoco <https://mujoco.org/>`_ version 2.1.0
 
-Clone the repository from Github to play and install the library with::
+Clone the repository from Github and install the library with::
 
     git clone https://github.com/Mr-Pepe/offline-model-based-rl
     cd offline-model-based-rl
@@ -35,8 +26,9 @@ Offline model-based training uses the concepts of pessimism proposed in
 `MOPO <https://arxiv.org/abs/2005.13239>`_ and `MOReL <https://arxiv.org/abs/2005.05951>`_.
 Similar to MBPO, both approaches train an environment model on an offline dataset and
 use that model to generate synthetic data for training a model-free RL agent. However,
-both approaches employ uncertainty estimation techniques to detect areas where the model
-prediction quality can not be guaranteed. The uncertainty estimate is either used to
+both approaches employ uncertainty estimation techniques to prevent distribution shift
+by detecting areas where the model prediction quality can not be guaranteed.
+The uncertainty estimate is either used to
 penalize the predicted reward or to terminate trajectories when the uncertainty passes
 a certain threshold. This library refers to the former as "penalty" (because of the
 continuous reward penalty) and the latter as "partitioning" (because it partitions the
@@ -67,6 +59,7 @@ Let's start with the most basic case of training an SAC agent online::
     python src/offline_mbrl/scripts/train_agent.py --env_name hopper-medium-replay-v2 --mode sac
 
 Most values are taken from the default trainer configuration and you can adapt them to your needs.
+You have to use one of the d4rl environment names although the offline dataset will not be used during online training.
 
 You can observe the training process by running::
 
@@ -124,11 +117,11 @@ Nonetheless, it does work extremely well in some cases and you can try it by run
 
 For model-based approaches, you should consider training an environment model first and reusing it later.
 Otherwise, you will have to train a new environment model for every training run although the offline dataset did not change.
-Run the following to train an environment model:
+Run the following to train an environment model::
 
     python src/offline_mbrl/scripts/train_environment_model.py --env_name hopper-medium-replay-v2
 
-Then run any of the offline model-based approaches, for example:
+Then run any of the offline model-based approaches, for example::
 
     python src/offline_mbrl/scripts/train_agent.py --env_name hopper-medium-replay-v2 --mode aleatoric-partitioning
 
