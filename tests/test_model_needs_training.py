@@ -138,3 +138,21 @@ def test_trains_model_only_once_during_offline_training() -> None:
         )
         is False
     )
+
+
+@pytest.mark.fast
+def test_pretrained_model_is_not_trained_before_offline_training() -> None:
+    model = EnvironmentModel(1, 1)
+    model.has_been_trained_at_least_once = True
+
+    assert (
+        model_needs_training(
+            model,
+            step=-400000,
+            buffer_size=400000,
+            init_steps=10000,
+            steps_since_model_training=1e10,
+            train_model_every=250,
+        )
+        is False
+    )

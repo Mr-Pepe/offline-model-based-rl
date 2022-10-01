@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Callable, Optional, Union
 
 import torch
+from pyexpat import model
 from torch import nn
 from torch.nn.functional import softplus
 from torch.nn.parameter import Parameter
@@ -455,8 +456,10 @@ class EnvironmentModel(nn.Module):
                 epochs_since_last_performance_improvement += 1
 
             if model_save_path is not None:
+                print(f"Saving environment model to: {model_save_path}")
                 torch.save(self, model_save_path)
 
+            self.has_been_trained_at_least_once = True
             epoch += 1
 
             print(
@@ -470,7 +473,6 @@ class EnvironmentModel(nn.Module):
             if debug:
                 print("")
 
-        self.has_been_trained_at_least_once = True
         return val_loss_per_network, batches_trained
 
     def train_one_batch(

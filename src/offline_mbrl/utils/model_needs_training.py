@@ -18,6 +18,9 @@ def model_needs_training(
         # Train once before offline training
         return True
 
+    if step < 0:
+        return False
+
     schedule_is_due = steps_since_model_training >= train_model_every > 0
 
     if schedule_is_due and step >= init_steps:

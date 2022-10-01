@@ -167,8 +167,6 @@ class Trainer:
         test_performances = []
         action_log = []
 
-        running_avg = 0.0
-
         next_obs = None
 
         for epoch in range(

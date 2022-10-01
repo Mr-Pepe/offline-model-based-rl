@@ -34,7 +34,7 @@ class TrainerConfiguration(BaseModel):
             on the offline dataset at the beginning of offline training). Also the
             number of steps to wait before starting to update the policy during each
             training loop iteration. This ensures that the replay buffer is sufficiently
-            filled. Defaults to 1,000.
+            filled. Defaults to 10,000.
         env_interactions_per_step (int): Number of interactions with the real
             environment per step during online training. Defaults to 1.
         agent_updates_per_step (int): Number of policy updates per step. Defaults to 1.
@@ -53,7 +53,7 @@ class TrainerConfiguration(BaseModel):
             interacting with an environment model. Passing None does not limit the
             rollout length, which might be a bad idea for environments without a
             termination function because the predictions will eventually become very
-            inaccurate. Defaults to None.
+            inaccurate. Defaults to 15.
         train_env_model_every (int): How many steps to wait before retraining the
             environment model on the replay buffer. Defaults to 250.
         train_env_model_from_scratch (int): Whether or not to initialize a new
@@ -87,7 +87,7 @@ class TrainerConfiguration(BaseModel):
     offline_epochs: int = 0
     steps_per_epoch: int = 4_000
     random_steps: int = 10_000
-    init_steps: int = 1_000
+    init_steps: int = 10_000
     env_interactions_per_step: int = 1
     agent_updates_per_step: int = 1
     test_episodes: int = 10
@@ -95,7 +95,7 @@ class TrainerConfiguration(BaseModel):
     max_episode_length: int = 1000
     use_env_model: bool = False
     n_parallel_virtual_rollouts: int = 50
-    max_virtual_rollout_length: Optional[int] = None
+    max_virtual_rollout_length: Optional[int] = 15
     train_env_model_every: int = 250
     train_env_model_from_scratch: bool = False
     reset_virtual_buffer_after_env_model_training: bool = False
@@ -111,7 +111,7 @@ class TrainerConfiguration(BaseModel):
 class EnvironmentModelConfiguration(BaseModel):
     type: Literal["deterministic", "probabilistic"] = "deterministic"
     n_networks: int = 1
-    hidden_layer_sizes: tuple[int, ...] = (128, 128)
+    hidden_layer_sizes: tuple[int, ...] = (200, 200, 200, 200)
     pessimism: float = 0
     ood_threshold: float = -1
     mode: Optional[str] = None
