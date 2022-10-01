@@ -27,7 +27,7 @@ pip install -e .[dev]
 ```
 
 After making changes to the code, make sure that static checks and unit tests pass by running `tox`.
-Tox only runs unit tests that are marked as `slow`.
+Tox only runs unit tests that are not marked as `slow`.
 For faster feedback from unit tests, run `pytest -m fast`.
 Please run the slow tests if you have a GPU available by executing `pytest -m slow`.
 
@@ -42,6 +42,3 @@ Feel free to use the code but please cite the usage as:
     year={2021}
 }
 ```
-
-# TODOs
-- Upload package to PyPI
