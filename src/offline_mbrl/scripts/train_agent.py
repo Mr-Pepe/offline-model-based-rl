@@ -26,7 +26,14 @@ from offline_mbrl.utils.setup_logger_kwargs import setup_logger_kwargs
 from offline_mbrl.utils.termination_functions import get_termination_function
 
 
-def main(args: argparse.Namespace) -> None:
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--env_name", type=str, required=True)
+    parser.add_argument("--mode", type=str, required=True)
+    parser.add_argument("--n_trials", type=int, default=20)
+    parser.add_argument("--device", type=str, default="cpu")
+
+    args = parser.parse_args()
 
     trainer_config = TrainerConfiguration()
 
@@ -93,9 +100,4 @@ def main(args: argparse.Namespace) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--env_name", type=str, required=True)
-    parser.add_argument("--mode", type=str, required=True)
-    parser.add_argument("--n_trials", type=int, default=20)
-    parser.add_argument("--device", type=str, default="cpu")
-    main(parser.parse_args())
+    main()

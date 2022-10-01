@@ -61,7 +61,7 @@ def plot_data(
         data_df = data
 
     sns.set(style="darkgrid", font_scale=1.5)
-    sns.lineplot(data=data_df, x=xaxis, y=value, hue=condition, ci="sd", **kwargs)
+    sns.lineplot(data=data_df, x=xaxis, y=value, hue=condition, errorbar="sd", **kwargs)
     plt.legend(loc="best", ncol=1, handlelength=1, borderaxespad=0.0, prop={"size": 13})
 
     xscale = np.max(np.asarray(data_df[xaxis])) > 5e3
@@ -306,7 +306,7 @@ def main(args: argparse.Namespace) -> None:
                                 data=data,
                                 x="Epoch",
                                 y=what_to_plot,
-                                ci="sd",
+                                errorbar="sd",
                                 estimator=getattr(np, "mean"),
                                 ax=ax,
                                 label=mode,
@@ -338,7 +338,7 @@ def main(args: argparse.Namespace) -> None:
 
                         if what_to_plot == "AverageTestEpRet":
                             ax.set_ylim([-5, 115])
-                        ax.grid(b=True, alpha=0.5, linestyle="--")
+                        ax.grid(visible=True, alpha=0.5, linestyle="--")
 
         handles, labels = axes[0, 0].get_legend_handles_labels()
         handles = list(reversed(handles))
@@ -405,7 +405,7 @@ if __name__ == "__main__":
     parser.add_argument("--select", nargs="*")
     parser.add_argument("--exclude", nargs="*")
     parser.add_argument("--est", default="mean")
-    parser.add_argument("--final_eval", type=str2bool, default=True)
+    parser.add_argument("--final_eval", type=str2bool, default=False)
     parsed_args = parser.parse_args()
     """
 
