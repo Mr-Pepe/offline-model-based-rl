@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import iqr, spearmanr
 
 
-def final_performance(performances):
+def final_performance(performances: np.ndarray) -> tuple[float, float, float]:
     """Return the final performance for a collection of training results.
 
     Arguments:
@@ -19,7 +19,7 @@ def final_performance(performances):
     )
 
 
-def stability(performances):
+def stability(performances: np.ndarray) -> float:
     """Compute the training stability of a method.
 
     Arguments:
@@ -39,7 +39,7 @@ def stability(performances):
     return coeff
 
 
-def efficiency(performances):
+def efficiency(performances: np.ndarray) -> float:
     """Compute the number of steps to reach 80% of the maximum policy performance.
 
     Arguments:
@@ -62,7 +62,9 @@ def efficiency(performances):
     return tt80.mean()
 
 
-def estimation_quality(model_errors, uncertainty_estimates):
+def estimation_quality(
+    model_errors: np.ndarray, uncertainty_estimates: np.ndarray
+) -> float:
     """Takes one-dimensional numpy arrays for true model errors
     and uncertainty estimates and returns the exponential deviation between the two."""
     model_errors /= model_errors.max()
@@ -71,7 +73,7 @@ def estimation_quality(model_errors, uncertainty_estimates):
     return (np.exp((model_errors - uncertainty_estimates).abs()) - 1).mean()
 
 
-def pessimism(model_errors, uncertainty_estimates):
+def pessimism(model_errors: np.ndarray, uncertainty_estimates: np.ndarray) -> float:
     """Takes one-dimensional numpy arrays for true model errors
     and uncertainty estimates and returns how pessimistic the model is in the range
     [-1, 1]."""

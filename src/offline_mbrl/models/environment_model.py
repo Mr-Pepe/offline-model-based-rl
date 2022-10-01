@@ -4,12 +4,10 @@
 """Contains an environment model that can be used to generate data for RL agents."""
 
 
-import os
 from pathlib import Path
 from typing import Callable, Optional, Union
 
 import torch
-from pyexpat import model
 from torch import nn
 from torch.nn.functional import softplus
 from torch.nn.parameter import Parameter

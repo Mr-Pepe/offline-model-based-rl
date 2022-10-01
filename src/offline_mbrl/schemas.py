@@ -65,16 +65,16 @@ class TrainerConfiguration(BaseModel):
             the virtual replay buffer. Defaults to False.
         pretrained_env_model_path (Optional[Path]): A path to an existing environment
             model. Defaults to None.
-        pretrained_agent_path (Optional[Path]): A path to a pretrained agent. Defaulst to
-            None.
+        pretrained_agent_path (Optional[Path]): A path to a pretrained agent. Defaults
+            to None.
         n_samples_from_dataset (Optional[int]): The number of samples to load from the
             d4rl offline dataset into the real replay buffer. Pass None to load all
             samples. Defaults to 0.
         real_buffer_size (int): The maximum number of samples that can be stored in the
             real replay buffer (containing samples from interacting with the real
             environment). Defaults to 1,000,000.
-        virtual_buffer_size (int): The maximum number of samples that can be stored in the
-            virtual replay buffer (containing samples from interacting with an
+        virtual_buffer_size (int): The maximum number of samples that can be stored in
+            the virtual replay buffer (containing samples from interacting with an
             environment model). Defaults to 1,000,000.
         save_frequency (int): How often (in terms of gap between epochs) to save the
             agent. Defaults to 1.

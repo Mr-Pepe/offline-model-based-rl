@@ -151,7 +151,7 @@ def test_pretrained_model_is_not_trained_before_offline_training() -> None:
             step=-400000,
             buffer_size=400000,
             init_steps=10000,
-            steps_since_model_training=1e10,
+            steps_since_model_training=int(1e10),
             train_model_every=250,
         )
         is False

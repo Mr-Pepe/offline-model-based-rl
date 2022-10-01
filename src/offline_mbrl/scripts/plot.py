@@ -1,7 +1,10 @@
 # Based on https://spinningup.openai.com
+import argparse
 import json
 import os
 import os.path as osp
+from pathlib import Path
+from typing import Any, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,13 +35,13 @@ units = {}
 
 
 def plot_data(
-    data,
-    xaxis="Epoch",
-    value="AverageEpRet",
-    condition="Condition1",
-    smooth=1,
-    **kwargs,
-):
+    data: Union[list, pd.DataFrame],
+    xaxis: str = "Epoch",
+    value: str = "AverageEpRet",
+    condition: str = "Condition1",
+    smooth: int = 1,
+    **kwargs: Any,
+) -> None:
     if smooth > 1:
         # smooth data with moving window average.
         # that is,
@@ -53,12 +56,15 @@ def plot_data(
             datum[value] = smoothed_x
 
     if isinstance(data, list):
-        data = pd.concat(data, ignore_index=True)
+        data_df = pd.concat(data, ignore_index=True)
+    else:
+        data_df = data
+
     sns.set(style="darkgrid", font_scale=1.5)
-    sns.lineplot(data=data, x=xaxis, y=value, hue=condition, ci="sd", **kwargs)
+    sns.lineplot(data=data_df, x=xaxis, y=value, hue=condition, ci="sd", **kwargs)
     plt.legend(loc="best", ncol=1, handlelength=1, borderaxespad=0.0, prop={"size": 13})
 
-    xscale = np.max(np.asarray(data[xaxis])) > 5e3
+    xscale = np.max(np.asarray(data_df[xaxis])) > 5e3
     if xscale:
         # Just some formatting niceness: x-axis scale in scientific
         # notation if max x is large
@@ -67,7 +73,7 @@ def plot_data(
     plt.tight_layout(pad=0.5)
 
 
-def get_datasets(logdir, condition=None):
+def get_datasets(logdir: Path, condition: bool = None) -> list:
     """
     Recursively look through logdir for output files produced by
     spinup.logx.EpochLogger.
@@ -87,7 +93,7 @@ def get_datasets(logdir, condition=None):
             if "exp_name" in config:
                 exp_name = config["exp_name"]
             condition1 = condition or exp_name or "exp"
-            condition2 = condition1 + "-" + str(exp_idx)
+            condition2 = str(condition1) + "-" + str(exp_idx)
             exp_idx += 1
             if condition1 not in units:
                 units[condition1] = 0
@@ -112,7 +118,12 @@ def get_datasets(logdir, condition=None):
     return datasets
 
 
-def get_all_datasets(all_logdirs, legend=None, select=None, exclude=None):
+def get_all_datasets(
+    all_logdirs: list,
+    legend: Optional[list] = None,
+    select: Optional[list] = None,
+    exclude: Optional[list] = None,
+) -> list:
     """
     For every entry in all_logdirs,
         1) check if the entry is a real directory and if it is,
@@ -128,7 +139,7 @@ def get_all_datasets(all_logdirs, legend=None, select=None, exclude=None):
         else:
             basedir = osp.dirname(logdir)
 
-            def fulldir(x, base_dir):
+            def fulldir(x: str, base_dir: str) -> str:
                 return osp.join(base_dir, x)
 
             prefix = logdir.split(os.sep)[-1]
@@ -161,16 +172,16 @@ def get_all_datasets(all_logdirs, legend=None, select=None, exclude=None):
 
 
 def make_plots(
-    all_logdirs,
-    legend=None,
-    xaxis=None,
-    values=None,
-    count=False,
-    smooth=1,
-    select=None,
-    exclude=None,
-    estimator="mean",
-):
+    all_logdirs: list,
+    legend: Optional[list] = None,
+    xaxis: str = "Epoch",
+    values: Union[list, str] = None,
+    count: bool = False,
+    smooth: int = 1,
+    select: Optional[list] = None,
+    exclude: Optional[list] = None,
+    estimator: str = "mean",
+) -> None:
     data = get_all_datasets(all_logdirs, legend, select, exclude)
     values = values if isinstance(values, list) else [values]
     condition = "Condition2" if count else "Condition1"
@@ -189,7 +200,7 @@ def make_plots(
     plt.show()
 
 
-def main(args):
+def main(args: argparse.Namespace) -> None:
     if not args.final_eval:
         make_plots(
             args.logdir,
@@ -384,8 +395,6 @@ def main(args):
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument("logdir", default=[], nargs="*")
     parser.add_argument("--legend", "-l", nargs="*")

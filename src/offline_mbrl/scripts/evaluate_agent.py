@@ -9,7 +9,6 @@ import joblib
 import torch
 
 from offline_mbrl.utils.logx import EpochLogger
-from offline_mbrl.utils.str2bool import str2bool
 
 
 def load_policy_and_env(experiment_path, itr="last", test_env=True):

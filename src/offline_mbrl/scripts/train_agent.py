@@ -1,8 +1,8 @@
 import argparse
 from pathlib import Path
-from typing import Optional
 
 from offline_mbrl.schemas import (
+    AgentConfiguration,
     BehavioralCloningConfiguration,
     EnvironmentModelConfiguration,
     EpochLoggerConfiguration,
@@ -26,7 +26,7 @@ from offline_mbrl.utils.setup_logger_kwargs import setup_logger_kwargs
 from offline_mbrl.utils.termination_functions import get_termination_function
 
 
-def main(args: argparse.Namespace):
+def main(args: argparse.Namespace) -> None:
 
     trainer_config = TrainerConfiguration()
 
@@ -38,14 +38,14 @@ def main(args: argparse.Namespace):
     preprocessing_function = get_preprocessing_function(trainer_config.env_name)
     termination_function = get_termination_function(trainer_config.env_name)
 
-    env_model_config: Optional[
-        EnvironmentModelConfiguration
-    ] = EnvironmentModelConfiguration(
+    env_model_config: EnvironmentModelConfiguration = EnvironmentModelConfiguration(
         type="probabilistic",
         n_networks=8,
         preprocessing_function=preprocessing_function,
         termination_function=termination_function,
     )
+
+    agent_config: AgentConfiguration
 
     if args.mode == BEHAVIORAL_CLONING:
         agent_config = BehavioralCloningConfiguration(
@@ -89,7 +89,7 @@ def main(args: argparse.Namespace):
     )
 
     trainer = Trainer(trainer_config, agent_config, env_model_config, logger_config)
-    return trainer.train()
+    trainer.train()
 
 
 if __name__ == "__main__":
