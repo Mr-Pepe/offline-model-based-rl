@@ -13,8 +13,8 @@ This library provides a simple but high-quality baseline for playing around with
 It is mostly tested, type-hinted, and documented. Read the detailed documentation [here](https://offline-model-based-rl.readthedocs.io/en/latest/#).
 
 The code in this repository is based on the code written as part of my master's thesis on uncertainty
-estimation in offline model-based reinforcement learning. You can find the thesis in
-[thesis.pdf](thesis.pdf). Please [cite](#citation) accordingly.
+estimation in offline model-based reinforcement learning.
+Please [cite](#citation) accordingly.
 
 
 
