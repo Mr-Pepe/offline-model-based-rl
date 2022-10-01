@@ -457,7 +457,6 @@ class EnvironmentModel(nn.Module):
                 print(f"Saving environment model to: {model_save_path}")
                 torch.save(self, model_save_path)
 
-            self.has_been_trained_at_least_once = True
             epoch += 1
 
             print(
@@ -470,6 +469,8 @@ class EnvironmentModel(nn.Module):
 
             if debug:
                 print("")
+
+        self.has_been_trained_at_least_once = True
 
         return val_loss_per_network, batches_trained
 
