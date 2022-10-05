@@ -81,4 +81,7 @@ HYPERPARAMS = {
         WALKER_EXPERT_V2: (15, 2.5),
     },
 }
-"""Tuned hyperparameters as tuples of (virtual rollout length, pessimism/ OOD threshold)."""
+"""Tuned hyperparameters.
+
+Contains tuples of (virtual rollout length, pessimism/ OOD threshold).
+"""
