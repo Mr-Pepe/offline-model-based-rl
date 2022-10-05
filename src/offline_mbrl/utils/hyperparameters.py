@@ -11,8 +11,6 @@ from offline_mbrl.utils.modes import (
     EPISTEMIC_PENALTY,
 )
 
-# Hyperparameters
-# (rollouts, rollout length, pessimism/ OOD threshold)
 HYPERPARAMS = {
     ALEATORIC_PARTITIONING: {
         HALF_CHEETAH_RANDOM_V2: (19, 0.36515),
@@ -83,3 +81,4 @@ HYPERPARAMS = {
         WALKER_EXPERT_V2: (15, 2.5),
     },
 }
+"""Tuned hyperparameters as tuples of (virtual rollout length, pessimism/ OOD threshold)."""
